@@ -7,11 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Domain\IRepositories\" />
-      <Folder Include="DTO\" />
+      <Folder Include="Domain\Entities\" />
+      <Folder Include="Domain\RepositoryContracts\" />
       <Folder Include="Enums\" />
-      <Folder Include="ServiceContracts\" />
-      <Folder Include="Services\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
+      <PackageReference Include="Microsoft.Extensions.Identity.Stores" Version="8.0.6" />
     </ItemGroup>
 
 </Project>

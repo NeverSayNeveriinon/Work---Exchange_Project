@@ -1,5 +1,14 @@
+using System.Text;
+using Core.Domain.IdentityEntities;
+using Core.ServiceContracts;
+using Core.Services;
 using Infrastructure.DatabaseContext;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 namespace API;
 
@@ -10,12 +19,46 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllers();
 
+        // Services IOC        
+        builder.Services.AddTransient<IJwtService, JwtService>();
+
+        
         // DataBase IOC
         var DBconnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<AppDbContext>(options =>
         {
             options.UseSqlServer(DBconnectionString);
         });
+        
+        // Identity IOC
+        builder.Services.AddIdentity<ApplicationUser,ApplicationRole>(options => 
+            {
+                options.Password.RequiredLength = 5;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireDigit = false;
+                options.Password.RequiredUniqueChars = 3; //Eg: AB12AB
+            }).AddEntityFrameworkStores<AppDbContext>()
+            .AddUserStore<UserStore<ApplicationUser,ApplicationRole,AppDbContext,Guid>>()
+            .AddRoleStore<RoleStore<ApplicationRole,AppDbContext,Guid>>()
+            .AddDefaultTokenProviders();
+        
+        // JWT
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters()
+                {
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"],
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                };
+            });
         
         // Swagger
         // Generates description for all endpoints (action methods)
@@ -24,6 +67,30 @@ public class Program
         builder.Services.AddSwaggerGen(options =>
         {
             // options.IncludeXmlComments("wwwroot/ExchangeApp.xml"); // For Reading the 'XML' comments
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please Enter JWT Token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "bearer"
+            });
+
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type=ReferenceType.SecurityScheme,
+                            Id="Bearer"
+                        }
+                    },
+                    new string[]{}
+                }
+            });
         }); 
         
         var app = builder.Build();
@@ -37,6 +104,8 @@ public class Program
         
         app.UseStaticFiles();
         
+        app.UseAuthentication(); 
+        app.UseAuthorization(); 
         app.MapControllers();
 
         app.Run();

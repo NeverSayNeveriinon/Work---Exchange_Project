@@ -8,6 +8,11 @@ public class UserRegister
     [StringLength(60, ErrorMessage = "The 'Email' Can't Be More Than 60 Characters")]
     [EmailAddress(ErrorMessage = "The 'Email' is not in a Correct Format")]
     public string Email { get; set; }
+    
+    
+    [Required(ErrorMessage = "The 'Email' Can't Be Blank!!!")]
+    [StringLength(30, ErrorMessage = "The 'Person Name' Can't Be More Than 30 Characters")]
+    public string PersonName { get; set; }
 
 
     [StringLength(maximumLength:11, MinimumLength = 11, ErrorMessage = "The 'Phone Number' must be 11 Characters")]

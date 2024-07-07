@@ -1,11 +1,16 @@
-﻿using Core.Domain.IdentityEntities;
+﻿using Core.Domain.ExternalServicesContracts;
+using Core.Domain.IdentityEntities;
 using Core.DTO.Auth;
 using Core.ServiceContracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
+// TODO: Add Role Logic
+// TODO: Add Email Confirm Token Life Time
 [Route("api/[controller]")]
 [ApiController]
 public class AccountController : ControllerBase
@@ -13,18 +18,21 @@ public class AccountController : ControllerBase
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly IJwtService _jwtService;
+    private readonly INotificationService _notifyService;
+
     
-    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtService jwtService)
+    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtService jwtService, INotificationService notifyService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtService = jwtService;
+        _notifyService = notifyService;
     }
 
 
     // Register//
     [HttpPost("register")]
-    public async Task<IActionResult> Register(UserRegister registerDTO)
+    public async Task<IActionResult> Register(UserRegister userRegister)
     {
         // Validation
         if (ModelState.IsValid == false)
@@ -33,22 +41,25 @@ public class AccountController : ControllerBase
             return Problem(errorMessage);
         }
         
-        ApplicationUser user = new ApplicationUser()
+        var userReturned = await _userManager.FindByEmailAsync(userRegister.Email);
+        if (userReturned != null) // means a user with this email is already in db
         {
-            UserName = registerDTO.Email,
-            Email = registerDTO.Email,
-            PhoneNumber = registerDTO.Phone
+            return Problem("The Email is Already Registered");
+        }
+       
+        var user = new ApplicationUser()
+        {
+            UserName = userRegister.Email,
+            PersonName = userRegister.PersonName,
+            Email = userRegister.Email,
+            PhoneNumber = userRegister.Phone
         };
 
-        IdentityResult result = await _userManager.CreateAsync(user, registerDTO.Password);
+        var result = await _userManager.CreateAsync(user, userRegister.Password);
         if (result.Succeeded)
         {
-            // Sign in
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            
-            var authenticationResponse = _jwtService.CreateJwtToken(user);
-
-            return Ok(authenticationResponse);
+            await SendConfirmationEmail(user);
+            return Ok("Please Check Your Email");
         }
         else
         {
@@ -79,8 +90,8 @@ public class AccountController : ControllerBase
             {
                 return NoContent();
             }
-
-            // sign-in
+            
+            // Sign in
             await _signInManager.SignInAsync(user, isPersistent: false);
 
             var authenticationResponse = _jwtService.CreateJwtToken(user);
@@ -102,5 +113,52 @@ public class AccountController : ControllerBase
         await _signInManager.SignOutAsync();
 
         return NoContent();
+    }
+    
+    
+    // Confirm Email //
+    [HttpGet("/confirm-email")]
+    public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (userId == null || token == null)
+        {
+            return Problem("Link expired");
+        }
+        else if (user == null)
+        {
+            return Problem("User not Found");
+        }
+        else
+        {
+            token = token.Replace(" ", "+");
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+            {
+                
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                var authenticationResponse = _jwtService.CreateJwtToken(user);
+                return Ok(authenticationResponse);
+            }
+            else
+            {
+                return Problem("Email not confirmed");
+            }
+        }
+    }
+    
+    // Confirm Email //
+    [HttpGet("/")]
+    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
+    public async Task<IActionResult> Index()
+    {
+        return Ok("Ooooo");
+    }
+    
+    private async Task SendConfirmationEmail(ApplicationUser? user)
+    {
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var confirmationLink = $"http://localhost:5214/confirm-email?userId={user.Id}&Token={token}";
+        await _notifyService.SendAsync(user.Email, "Open and Confirm Your Email", $"Please confirm your account by clicking <a href='{confirmationLink}'>this link</a>;.", true);
     }
 }

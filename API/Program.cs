@@ -1,4 +1,5 @@
 using System.Text;
+using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
 using Core.ServiceContracts;
 using Core.Services;
@@ -21,6 +22,7 @@ public class Program
 
         // Services IOC        
         builder.Services.AddTransient<IJwtService, JwtService>();
+        builder.Services.AddTransient<INotificationService, EmailService>();
 
         
         // DataBase IOC
@@ -31,7 +33,7 @@ public class Program
         });
         
         // Identity IOC
-        builder.Services.AddIdentity<ApplicationUser,ApplicationRole>(options => 
+        builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Password.RequiredLength = 5;
                 options.Password.RequireNonAlphanumeric = false;
@@ -39,9 +41,16 @@ public class Program
                 options.Password.RequireLowercase = true;
                 options.Password.RequireDigit = false;
                 options.Password.RequiredUniqueChars = 3; //Eg: AB12AB
+                options.SignIn.RequireConfirmedEmail = true;
+                // options.Tokens.EmailConfirmationTokenProvider = "Default";
+                // options.Tokens.ProviderMap.Add("Default",
+                //     new TokenProviderDescriptor(typeof(IUserTwoFactorTokenProvider<ApplicationUser>))
+                //     {
+                //         
+                //     }
             }).AddEntityFrameworkStores<AppDbContext>()
-            .AddUserStore<UserStore<ApplicationUser,ApplicationRole,AppDbContext,Guid>>()
-            .AddRoleStore<RoleStore<ApplicationRole,AppDbContext,Guid>>()
+            .AddUserStore<UserStore<ApplicationUser, ApplicationRole, AppDbContext, Guid>>()
+            .AddRoleStore<RoleStore<ApplicationRole, AppDbContext, Guid>>()
             .AddDefaultTokenProviders();
         
         // JWT

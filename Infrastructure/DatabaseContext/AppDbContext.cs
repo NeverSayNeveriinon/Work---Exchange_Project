@@ -9,9 +9,11 @@ namespace Infrastructure.DatabaseContext;
 public class AppDbContext : IdentityDbContext<ApplicationUser,ApplicationRole,Guid>
 {
     public virtual DbSet<UserProfile> UserProfiles { get; set; }
-    public virtual DbSet<DefinedAccount> DefinedAccounts { get; set; }
     public virtual DbSet<CurrencyAccount> CurrencyAccounts { get; set; }
     public virtual DbSet<Currency> Currencies { get; set; }
+    public virtual DbSet<ExchangeRate> ExchangeRates { get; set; }
+    public virtual DbSet<CommissionRate> CommissionRates { get; set; }
+    public virtual DbSet<Transaction> Transactions { get; set; }
     
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
@@ -22,10 +24,10 @@ public class AppDbContext : IdentityDbContext<ApplicationUser,ApplicationRole,Gu
     {
         base.OnModelCreating(modelBuilder);
         
-        modelBuilder.Entity<Currency>()
-            .Property(entity => entity.ExchangeRates)
-            .HasConversion(
-                v => JsonConvert.SerializeObject(v),
-                v => JsonConvert.DeserializeObject<Dictionary<int, decimal>>(v));
+        // modelBuilder.Entity<Currency>()
+        //     .Property(entity => entity.ExchangeRates)
+        //     .HasConversion(
+        //         v => JsonConvert.SerializeObject(v),
+        //         v => JsonConvert.DeserializeObject<Dictionary<int, decimal>>(v));
     }
 }

@@ -1,9 +1,11 @@
 using System.Text;
 using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
+using Core.Domain.RepositoryContracts;
 using Core.ServiceContracts;
 using Core.Services;
 using Infrastructure.DatabaseContext;
+using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -23,6 +25,18 @@ public class Program
         // Services IOC        
         builder.Services.AddTransient<IJwtService, JwtService>();
         builder.Services.AddTransient<INotificationService, EmailService>();
+        
+        builder.Services.AddScoped<ICurrencyAccountRepository, CurrencyAccountRepository>();
+        builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
+        
+        builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+        builder.Services.AddScoped<ICurrencyService, CurrencyService>();
+        
+        builder.Services.AddScoped<ICommissionRateRepository, CommissionRateRepository>();
+        builder.Services.AddScoped<ICommissionRateService, CommissionRateService>();
+
+        builder.Services.AddScoped<IExchangeValueRepository, ExchangeValueRepository>();
+        builder.Services.AddScoped<IExchangeValueService, ExchangeValueService>();
 
         
         // DataBase IOC
@@ -33,7 +47,7 @@ public class Program
         });
         
         // Identity IOC
-        builder.Services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+        builder.Services.AddIdentity<UserProfile, UserRole>(options =>
             {
                 options.Password.RequiredLength = 5;
                 options.Password.RequireNonAlphanumeric = false;
@@ -44,13 +58,13 @@ public class Program
                 options.SignIn.RequireConfirmedEmail = true;
                 // options.Tokens.EmailConfirmationTokenProvider = "Default";
                 // options.Tokens.ProviderMap.Add("Default",
-                //     new TokenProviderDescriptor(typeof(IUserTwoFactorTokenProvider<ApplicationUser>))
+                //     new TokenProviderDescriptor(typeof(IUserTwoFactorTokenProvider<UserProfile>))
                 //     {
                 //         
                 //     }
             }).AddEntityFrameworkStores<AppDbContext>()
-            .AddUserStore<UserStore<ApplicationUser, ApplicationRole, AppDbContext, Guid>>()
-            .AddRoleStore<RoleStore<ApplicationRole, AppDbContext, Guid>>()
+            .AddUserStore<UserStore<UserProfile, UserRole, AppDbContext, Guid>>()
+            .AddRoleStore<RoleStore<UserRole, AppDbContext, Guid>>()
             .AddDefaultTokenProviders();
         
         // JWT

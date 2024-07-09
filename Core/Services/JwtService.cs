@@ -23,9 +23,9 @@ public class JwtService : IJwtService
     /// <summary>
     /// Generates a JWT token using the given user's information and the configuration settings.
     /// </summary>
-    /// <param name="user">ApplicationUser object</param>
+    /// <param name="user">UserProfile object</param>
     /// <returns>AuthenticationResponse that includes token</returns>
-    public AuthenticationResponse CreateJwtToken(ApplicationUser user)
+    public AuthenticationResponse CreateJwtToken(UserProfile user)
     {
         DateTime expiration = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:EXPIRATION_MINUTES"]));
 

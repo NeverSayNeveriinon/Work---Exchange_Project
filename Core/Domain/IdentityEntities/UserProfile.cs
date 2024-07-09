@@ -1,16 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
-namespace Core.Domain.Entities;
+namespace Core.Domain.IdentityEntities;
 
-public class UserProfile
+public class UserProfile : IdentityUser<Guid>
 {
-    [Key] 
-    public Guid UserId { get; set; }
-    public string Name { get; set; }
-    public string Email { get; set; }
+    [StringLength(30, ErrorMessage = "The 'Person Name' Can't Be More Than 30 Characters")]
+    public string? PersonName { get; set; }
     
-    public List<DefinedAccount> DefinedAccounts { get; set; } = new List<DefinedAccount>();
-    
+    public List<int> DefinedAccountNumbers { get; set; } = new List<int>();
     
     // Relations //
     #region Relations
@@ -20,4 +19,5 @@ public class UserProfile
     public ICollection<CurrencyAccount>? CurrencyAccounts { get; } = new List<CurrencyAccount>(); // Navigation to 'CurrencyAccount' entity
     
     #endregion
+    
 }

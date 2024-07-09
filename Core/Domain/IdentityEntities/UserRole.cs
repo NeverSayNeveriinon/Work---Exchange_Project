@@ -2,7 +2,7 @@
 
 namespace Core.Domain.IdentityEntities;
 
-public class ApplicationRole : IdentityRole<Guid>
+public class UserRole : IdentityRole<Guid>
 {
     
 }

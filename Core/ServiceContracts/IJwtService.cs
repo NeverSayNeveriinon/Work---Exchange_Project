@@ -5,5 +5,5 @@ namespace Core.ServiceContracts;
 
 public interface IJwtService
 {
-    public AuthenticationResponse CreateJwtToken(ApplicationUser user);
+    public AuthenticationResponse CreateJwtToken(UserProfile user);
 }

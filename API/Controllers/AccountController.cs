@@ -11,25 +11,25 @@ namespace API.Controllers;
 
 // TODO: Add Role Logic
 // TODO: Add Email Confirm Token Life Time
+// TODO: Add Defined Accounts
+
 [Route("api/[controller]")]
 [ApiController]
 public class AccountController : ControllerBase
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<UserProfile> _userManager;
+    private readonly SignInManager<UserProfile> _signInManager;
     private readonly IJwtService _jwtService;
     private readonly INotificationService _notifyService;
-
     
-    public AccountController(UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, IJwtService jwtService, INotificationService notifyService)
+    public AccountController(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IJwtService jwtService, INotificationService notifyService)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _jwtService = jwtService;
         _notifyService = notifyService;
     }
-
-
+    
     // Register//
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegister userRegister)
@@ -47,7 +47,7 @@ public class AccountController : ControllerBase
             return Problem("The Email is Already Registered");
         }
        
-        var user = new ApplicationUser()
+        var user = new UserProfile()
         {
             UserName = userRegister.Email,
             PersonName = userRegister.PersonName,
@@ -84,7 +84,7 @@ public class AccountController : ControllerBase
 
         if (result.Succeeded)
         {
-            ApplicationUser? user = await _userManager.FindByEmailAsync(loginDTO.Email);
+            UserProfile? user = await _userManager.FindByEmailAsync(loginDTO.Email);
 
             if (user == null)
             {
@@ -155,7 +155,30 @@ public class AccountController : ControllerBase
         return Ok("Ooooo");
     }
     
-    private async Task SendConfirmationEmail(ApplicationUser? user)
+    
+    // [HttpPost("Defined-Accounts")]
+    // // Post: api/Account/Defined-Accounts
+    // public async Task<IActionResult> PostDefinedAccount(int currencyDefinedAccountAdd)
+    // {
+    //     // No need to do this, because it is done by 'ApiController' attribute in BTS
+    //     // if (!ModelState.IsValid)
+    //     // {
+    //     //     return ValidationProblem(ModelState);
+    //     // }
+    //
+    //     var currencyAccountResponse = await _userManager.;
+    //     
+    //     return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
+    // }
+    
+    
+    
+    
+    
+    
+    
+    
+    private async Task SendConfirmationEmail(UserProfile? user)
     {
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
         var confirmationLink = $"http://localhost:5214/confirm-email?userId={user.Id}&Token={token}";

@@ -1,0 +1,67 @@
+﻿using Core.Domain.Entities;
+using Core.Domain.RepositoryContracts;
+using Infrastructure.DatabaseContext;
+using Microsoft.EntityFrameworkCore;
+
+namespace Infrastructure.Repositories;
+
+public class CommissionRateRepository : ICommissionRateRepository
+{
+    private readonly AppDbContext _dbContext;
+
+    
+    public CommissionRateRepository(AppDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+   
+
+    public async Task<List<CommissionRate>> GetAllCommissionRates()
+    {
+        var commissionRates = _dbContext.CommissionRates.AsNoTracking();
+        
+        List<CommissionRate> commissionRatesList = await commissionRates.ToListAsync();
+        
+        return commissionRatesList;
+    }
+
+    public async Task<CommissionRate?> GetCommissionRateByID(int id)
+    {
+        CommissionRate? currency = await _dbContext.CommissionRates
+                                                   .AsNoTracking()
+                                                   .FirstOrDefaultAsync(currencyItem => currencyItem.Id == id);
+
+        return currency;
+    }
+
+     
+    public async Task<CommissionRate> AddCommissionRate(CommissionRate currency)
+    {
+        var currencyReturned = await _dbContext.CommissionRates.AddAsync(currency);
+
+        return currencyReturned.Entity;
+    }
+    
+    public async Task<CommissionRate> UpdateCommissionRate(CommissionRate currency, CommissionRate updatedCommissionRate)
+    {
+        _dbContext.Entry(currency).Property(p => p.CRate).IsModified = true;
+        _dbContext.Entry(currency).Property(p => p.MaxUSDRange).IsModified = true;
+        
+        currency.CRate = updatedCommissionRate.CRate;
+        currency.MaxUSDRange = updatedCommissionRate.MaxUSDRange;
+
+        return currency;
+    }
+    
+    public async Task<bool> DeleteCommissionRate(CommissionRate currency)
+    {
+        var entityEntry = _dbContext.CommissionRates.Remove(currency);
+        
+        return entityEntry.State == EntityState.Deleted;
+    }
+    
+    public async Task SaveChangesAsync()
+    {
+        await _dbContext.SaveChangesAsync();
+    }
+}

@@ -7,8 +7,11 @@ public class Transaction
 {
     [Key]
     public int Id { get; set; }
+    [Column(TypeName="money")]
     public decimal Amount { get; set; }
     public bool IsSuccess { get; set; }
+    
+    
     
     [ForeignKey("FromAccount")]
     public int FromAccountId { get; set; }

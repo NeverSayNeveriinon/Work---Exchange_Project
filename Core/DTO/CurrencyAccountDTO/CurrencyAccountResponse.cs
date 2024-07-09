@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Entities;
+using Core.Enums;
 
 namespace Core.DTO.CurrencyAccountDTO;
 
@@ -6,10 +7,9 @@ public class CurrencyAccountResponse
 {
     public int Number { get; set; }
     public Guid OwnerId { get; set; }
-    public string FullName { get; set; }
+    public string? FullName { get; set; }
     public decimal Balance { get; set; }
-    public string CurrencyType { get; set; }
-
+    public string? CurrencyType { get; set; }
 }
 
 
@@ -21,9 +21,9 @@ public static partial class CurrencyAccountExtensions
         {
             Number = currencyAccount.Number,
             OwnerId = currencyAccount.OwnerID,
-            FullName = currencyAccount.Owner.Name,
+            FullName = currencyAccount.Owner?.PersonName,
             Balance = currencyAccount.Balance,
-            CurrencyType = nameof(currencyAccount.Currency.CurrencyType)
+            CurrencyType = currencyAccount.Currency == null ? null : Enum.GetName(typeof (CurrencyTypeOptions), currencyAccount.Currency.CurrencyType)
         };
 
         return response;

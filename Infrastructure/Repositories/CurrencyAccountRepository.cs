@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories;
 
+// TODO: Using Generic Repository
 public class CurrencyAccountRepository : ICurrencyAccountRepository
 {
     private readonly AppDbContext _dbContext;
@@ -18,7 +19,9 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
 
     public async Task<List<CurrencyAccount>> GetAllCurrencyAccounts()
     {
-        var accounts = _dbContext.CurrencyAccounts.AsNoTracking();
+        var accounts = _dbContext.CurrencyAccounts.Include(property => property.Owner)
+                                                  .Include(property => property.Currency)
+                                                  .AsNoTracking();
         
         List<CurrencyAccount> accountsList = await accounts.ToListAsync();
         
@@ -28,6 +31,8 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
     public async Task<CurrencyAccount?> GetCurrencyAccountByID(int id)
     {
         CurrencyAccount? account = await _dbContext.CurrencyAccounts
+                                              .Include(property => property.Owner)
+                                              .Include(property => property.Currency)
                                               .AsNoTracking()
                                               .FirstOrDefaultAsync(accountItem => accountItem.Number == id);
 
@@ -37,19 +42,26 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
      
     public async Task<CurrencyAccount> AddCurrencyAccount(CurrencyAccount account)
     {
-        await _dbContext.CurrencyAccounts.AddAsync(account);
+        var currencyAccountReturned = await _dbContext.CurrencyAccounts.AddAsync(account);
 
-        return account;
+        return currencyAccountReturned.Entity;
     }
     
     public async Task<CurrencyAccount> UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount)
     {
-        _dbContext.Entry(account).State = EntityState.Modified;
-
-        _dbContext.Entry(account).CurrentValues.SetValues(updatedCurrencyAccount);
+        _dbContext.Entry(account).Property(p => p.CurrencyID).IsModified = true;
+        account.CurrencyID = updatedCurrencyAccount.CurrencyID;
         
         return account;
     }
+    
+    // public async Task<CurrencyAccount> UpdateDefinedAccount(CurrencyAccount account, int definedAccount)
+    // {
+    //     _dbContext.Entry(account).Property(p => p.CurrencyID).IsModified = true;
+    //     account.CurrencyID = updatedCurrencyAccount.CurrencyID;
+    //     
+    //     return account;
+    // }
     
     public async Task<bool> DeleteCurrencyAccount(CurrencyAccount account)
     {

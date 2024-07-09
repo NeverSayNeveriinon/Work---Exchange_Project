@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Core.Domain.IdentityEntities;
 
 namespace Core.Domain.Entities;
 
@@ -7,6 +8,8 @@ public class CurrencyAccount
 {
     [Key]
     public int Number { get; set; }
+    
+    [Column(TypeName="money")]
     public decimal Balance { get; set; }
     
     
@@ -18,14 +21,14 @@ public class CurrencyAccount
     // With "UserProfile" ---> CurrencyAccount 'N'====......----'1' UserProfile
     [ForeignKey("Owner")]
     public Guid OwnerID { get; set; }  // Foreign Key to 'UserProfile.UserId'
-    public UserProfile Owner { get; set; } = null!;  // Navigation to 'UserProfile' entity
+    public UserProfile? Owner { get; set; } = null!;  // Navigation to 'UserProfile' entity
     
     
     //                      (Dependent)                         (Principal)
     // With "Currency" ---> CurrencyAccount 'N'====......----'1' Currency
     [ForeignKey("Currency")]
     public int CurrencyID { get; set; }  // Foreign Key to 'Currency.UserId'
-    public Currency Currency { get; set; } = null!;  // Navigation to 'Currency' entity
+    public Currency? Currency { get; set; } = null!;  // Navigation to 'Currency' entity
         
     
     
@@ -35,7 +38,7 @@ public class CurrencyAccount
     
     // With "CurrencyAccount(As FromCurrencyAccount)" ---> ToCurrencyAccount 'N'----......----'N' FromCurrencyAccount -> in 'Transaction' Entity
     public List<CurrencyAccount>? FromCurrencyAccounts { get; } = new List<CurrencyAccount>(); // Navigation to 'CurrencyAccount(As FromCurrencyAccount)' entity
-    public List<Transaction>? ToTransactions { get; } = new List<Transaction>(); // Navigation to 'ExchangeRate(Join Entity)' entity
+    public List<Transaction>? ToTransactions { get; } = new List<Transaction>(); // Navigation to 'ExchangeValue(Join Entity)' entity
 
     #endregion
 }

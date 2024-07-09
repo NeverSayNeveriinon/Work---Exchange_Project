@@ -22,35 +22,127 @@ namespace Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Core.Domain.IdentityEntities.ApplicationRole", b =>
+            modelBuilder.Entity("Core.Domain.Entities.CommissionRateRepository", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("int");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<double>("CRate")
+                        .HasPrecision(6, 3)
+                        .HasColumnType("float(6)");
 
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                    b.Property<decimal>("MaxUSDRange")
+                        .HasColumnType("money");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
-
-                    b.ToTable("AspNetRoles", (string)null);
+                    b.ToTable("CommissionRates");
                 });
 
-            modelBuilder.Entity("Core.Domain.IdentityEntities.ApplicationUser", b =>
+            modelBuilder.Entity("Core.Domain.Entities.Currency", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CurrencyType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Currencies");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.CurrencyAccount", b =>
+                {
+                    b.Property<int>("Number")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Number"));
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("money");
+
+                    b.Property<int>("CurrencyID")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("OwnerID")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Number");
+
+                    b.HasIndex("CurrencyID");
+
+                    b.HasIndex("OwnerID");
+
+                    b.ToTable("CurrencyAccounts");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.ExchangeValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FirstCurrencyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SecondCurrencyId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitOfFirstValue")
+                        .HasColumnType("money");
+
+                    b.Property<decimal>("UnitOfSecondValue")
+                        .HasColumnType("money");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FirstCurrencyId");
+
+                    b.HasIndex("SecondCurrencyId");
+
+                    b.ToTable("ExchangeValues");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Transaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("money");
+
+                    b.Property<int>("FromAccountId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsSuccess")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ToAccountId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromAccountId");
+
+                    b.HasIndex("ToAccountId");
+
+                    b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("Core.Domain.IdentityEntities.UserProfile", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -61,6 +153,10 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefinedAccountNumbers")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
@@ -91,12 +187,6 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -118,6 +208,34 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Core.Domain.IdentityEntities.UserRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -223,9 +341,62 @@ namespace Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Core.Domain.Entities.CurrencyAccount", b =>
+                {
+                    b.HasOne("Core.Domain.Entities.Currency", "Currency")
+                        .WithMany("CurrencyAccounts")
+                        .HasForeignKey("CurrencyID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Core.Domain.IdentityEntities.UserProfile", "Owner")
+                        .WithMany("CurrencyAccounts")
+                        .HasForeignKey("OwnerID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Currency");
+
+                    b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.ExchangeValue", b =>
+                {
+                    b.HasOne("Core.Domain.Entities.Currency", "FirstCurrency")
+                        .WithMany("FirstExchangeValues")
+                        .HasForeignKey("FirstCurrencyId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Core.Domain.Entities.Currency", "SecondCurrency")
+                        .WithMany("SecondExchangeValues")
+                        .HasForeignKey("SecondCurrencyId")
+                        .OnDelete(DeleteBehavior.ClientCascade);
+
+                    b.Navigation("FirstCurrency");
+
+                    b.Navigation("SecondCurrency");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Transaction", b =>
+                {
+                    b.HasOne("Core.Domain.Entities.CurrencyAccount", "FromAccount")
+                        .WithMany("FromTransactions")
+                        .HasForeignKey("FromAccountId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Core.Domain.Entities.CurrencyAccount", "ToAccount")
+                        .WithMany("ToTransactions")
+                        .HasForeignKey("ToAccountId")
+                        .OnDelete(DeleteBehavior.ClientCascade);
+
+                    b.Navigation("FromAccount");
+
+                    b.Navigation("ToAccount");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Core.Domain.IdentityEntities.ApplicationRole", null)
+                    b.HasOne("Core.Domain.IdentityEntities.UserRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -234,7 +405,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Core.Domain.IdentityEntities.ApplicationUser", null)
+                    b.HasOne("Core.Domain.IdentityEntities.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -243,7 +414,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
-                    b.HasOne("Core.Domain.IdentityEntities.ApplicationUser", null)
+                    b.HasOne("Core.Domain.IdentityEntities.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -252,13 +423,13 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("Core.Domain.IdentityEntities.ApplicationRole", null)
+                    b.HasOne("Core.Domain.IdentityEntities.UserRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Core.Domain.IdentityEntities.ApplicationUser", null)
+                    b.HasOne("Core.Domain.IdentityEntities.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -267,11 +438,32 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.HasOne("Core.Domain.IdentityEntities.ApplicationUser", null)
+                    b.HasOne("Core.Domain.IdentityEntities.UserProfile", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.Currency", b =>
+                {
+                    b.Navigation("CurrencyAccounts");
+
+                    b.Navigation("FirstExchangeValues");
+
+                    b.Navigation("SecondExchangeValues");
+                });
+
+            modelBuilder.Entity("Core.Domain.Entities.CurrencyAccount", b =>
+                {
+                    b.Navigation("FromTransactions");
+
+                    b.Navigation("ToTransactions");
+                });
+
+            modelBuilder.Entity("Core.Domain.IdentityEntities.UserProfile", b =>
+                {
+                    b.Navigation("CurrencyAccounts");
                 });
 #pragma warning restore 612, 618
         }

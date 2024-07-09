@@ -15,7 +15,7 @@ public class CurrencyAccountController : ControllerBase
         _currencyAccountService = currencyAccountService;
     }
     
-    [Route("/")]
+    [Route("index")]
     [ApiExplorerSettings(IgnoreApi = true)] // For not showing in 'Swagger'
     public IActionResult Index()
     {
@@ -60,7 +60,7 @@ public class CurrencyAccountController : ControllerBase
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [HttpPost]
     // Post: api/CurrencyAccount
-    public async Task<IActionResult> PostCurrencyAccount(CurrencyAccountRequest currencyAccount)
+    public async Task<IActionResult> PostCurrencyAccount(CurrencyAccountAddRequest currencyAccountAdd)
     {
         // No need to do this, because it is done by 'ApiController' attribute in BTS
         // if (!ModelState.IsValid)
@@ -68,10 +68,25 @@ public class CurrencyAccountController : ControllerBase
         //     return ValidationProblem(ModelState);
         // }
         
-        await _currencyAccountService.AddCurrencyAccount(currencyAccount);
+        var currencyAccountResponse = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd);
         
-        return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccount}, currencyAccount);
-    }
+        return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
+    }    
+    
+    // [HttpPost("Defined-Accounts")]
+    // // Post: api/CurrencyAccount/Defined-Accounts
+    // public async Task<IActionResult> PostDefinedAccount(int currencyDefinedAccountAdd)
+    // {
+    //     // No need to do this, because it is done by 'ApiController' attribute in BTS
+    //     // if (!ModelState.IsValid)
+    //     // {
+    //     //     return ValidationProblem(ModelState);
+    //     // }
+    //     
+    //     var currencyAccountResponse = await _currencyAccountService.AddDefinedAccount(currencyDefinedAccountAdd);
+    //     
+    //     return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
+    // }
     
     
     
@@ -118,14 +133,14 @@ public class CurrencyAccountController : ControllerBase
     // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
     [HttpPut("{currencyAccountID:int}")]
     // Put: api/CurrencyAccount/{currencyAccountID}
-    public async Task<IActionResult> PutCurrencyAccount(CurrencyAccountRequest currencyAccountRequest, int currencyAccountID)
+    public async Task<IActionResult> PutCurrencyAccount(CurrencyAccountUpdateRequest currencyAccountUpdateRequest, int currencyAccountID)
     {
-        // if (currencyAccountID != currencyAccountRequest.n)
+        // if (currencyAccountID != CurrencyAccountUpdateRequest.n)
         // {
         //     return Problem(detail:"The ID in Url doesn't match with the ID in Body", statusCode:400, title: "Problem With the ID");
         // }
 
-        CurrencyAccountResponse? existingObject = await _currencyAccountService.UpdateCurrencyAccount(currencyAccountRequest, currencyAccountID);
+        CurrencyAccountResponse? existingObject = await _currencyAccountService.UpdateCurrencyAccount(currencyAccountUpdateRequest, currencyAccountID);
         if (existingObject is null)
         {
             return NotFound("notfound:");

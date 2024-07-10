@@ -19,19 +19,9 @@ public class CurrencyService : ICurrencyService
         // 'currencyRequest' is Null //
         ArgumentNullException.ThrowIfNull(currencyRequest,"The 'CurrencyRequest' object parameter is Null");
         
-        // ValidationHelper.ModelValidation(currencyRequest);
-
-        // // 'currencyRequest.Name' is Duplicate //
-        // // Way 1
-        // if ( (await _currencyRepository.GetFilteredCurrencys(currency => currency.Name == currencyRequest.Name))?.Count > 0)
-        // {
-        //     throw new ArgumentException("The 'Currency Name' is already exists");
-        // }
-        
-        
         // 'currencyRequest.Name' is valid and there is no problem //
         Currency currency = currencyRequest.ToCurrency();
-        Currency currencyReturned = await _currencyRepository.AddCurrency(currency);
+        Currency currencyReturned = await _currencyRepository.AddCurrencyAsync(currency);
         await _currencyRepository.SaveChangesAsync();
 
         return currencyReturned.ToCurrencyResponse();
@@ -40,8 +30,7 @@ public class CurrencyService : ICurrencyService
 
     public async Task<List<CurrencyResponse>> GetAllCurrencies()
     {
-        // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        List<Currency> currencies = await _currencyRepository.GetAllCurrencies();
+        List<Currency> currencies = await _currencyRepository.GetAllCurrenciesAsync();
         
         List<CurrencyResponse> currencyResponses = currencies.Select(accountItem => accountItem.ToCurrencyResponse()).ToList();
         return currencyResponses;
@@ -52,8 +41,7 @@ public class CurrencyService : ICurrencyService
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Currency'Id' parameter is Null");
 
-        // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        Currency? currency = await _currencyRepository.GetCurrencyByID(Id.Value);
+        Currency? currency = await _currencyRepository.GetCurrencyByIDAsync(Id.Value);
 
         // if 'id' doesn't exist in 'currencies list' 
         if (currency == null)
@@ -74,13 +62,8 @@ public class CurrencyService : ICurrencyService
         
         // if 'currencyRequest' is null
         ArgumentNullException.ThrowIfNull(currencyRequest,"The 'CurrencyRequest' object parameter is Null");
-
         
-        // Validation
-        // ValidationHelper.ModelValidation(currencyRequest);
-
-        // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        Currency? currency = await _currencyRepository.GetCurrencyByID(currencyID.Value);
+        Currency? currency = await _currencyRepository.GetCurrencyByIDAsync(currencyID.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (currency == null)
@@ -88,7 +71,7 @@ public class CurrencyService : ICurrencyService
             return null;
         }
             
-        Currency updatedCurrency = await _currencyRepository.UpdateCurrency(currency, currencyRequest.ToCurrency());
+        Currency updatedCurrency = _currencyRepository.UpdateCurrency(currency, currencyRequest.ToCurrency());
         await _currencyRepository.SaveChangesAsync();
 
         return updatedCurrency.ToCurrencyResponse();
@@ -99,7 +82,7 @@ public class CurrencyService : ICurrencyService
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Currency'ID' parameter is Null");
 
-        Currency? currency = await _currencyRepository.GetCurrencyByID(Id.Value);
+        Currency? currency = await _currencyRepository.GetCurrencyByIDAsync(Id.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (currency == null) 
@@ -107,7 +90,7 @@ public class CurrencyService : ICurrencyService
             return null;
         }
     
-        bool result = await _currencyRepository.DeleteCurrency(currency);
+        bool result = _currencyRepository.DeleteCurrency(currency);
         await _currencyRepository.SaveChangesAsync();
 
         return result;

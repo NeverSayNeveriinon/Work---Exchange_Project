@@ -15,6 +15,7 @@ using Microsoft.OpenApi.Models;
 
 namespace API;
 
+// TODO: Add Exception Middleware
 public class Program
 {
     public static void Main(string[] args)
@@ -37,6 +38,9 @@ public class Program
 
         builder.Services.AddScoped<IExchangeValueRepository, ExchangeValueRepository>();
         builder.Services.AddScoped<IExchangeValueService, ExchangeValueService>();
+        
+        builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+        builder.Services.AddScoped<ITransactionService, TransactionService>();
 
         
         // DataBase IOC

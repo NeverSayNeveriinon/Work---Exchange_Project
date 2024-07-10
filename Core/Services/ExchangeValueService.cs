@@ -23,7 +23,7 @@ public class ExchangeValueService : IExchangeValueService
         
         // 'exchangeValueRequest.Name' is valid and there is no problem //
         ExchangeValue exchangeValue = exchangeValueAddRequest.ToExchangeValue();
-        ExchangeValue exchangeValueReturned = await _exchangeValueRepository.AddExchangeValue(exchangeValue);
+        ExchangeValue exchangeValueReturned = await _exchangeValueRepository.AddExchangeValueAsync(exchangeValue);
         await _exchangeValueRepository.SaveChangesAsync();
 
         return exchangeValueReturned.ToExchangeValueResponse();
@@ -32,7 +32,7 @@ public class ExchangeValueService : IExchangeValueService
 
     public async Task<List<ExchangeValueResponse>> GetAllExchangeValues()
     {
-        List<ExchangeValue> exchangeValues = await _exchangeValueRepository.GetAllExchangeValues();
+        List<ExchangeValue> exchangeValues = await _exchangeValueRepository.GetAllExchangeValuesAsync();
         
         List<ExchangeValueResponse> exchangeValueResponses = exchangeValues.Select(accountItem => accountItem.ToExchangeValueResponse()).ToList();
         return exchangeValueResponses;
@@ -43,7 +43,7 @@ public class ExchangeValueService : IExchangeValueService
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The ExchangeValue'Id' parameter is Null");
 
-        ExchangeValue? exchangeValue = await _exchangeValueRepository.GetExchangeValueByID(Id.Value);
+        ExchangeValue? exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(Id.Value);
 
         // if 'id' doesn't exist in 'exchangeValues list' 
         if (exchangeValue == null)
@@ -66,7 +66,7 @@ public class ExchangeValueService : IExchangeValueService
         ArgumentNullException.ThrowIfNull(exchangeValueUpdateRequest,"The 'ExchangeValueRequest' object parameter is Null");
         
 
-        ExchangeValue? exchangeValue = await _exchangeValueRepository.GetExchangeValueByID(exchangeValueID.Value);
+        ExchangeValue? exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(exchangeValueID.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (exchangeValue == null)
@@ -74,7 +74,7 @@ public class ExchangeValueService : IExchangeValueService
             return null;
         }
             
-        ExchangeValue updatedExchangeValue = await _exchangeValueRepository.UpdateExchangeValue(exchangeValue, exchangeValueUpdateRequest.ToExchangeValue());
+        ExchangeValue updatedExchangeValue = _exchangeValueRepository.UpdateExchangeValue(exchangeValue, exchangeValueUpdateRequest.ToExchangeValue());
         await _exchangeValueRepository.SaveChangesAsync();
 
         return updatedExchangeValue.ToExchangeValueResponse();
@@ -85,7 +85,7 @@ public class ExchangeValueService : IExchangeValueService
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The ExchangeValue'ID' parameter is Null");
 
-        ExchangeValue? exchangeValue = await _exchangeValueRepository.GetExchangeValueByID(Id.Value);
+        ExchangeValue? exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(Id.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (exchangeValue == null) 
@@ -93,7 +93,7 @@ public class ExchangeValueService : IExchangeValueService
             return null;
         }
     
-        bool result = await _exchangeValueRepository.DeleteExchangeValue(exchangeValue);
+        bool result = _exchangeValueRepository.DeleteExchangeValue(exchangeValue);
         await _exchangeValueRepository.SaveChangesAsync();
 
         return result;

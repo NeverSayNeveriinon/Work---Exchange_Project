@@ -14,14 +14,16 @@ public class ExchangeValueAddRequest
 
 public static partial class ExchangeValueExtensions
 {
-    public static ExchangeValue ToExchangeValue(this ExchangeValueAddRequest exchangeValueAddRequest)
+    public static ExchangeValue ToExchangeValue(this ExchangeValueAddRequest exchangeValueAddRequest, int firstCurrencyId, int secondCurrencyId)
     {
         ExchangeValue exchangeValue = new ExchangeValue()
         {
             UnitOfFirstValue = exchangeValueAddRequest.UnitOfFirstValue,
             UnitOfSecondValue = exchangeValueAddRequest.UnitOfSecondValue,
-            FirstCurrency =  new Currency() { CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), exchangeValueAddRequest.FirstCurrencyType) },
-            SecondCurrency =  new Currency() { CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), exchangeValueAddRequest.SecondCurrencyType) }
+            FirstCurrencyId = firstCurrencyId,
+            SecondCurrencyId = secondCurrencyId
+            // FirstCurrency =  new Currency() { CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), exchangeValueAddRequest.FirstCurrencyType) },
+            // SecondCurrency =  new Currency() { CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), exchangeValueAddRequest.SecondCurrencyType) }
         };
 
         return exchangeValue;

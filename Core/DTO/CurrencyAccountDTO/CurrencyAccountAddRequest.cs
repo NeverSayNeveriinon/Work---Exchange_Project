@@ -11,14 +11,15 @@ public class CurrencyAccountAddRequest
 
 public static partial class CurrencyAccountExtensions
 {
-    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest, Guid? OwnerID)
+    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest, Guid? ownerID, int? currencyId)
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
             Number = 0,
             Balance = 0,
-            Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyAccountAddRequest.CurrencyType)},
-            OwnerID = OwnerID.Value,
+            // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyAccountAddRequest.CurrencyType)},
+            CurrencyID = currencyId.Value,
+            OwnerID = ownerID.Value,
             DateTimeOfOpen = DateTime.Now
         };
 

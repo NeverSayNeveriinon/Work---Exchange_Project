@@ -9,11 +9,12 @@ namespace Core.Services;
 public class ExchangeValueService : IExchangeValueService
 {
     private readonly IExchangeValueRepository _exchangeValueRepository;
-    private IExchangeValueService _exchangeValueServiceImplementation;
-
-    public ExchangeValueService(IExchangeValueRepository exchangeValueRepository)
+    private readonly ICurrencyService _currencyService;
+    
+    public ExchangeValueService(IExchangeValueRepository exchangeValueRepository, ICurrencyService currencyService)
     {
         _exchangeValueRepository = exchangeValueRepository;
+        _currencyService = currencyService;
     }
 
     public async Task<ExchangeValueResponse> AddExchangeValue(ExchangeValueAddRequest? exchangeValueAddRequest)
@@ -22,7 +23,10 @@ public class ExchangeValueService : IExchangeValueService
         ArgumentNullException.ThrowIfNull(exchangeValueAddRequest,"The 'ExchangeValueRequest' object parameter is Null");
         
         // 'exchangeValueRequest.Name' is valid and there is no problem //
-        ExchangeValue exchangeValue = exchangeValueAddRequest.ToExchangeValue();
+        var firstCurrency = await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.FirstCurrencyType);
+        var secondCurrency = await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.SecondCurrencyType);
+        ExchangeValue exchangeValue = exchangeValueAddRequest.ToExchangeValue(firstCurrency.Id,secondCurrency.Id);
+        
         ExchangeValue exchangeValueReturned = await _exchangeValueRepository.AddExchangeValueAsync(exchangeValue);
         await _exchangeValueRepository.SaveChangesAsync();
 

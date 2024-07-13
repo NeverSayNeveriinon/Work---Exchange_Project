@@ -1,13 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Core.Domain.Entities;
 
-// TODO: We shouldn't have two Rial with different ID's, so id and CurrencyType should both be key
+[Index(nameof(CurrencyType), IsUnique = true)]
 public class Currency
 {
     [Key]
     public int Id { get; set; }
+    
     public CurrencyTypeOptions CurrencyType  { get; set; }
     
     

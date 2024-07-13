@@ -19,6 +19,7 @@ public static partial class ExchangeValueExtensions
     {
         ExchangeValueResponse response = new ExchangeValueResponse()
         {
+            Id = exchangeValue.Id,
             UnitOfFirstValue = exchangeValue.UnitOfFirstValue,
             UnitOfSecondValue = exchangeValue.UnitOfSecondValue,
             FirstCurrencyId = exchangeValue.FirstCurrencyId,

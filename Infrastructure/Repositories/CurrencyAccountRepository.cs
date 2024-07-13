@@ -28,13 +28,15 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
         return accountsList;
     }
 
-    public async Task<CurrencyAccount?> GetCurrencyAccountByIDAsync(int id)
+    public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(int number)
     {
         CurrencyAccount? account = await _dbContext.CurrencyAccounts
                                               .Include(property => property.Owner)
                                               .Include(property => property.Currency)
+                                              .ThenInclude(property => property.SecondExchangeValues)
+                                              .ThenInclude(property => property.FirstCurrency)
                                               .AsNoTracking()
-                                              .FirstOrDefaultAsync(accountItem => accountItem.Number == id);
+                                              .FirstOrDefaultAsync(accountItem => accountItem.Number == number);
 
         return account;
     }
@@ -46,6 +48,7 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
 
         return currencyAccountReturned.Entity;
     }
+    
     
     public CurrencyAccount UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount)
     {

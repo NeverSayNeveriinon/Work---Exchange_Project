@@ -9,8 +9,8 @@ public interface ICurrencyAccountService
 {
     public Task<CurrencyAccountResponse> AddCurrencyAccount(CurrencyAccountAddRequest? CurrencyAccountAddRequest, ClaimsPrincipal userClaims);
     public Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts();
-    public Task<CurrencyAccountResponse?> GetCurrencyAccountByID(int? ID);
-    public Task<CurrencyAccountResponse?> UpdateCurrencyAccount(CurrencyAccountUpdateRequest? currencyAccountUpdateRequest, int? currencyAccountID);
-    public Task<bool?> DeleteCurrencyAccount(int? ID);
-    public Task<CurrencyAccountResponse?> IncreaseBalanceAmount(int? currencyAccountID, Money? money); 
+    public Task<CurrencyAccountResponse?> GetCurrencyAccountByNumber(int? Number);
+    public Task<CurrencyAccountResponse?> UpdateCurrencyAccount(CurrencyAccountUpdateRequest? currencyAccountUpdateRequest, int? currencyAccountNumber);
+    public Task<bool?> DeleteCurrencyAccount(int? Number);
+    public Task<CurrencyAccountResponse?> IncreaseBalanceAmount(int? currencyAccountNumber, Money? money); 
 }

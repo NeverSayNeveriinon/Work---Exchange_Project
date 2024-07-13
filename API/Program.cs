@@ -7,6 +7,7 @@ using Core.Services;
 using Infrastructure.DatabaseContext;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -120,8 +121,32 @@ public class Program
             });
         }); 
         
+        // Authorization
+        // configure a policy to authorization
+        builder.Services.AddAuthorization(options =>
+        {
+            // enforces authorization policy (user must be authenticated) for all the action methods
+            var policyBuilder = new AuthorizationPolicyBuilder();
+            var policy = policyBuilder.RequireAuthenticatedUser().Build(); 
+            options.FallbackPolicy = policy;
+            
+            // add a custom policy to be used in 'AccountController'
+            options.AddPolicy("NotAuthorized", custompolicy =>
+            {
+                custompolicy.RequireAssertion(context =>
+                {
+                    return !context.User.Identity?.IsAuthenticated ?? false;
+                });
+            });
+        });
+        
+        
+        
         var app = builder.Build();
 
+        
+        // Middlewares //
+        
         app.UseHsts();
         app.UseHttpsRedirection();
         
@@ -130,7 +155,8 @@ public class Program
         app.UseSwaggerUI(); // Creates swagger UI for testing all endpoints (action methods)
         
         app.UseStaticFiles();
-        
+
+        app.UseRouting();
         app.UseAuthentication(); 
         app.UseAuthorization(); 
         app.MapControllers();

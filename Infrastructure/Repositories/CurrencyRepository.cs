@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
+using Core.Enums;
 using Infrastructure.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +31,15 @@ public class CurrencyRepository : ICurrencyRepository
         Currency? currency = await _dbContext.Currencies
                                              .AsNoTracking()
                                              .FirstOrDefaultAsync(currencyItem => currencyItem.Id == id);
+
+        return currency;
+    }
+    
+    public async Task<Currency?> GetCurrencyByCurrencyTypeAsync(CurrencyTypeOptions currencyType)
+    {
+        Currency? currency = await _dbContext.Currencies
+                                             .AsNoTracking()
+                                             .FirstOrDefaultAsync(currencyItem => currencyItem.CurrencyType == currencyType);
 
         return currency;
     }

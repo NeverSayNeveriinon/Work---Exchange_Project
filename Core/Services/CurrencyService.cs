@@ -1,6 +1,7 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO.CurrencyDTO;
+using Core.Enums;
 using Core.ServiceContracts;
 
 namespace Core.Services;
@@ -52,8 +53,28 @@ public class CurrencyService : ICurrencyService
         // if there is no problem
         CurrencyResponse currencyResponse = currency.ToCurrencyResponse();
 
-        return currencyResponse;;
+        return currencyResponse;
     }
+    
+    public async Task<CurrencyResponse?> GetCurrencyByCurrencyType(string? currencyType)
+    {
+        // if 'currencyType' is null
+        ArgumentNullException.ThrowIfNull(currencyType,"The 'currencyType' parameter is Null");
+
+        var currencyTypeOption = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyType);
+        Currency? currency = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currencyTypeOption);
+
+        // if 'id' doesn't exist in 'currencies list' 
+        if (currency == null)
+        {
+            return null;
+        }
+
+        // if there is no problem
+        CurrencyResponse currencyResponse = currency.ToCurrencyResponse();
+
+        return currencyResponse;
+    }   
 
     public async Task<CurrencyResponse?> UpdateCurrency(CurrencyRequest? currencyRequest, int? currencyID)
     {

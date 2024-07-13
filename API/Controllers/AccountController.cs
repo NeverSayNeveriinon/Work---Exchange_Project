@@ -5,6 +5,7 @@ using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -52,7 +53,8 @@ public class AccountController : ControllerBase
             UserName = userRegister.Email,
             PersonName = userRegister.PersonName,
             Email = userRegister.Email,
-            PhoneNumber = userRegister.Phone
+            PhoneNumber = userRegister.Phone,
+            DefinedAccountNumbers = new List<int>()
         };
 
         var result = await _userManager.CreateAsync(user, userRegister.Password);
@@ -85,7 +87,7 @@ public class AccountController : ControllerBase
         if (result.Succeeded)
         {
             UserProfile? user = await _userManager.FindByEmailAsync(loginDTO.Email);
-
+            
             if (user == null)
             {
                 return NoContent();
@@ -156,20 +158,27 @@ public class AccountController : ControllerBase
     }
     
     
-    // [HttpPost("Defined-Accounts")]
-    // // Post: api/Account/Defined-Accounts
-    // public async Task<IActionResult> PostDefinedAccount(int currencyDefinedAccountAdd)
-    // {
-    //     // No need to do this, because it is done by 'ApiController' attribute in BTS
-    //     // if (!ModelState.IsValid)
-    //     // {
-    //     //     return ValidationProblem(ModelState);
-    //     // }
-    //
-    //     var currencyAccountResponse = await _userManager.;
-    //     
-    //     return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
-    // }
+    [HttpPost("Defined-Accounts")]
+    // Post: api/Account/Defined-Accounts
+    public async Task<IActionResult> PostDefinedAccount(int definedAccountAddID)
+    {
+        var existingUser = await _userManager.GetUserAsync(User);
+        if (existingUser == null)
+        {
+            return Problem("Try to Log-In Again,if it doesn't worked it seems you haven't signed up!!");
+        }
+        
+        existingUser.DefinedAccountNumbers!.Add(definedAccountAddID);
+        
+        var resultIdentity = await _userManager.UpdateAsync(existingUser);
+        if (!resultIdentity.Succeeded)
+        {
+            return Problem("The Defined Account ID has not been Added, Try Again");
+        }
+
+        
+        return NoContent();
+    }
     
     
     

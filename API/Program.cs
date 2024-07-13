@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
@@ -28,6 +29,8 @@ public class Program
         builder.Services.AddTransient<IJwtService, JwtService>();
         builder.Services.AddTransient<INotificationService, EmailService>();
         
+        builder.Services.AddScoped<IAccountService, AccountService>();
+        
         builder.Services.AddScoped<ICurrencyAccountRepository, CurrencyAccountRepository>();
         builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
         
@@ -42,6 +45,7 @@ public class Program
         
         builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
         builder.Services.AddScoped<ITransactionService, TransactionService>();
+
 
         
         // DataBase IOC
@@ -73,7 +77,12 @@ public class Program
             .AddDefaultTokenProviders();
         
         // JWT
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        builder.Services.AddAuthentication(options => 
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters()

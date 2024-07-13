@@ -8,7 +8,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 public class CurrencyController : ControllerBase
 {
     private readonly ICurrencyService _currencyService;
@@ -75,23 +75,7 @@ public class CurrencyController : ControllerBase
         
         return CreatedAtAction(nameof(GetCurrency), new {currencyID = currencyResponse.Id}, new { currencyResponse.Id });
     }
-    //
-    //
-    // [HttpGet("CommissionRateRepository")]
-    // // Post: api/Currency/CommissionRateRepository
-    // public async Task<IActionResult> PostCommissionRate(decimal MaxUSDRange, double CRate)
-    // {
-    //     // No need to do this, because it is done by 'ApiController' attribute in BTS
-    //     // if (!ModelState.IsValid)
-    //     // {
-    //     //     return ValidationProblem(ModelState);
-    //     // }
-    //     
-    //     var currencyResponse = await _currencyService.AddCurrency(currencyRequest);
-    //     
-    //     return CreatedAtAction(nameof(GetCurrency), new {currencyID = currencyResponse.Id}, new { currencyResponse.Id });
-    // }
-    
+
     
     
     /// <summary>

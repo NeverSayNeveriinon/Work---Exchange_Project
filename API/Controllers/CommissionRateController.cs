@@ -8,7 +8,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 public class CommissionRateController : ControllerBase
 {
     private readonly ICommissionRateService _commissionRateService;

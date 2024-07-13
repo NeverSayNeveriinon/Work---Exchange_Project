@@ -9,7 +9,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 public class ExchangeValueController : ControllerBase
 {
     private readonly IExchangeValueService _exchangeValueService;

@@ -16,7 +16,7 @@ public class ExchangeValueRepository : IExchangeValueRepository
     }
    
 
-    public async Task<List<ExchangeValue>> GetAllExchangeValues()
+    public async Task<List<ExchangeValue>> GetAllExchangeValuesAsync()
     {
         var currencies = _dbContext.ExchangeValues.AsNoTracking();
         
@@ -25,7 +25,7 @@ public class ExchangeValueRepository : IExchangeValueRepository
         return currenciesList;
     }
 
-    public async Task<ExchangeValue?> GetExchangeValueByID(int id)
+    public async Task<ExchangeValue?> GetExchangeValueByIDAsync(int id)
     {
         ExchangeValue? exchangeValue = await _dbContext.ExchangeValues
                                              .AsNoTracking()
@@ -35,14 +35,14 @@ public class ExchangeValueRepository : IExchangeValueRepository
     }
 
      
-    public async Task<ExchangeValue> AddExchangeValue(ExchangeValue exchangeValue)
+    public async Task<ExchangeValue> AddExchangeValueAsync(ExchangeValue exchangeValue)
     {
         var exchangeValueReturned = await _dbContext.ExchangeValues.AddAsync(exchangeValue);
 
         return exchangeValueReturned.Entity;
     }
     
-    public async Task<ExchangeValue> UpdateExchangeValue(ExchangeValue exchangeValue, ExchangeValue updatedExchangeValue)
+    public ExchangeValue UpdateExchangeValue(ExchangeValue exchangeValue, ExchangeValue updatedExchangeValue)
     {
         // _dbContext.Entry(exchangeValue).Property(p => p.ExchangeValueType).IsModified = true;
         // exchangeValue.ExchangeValueType = updatedExchangeValue.ExchangeValueType;
@@ -50,7 +50,7 @@ public class ExchangeValueRepository : IExchangeValueRepository
         return exchangeValue;
     }
     
-    public async Task<bool> DeleteExchangeValue(ExchangeValue exchangeValue)
+    public bool DeleteExchangeValue(ExchangeValue exchangeValue)
     {
         var entityEntry = _dbContext.ExchangeValues.Remove(exchangeValue);
         

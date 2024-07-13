@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Core.Domain.Entities;
 
+// TODO: maybe it's better to change double to decimal for cRate
 public class CommissionRate
 {
     [Key]

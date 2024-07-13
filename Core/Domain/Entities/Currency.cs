@@ -3,6 +3,7 @@ using Core.Enums;
 
 namespace Core.Domain.Entities;
 
+// TODO: We shouldn't have two Rial with different ID's, so id and CurrencyType should both be key
 public class Currency
 {
     [Key]

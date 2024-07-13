@@ -11,8 +11,8 @@ public class CurrencyAccount
     
     [Column(TypeName="money")]
     public decimal Balance { get; set; }
-    
-    
+
+    public DateTime DateTimeOfOpen { get; set; }
     
     // Relations //
     #region Relations

@@ -10,14 +10,15 @@ public class Transaction
     [Column(TypeName="money")]
     public decimal Amount { get; set; }
     public bool IsSuccess { get; set; }
-    
+    public DateTime DateTime { get; set; }
+
     
     
     [ForeignKey("FromAccount")]
-    public int FromAccountId { get; set; }
+    public int FromAccountNumber { get; set; }
     
     [ForeignKey("ToAccount")]
-    public int ToAccountId { get; set; }
+    public int ToAccountNumber { get; set; }
     
     public CurrencyAccount? FromAccount { get; } = null!;
     public CurrencyAccount? ToAccount { get; } = null!;

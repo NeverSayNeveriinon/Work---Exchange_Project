@@ -10,6 +10,7 @@ public class CurrencyAccountResponse
     public string? FullName { get; set; }
     public decimal Balance { get; set; }
     public string? CurrencyType { get; set; }
+    public DateTime DateTimeOfOpen { get; set; }
 }
 
 
@@ -23,7 +24,8 @@ public static partial class CurrencyAccountExtensions
             OwnerId = currencyAccount.OwnerID,
             FullName = currencyAccount.Owner?.PersonName,
             Balance = currencyAccount.Balance,
-            CurrencyType = currencyAccount.Currency == null ? null : Enum.GetName(typeof (CurrencyTypeOptions), currencyAccount.Currency.CurrencyType)
+            CurrencyType = currencyAccount.Currency == null ? null : Enum.GetName(typeof (CurrencyTypeOptions), currencyAccount.Currency.CurrencyType),
+            DateTimeOfOpen = currencyAccount.DateTimeOfOpen
         };
 
         return response;

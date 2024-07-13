@@ -7,9 +7,10 @@ public class TransactionResponse
 {
     public int Id { get; set; }
     public decimal Amount { get; set; }
-    public int FromAccountId { get; set; }
-    public int ToAccountId { get; set; }
+    public int FromAccountNumber { get; set; }
+    public int ToAccountNumber { get; set; }
 
+    public DateTime DateTime { get; set; }
     public string? RealTimeExchangeValue { get; set; }
     public double CommissionRate { get; set; }
     public string? FromCurrencyType { get; set; }
@@ -31,10 +32,11 @@ public static partial class TransactionExtensions
         {
             Id = transaction.Id,
             Amount = transaction.Amount,
-            FromAccountId = transaction.FromAccountId,
-            ToAccountId = transaction.ToAccountId,
+            FromAccountNumber = transaction.FromAccountNumber,
+            ToAccountNumber = transaction.ToAccountNumber,
             FromCurrencyType =  tranactionFromCurrencyType,
             ToCurrencyType =  tranactionToCurrencyType,
+            DateTime = transaction.DateTime,
             RealTimeExchangeValue = "1 " + tranactionFromCurrencyType + " = " + (transaction.FromAccount == null || transaction.FromAccount.Currency == null
                                     ? null : transaction.FromAccount.Currency.FirstExchangeValues.FirstOrDefault(exchangeValue => exchangeValue.SecondCurrencyId == transaction.ToAccount.CurrencyID)
                                                 .UnitOfFirstValue.ToString()) + " " + tranactionToCurrencyType

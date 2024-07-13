@@ -1,11 +1,14 @@
 ﻿using Core.DTO.CommissionRateDTO;
 using Core.ServiceContracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
 public class CommissionRateController : ControllerBase
 {
     private readonly ICommissionRateService _commissionRateService;

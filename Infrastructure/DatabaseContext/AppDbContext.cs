@@ -72,10 +72,10 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             .UsingEntity<Transaction>(
                 l => l.HasOne<CurrencyAccount>(e => e.ToAccount)
                     .WithMany(e => e.ToTransactions)
-                    .HasForeignKey(e => e.ToAccountId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
+                    .HasForeignKey(e => e.ToAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
                 r => r.HasOne<CurrencyAccount>(e => e.FromAccount)
                     .WithMany(e => e.FromTransactions)
-                    .HasForeignKey(e => e.FromAccountId).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
+                    .HasForeignKey(e => e.FromAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
         
         // CurrencyAccount(as FirstCurrency) 'N'----......----'N' Currency(as SecondCurrency)
         modelBuilder.Entity<Currency>()

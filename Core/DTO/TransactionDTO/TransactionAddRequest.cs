@@ -7,8 +7,8 @@ namespace Core.DTO.TransactionDTO;
 public class TransactionAddRequest
 {
     public decimal Amount { get; set; }
-    public int FromAccountId { get; set; }
-    public int ToAccountId { get; set; }
+    public int FromAccountNumber { get; set; }
+    public int ToAccountNumber { get; set; }
 }
 
 public static partial class TransactionExtensions
@@ -19,8 +19,9 @@ public static partial class TransactionExtensions
         {
             Id = 0,
             Amount = transactionAddRequest.Amount,
-            FromAccountId = transactionAddRequest.FromAccountId,
-            ToAccountId = transactionAddRequest.ToAccountId
+            FromAccountNumber = transactionAddRequest.FromAccountNumber,
+            ToAccountNumber = transactionAddRequest.ToAccountNumber,
+            DateTime = DateTime.Now
         };
 
         return transaction;

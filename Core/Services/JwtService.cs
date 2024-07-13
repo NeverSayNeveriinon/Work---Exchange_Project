@@ -34,7 +34,7 @@ public class JwtService : IJwtService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), //Subject (user id)
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), //JWT unique ID
             // new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()), //Issued at (date and time of token generation)
-            new Claim(ClaimTypes.Name, user.Email), //Unique name of the user (Email)
+            // new Claim(ClaimTypes.Name, user.Email), //Unique name of the user (Email)
             new Claim(ClaimTypes.Email, user.Email), //Unique email of the user (Email)
         };
 

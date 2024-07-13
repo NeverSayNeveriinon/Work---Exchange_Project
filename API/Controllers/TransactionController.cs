@@ -1,11 +1,14 @@
 ﻿using Core.DTO.TransactionDTO;
 using Core.ServiceContracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;

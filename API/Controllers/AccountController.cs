@@ -32,18 +32,12 @@ public class AccountController : ControllerBase
     }
     
     // Register//
+    [Authorize("NotAuthorized")]
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegister userRegister)
     {
-        // Validation
-        if (ModelState.IsValid == false)
-        {
-            string errorMessage = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-            return Problem(errorMessage);
-        }
-        
         var userReturned = await _userManager.FindByEmailAsync(userRegister.Email);
-        if (userReturned != null) // means a user with this email is already in db
+        if (userReturned != null) // if userReturned has sth, means a user with this email is already in db
         {
             return Problem("The Email is Already Registered");
         }
@@ -58,6 +52,7 @@ public class AccountController : ControllerBase
         };
 
         var result = await _userManager.CreateAsync(user, userRegister.Password);
+        await _userManager.AddToRoleAsync(user, userRegister.Role);
         if (result.Succeeded)
         {
             await SendConfirmationEmail(user);
@@ -72,6 +67,7 @@ public class AccountController : ControllerBase
     
         
     // Login //
+    [Authorize("NotAuthorized")]
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserLogin loginDTO)
     {
@@ -109,6 +105,7 @@ public class AccountController : ControllerBase
         
         
     // Logout //
+    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("logout")]
     public async Task<IActionResult> Logout()
     {
@@ -119,6 +116,7 @@ public class AccountController : ControllerBase
     
     
     // Confirm Email //
+    [Authorize("NotAuthorized")]
     [HttpGet("/confirm-email")]
     public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
     {
@@ -159,6 +157,7 @@ public class AccountController : ControllerBase
     
     
     [HttpPost("Defined-Accounts")]
+    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
     // Post: api/Account/Defined-Accounts
     public async Task<IActionResult> PostDefinedAccount(int definedAccountAddID)
     {

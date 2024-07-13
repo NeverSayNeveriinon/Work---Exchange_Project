@@ -25,18 +25,18 @@ public class JwtService : IJwtService
     /// </summary>
     /// <param name="user">UserProfile object</param>
     /// <returns>AuthenticationResponse that includes token</returns>
-    public AuthenticationResponse CreateJwtToken(UserProfile user)
+    public AuthenticationResponse CreateJwtToken(UserProfile user, List<Claim> claims)
     {
         DateTime expiration = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:EXPIRATION_MINUTES"]));
-
-        Claim[] claims = new Claim[] 
-        {
+ 
+        claims.AddRange(
+        [
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), //Subject (user id)
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), //JWT unique ID
             // new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()), //Issued at (date and time of token generation)
             new Claim(ClaimTypes.Name, user.Email), //Unique name of the user (Email)
             new Claim(ClaimTypes.Email, user.Email), //Unique email of the user (Email)
-        };
+        ]);
 
         SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 

@@ -1,4 +1,5 @@
 ﻿using Core.Domain.Entities;
+using Core.Enums;
 
 namespace Core.Domain.RepositoryContracts;
 
@@ -10,4 +11,5 @@ public interface ICurrencyRepository
     public Currency UpdateCurrency(Currency currency, Currency updatedCurrency);
     public bool DeleteCurrency(Currency currency);
     public Task SaveChangesAsync();
+    public Task<Currency?> GetCurrencyByCurrencyTypeAsync(CurrencyTypeOptions currencyType);
 }

@@ -51,6 +51,19 @@ public class TransactionRepository : ITransactionRepository
         return tranactionReturned.Entity;
     }
     
+    public Transaction Attach(Transaction transaction)
+    {
+        var transactionReturned = _dbContext.Transactions.Attach(transaction);
+
+        return transactionReturned.Entity;
+    }
+    
+    public void LoadReferences(Transaction transaction)
+    {
+        _dbContext.Entry(transaction).Reference(c => c.FromAccount).Load();
+        _dbContext.Entry(transaction).Reference(c => c.ToAccount).Load();
+    }
+    
     public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction)
     {
         // _dbContext.Entry(transaction).Property(p => p.CurrencyID).IsModified = true;

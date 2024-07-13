@@ -21,10 +21,18 @@ public class TransactionService : ITransactionService
         
         // 'transactionAddRequest.Name' is valid and there is no problem //
         Transaction transaction = transactionAddRequest.ToTransaction();
-        Transaction transactionReturned = await _transactionRepository.AddTransactionAsync(transaction);
+        _transactionRepository.LoadReferences(transaction);
+
+        var valueToBeMultiplied = transaction?.FromAccount?.Currency?.FirstExchangeValues?.FirstOrDefault(exValue => exValue.FirstCurrencyId == transaction.ToAccount?.CurrencyID)?.UnitOfFirstValue;
+        var amount = transactionAddRequest.Amount * valueToBeMultiplied.Value;
+        transaction.Amount = amount;
+        // TODO: Calculate Commission
+        Transaction transactionAddReturned = await _transactionRepository.AddTransactionAsync(transaction);
         await _transactionRepository.SaveChangesAsync();
 
-        return transactionReturned.ToTransactionResponse();
+        // var transactionGetReturned = await _transactionRepository.GetTransactionByIDAsync(transactionAddReturned.Id);
+        
+        return transactionAddReturned.ToTransactionResponse();
     }   
     
 

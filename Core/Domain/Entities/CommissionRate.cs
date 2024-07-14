@@ -12,5 +12,5 @@ public class CommissionRate
     [Column(TypeName="money")]
     public decimal MaxUSDRange { get; set; }
     
-    public double CRate { get; set; }
+    public decimal CRate { get; set; }
 }

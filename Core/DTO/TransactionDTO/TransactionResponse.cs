@@ -8,11 +8,11 @@ public class TransactionResponse
     public int Id { get; set; }
     public decimal Amount { get; set; }
     public int FromAccountNumber { get; set; }
-    public int ToAccountNumber { get; set; }
+    public int? ToAccountNumber { get; set; }
 
     public DateTime DateTime { get; set; }
     public string? RealTimeExchangeValue { get; set; }
-    public double CommissionRate { get; set; }
+    public double CRate { get; set; }
     public string? FromCurrencyType { get; set; }
     public string? ToCurrencyType { get; set; }
 }

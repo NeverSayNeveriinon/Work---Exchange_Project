@@ -1,5 +1,6 @@
 ﻿using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
+using Core.DTO.TransactionDTO;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -57,33 +58,21 @@ public class CurrencyAccountController : ControllerBase
     /// 
     ///     POST -> "api/CurrencyAccount"
     ///     {
+    ///         CurrencyType = "USD"
     ///     }
     /// 
     /// </remarks>
     /// <response code="201">The New CurrencyAccount is successfully added to CurrencyAccounts List</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
-    [HttpPost]
-    // Post: api/CurrencyAccount
+    [HttpPost("moneyToOpenAccount:decimal")]
+    // Post: api/CurrencyAccount/{moneyToOpenAccount}
     public async Task<IActionResult> PostCurrencyAccount(CurrencyAccountAddRequest currencyAccountAdd)
     {
         var currencyAccountResponse = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
+
         
         return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountNumber = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
     }    
-    
-    [HttpPut("Balance/{currencyAccountNumber:int}")]
-    // Post: api/CurrencyAccount/Balance-Increase/{currencyAccountNumber}
-    public async Task<IActionResult> IncreaseBalanceAmount(int currencyAccountNumber, [FromBody]Money money)
-    {
-        var currencyAccountResponse = await _currencyAccountService.IncreaseBalanceAmount(currencyAccountNumber, money);
-        if (currencyAccountResponse is null)
-        {
-            return NotFound("notfound:");
-        }
-        
-        return NoContent();
-    }
-    
     
     
     /// <summary>

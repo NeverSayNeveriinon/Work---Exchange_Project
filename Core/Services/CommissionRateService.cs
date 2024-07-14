@@ -1,7 +1,9 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
+using Core.DTO;
 using Core.DTO.CommissionRateDTO;
 using Core.DTO.CurrencyDTO;
+using Core.Enums;
 using Core.ServiceContracts;
 
 namespace Core.Services;
@@ -35,6 +37,15 @@ public class CommissionRateService : ICommissionRateService
         
         List<CommissionRateResponse> CommissionRateResponses = CommissionRates.Select(accountItem => accountItem.ToCommissionRateResponse()).ToList();
         return CommissionRateResponses;
+    }    
+    
+    public async Task<decimal> GetCRate(Money money)
+    {
+        var valueToBeMultiplied = money.Currency.FirstExchangeValues?.FirstOrDefault(exValue=> exValue.SecondCurrency.CurrencyType == CurrencyTypeOptions.USD)!.UnitOfFirstValue;
+        var usdAmount = money.Amount * valueToBeMultiplied;
+        var cRate = await _commissionRateRepository.GetCRateByAmount(usdAmount.Value);
+        
+        return cRate;
     }
 
     public async Task<CommissionRateResponse?> GetCommissionRateByID(int? Id)

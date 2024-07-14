@@ -34,7 +34,14 @@ public class CommissionRateRepository : ICommissionRateRepository
         return currency;
     }
 
-     
+    public async Task<decimal> GetCRateByAmount(decimal amount)
+    {
+        var f = await _dbContext.CommissionRates.ToListAsync();
+        var g = ~(f.Select(commissionRate => commissionRate.CRate).ToList().BinarySearch(amount));
+        var j = f.ElementAtOrDefault(g).CRate;
+        return j;
+    }
+    
     public async Task<CommissionRate> AddCommissionRateAsync(CommissionRate currency)
     {
         var currencyReturned = await _dbContext.CommissionRates.AddAsync(currency);

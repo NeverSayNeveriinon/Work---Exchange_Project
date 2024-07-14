@@ -58,10 +58,11 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
         return account;
     }
     
-    public CurrencyAccount UpdateBalanceAmount(CurrencyAccount account, decimal moneyAmount)
+    public CurrencyAccount UpdateBalanceAmount(CurrencyAccount account, decimal moneyAmount, Func<decimal,decimal,decimal> calculationFunc)
     {
         _dbContext.Entry(account).Property(p => p.Balance).IsModified = true;
-        account.Balance += moneyAmount;
+        var calculationResult = calculationFunc(account.Balance, moneyAmount);
+        account.Balance = calculationResult;
         
         return account;
     }

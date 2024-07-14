@@ -10,5 +10,5 @@ public interface ICurrencyAccountRepository
     public CurrencyAccount UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount);
     public bool DeleteCurrencyAccount(CurrencyAccount account);
     public Task SaveChangesAsync();
-    public CurrencyAccount UpdateBalanceAmount(CurrencyAccount account, decimal moneyAmount);
+    public CurrencyAccount UpdateBalanceAmount(CurrencyAccount account, decimal moneyAmount, Func<decimal, decimal, decimal> calculationFunc);
 }

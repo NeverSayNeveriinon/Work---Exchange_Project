@@ -12,5 +12,5 @@ public interface ICurrencyAccountService
     public Task<CurrencyAccountResponse?> GetCurrencyAccountByNumber(int? Number);
     public Task<CurrencyAccountResponse?> UpdateCurrencyAccount(CurrencyAccountUpdateRequest? currencyAccountUpdateRequest, int? currencyAccountNumber);
     public Task<bool?> DeleteCurrencyAccount(int? Number);
-    public Task<CurrencyAccountResponse?> IncreaseBalanceAmount(int? currencyAccountNumber, Money? money); 
+    public Task<CurrencyAccountResponse?> UpdateBalanceAmount(CurrencyAccount? currencyAccount, decimal? amount, Func<decimal, decimal, decimal> calculationFunc);
 }

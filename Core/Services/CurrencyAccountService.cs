@@ -4,6 +4,7 @@ using Core.Domain.IdentityEntities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
+using Core.DTO.TransactionDTO;
 using Core.Enums;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,7 @@ namespace Core.Services;
 public class CurrencyAccountService : ICurrencyAccountService
 {
     private readonly ICurrencyAccountRepository _accountRepository;
+    // private readonly ITransactionService _transactionService;
     private readonly ICurrencyService _currencyService;
     private readonly UserManager<UserProfile> _userManager;
 
@@ -21,6 +23,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         _accountRepository = accountRepository;
         _userManager = userManager;
         _currencyService = currencyService;
+        // _transactionService = transactionService;
     }
 
     public async Task<CurrencyAccountResponse> AddCurrencyAccount(CurrencyAccountAddRequest? currencyAccountAddRequest, ClaimsPrincipal userClaims)
@@ -28,16 +31,14 @@ public class CurrencyAccountService : ICurrencyAccountService
         // 'CurrencyAccountAddRequest' is Null //
         ArgumentNullException.ThrowIfNull(currencyAccountAddRequest,"The 'CurrencyAccountAddRequest' object parameter is Null");
         
-        // ValidationHelper.ModelValidation(currencyAccountAddRequest);
-
-        // // 'CurrencyAccountAddRequest.Name' is Duplicate //
-        // // Way 1
-        // if ( (await _accountRepository.GetFilteredCurrencyAccounts(currencyAccount => currencyAccount.Name == CurrencyAccountAddRequest.Name))?.Count > 0)
+        // var transactionAddRequest = new TransactionDepositAddRequest()
         // {
-        //     throw new ArgumentException("The 'CurrencyAccount Name' is already exists");
-        // }
-        
-        // 'CurrencyAccountAddRequest.Name' is valid and there is no problem //
+        //     AccountNumber = currencyAccountResponse.Number,
+        //     money = new MoneyRequest(){Amount = moneyToOpenAccount, CurrencyType = currencyType}
+        // };
+        //         
+        // var f = await _transactionService.AddDepositTransaction(transactionAddRequest);
+
         var currency = await _currencyService.GetCurrencyByCurrencyType(currencyAccountAddRequest.CurrencyType);
         var user = await _userManager.GetUserAsync(userClaims);
         CurrencyAccount currencyAccount = currencyAccountAddRequest.ToCurrencyAccount(user?.Id, currency?.Id);
@@ -124,31 +125,17 @@ public class CurrencyAccountService : ICurrencyAccountService
     }
     
     
-
-    public async Task<CurrencyAccountResponse?> IncreaseBalanceAmount(int? currencyAccountNumber, Money? money)
+    public async Task<CurrencyAccountResponse?> UpdateBalanceAmount(CurrencyAccount? currencyAccount, decimal? amount, Func<decimal,decimal,decimal> calculationFunc)
     {
-        // if 'currencyAccountNumber' is null
-        ArgumentNullException.ThrowIfNull(currencyAccountNumber,"The 'currencyAccountNumber' parameter is Null");
+        // if 'currencyAccount' is null
+        ArgumentNullException.ThrowIfNull(currencyAccount, "The 'currencyAccount' parameter is Null");
         
-        // if 'money' is null
-        ArgumentNullException.ThrowIfNull(money,"The 'money' object parameter is Null");
-
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(currencyAccountNumber.Value);
+        // if 'amount' is null
+        ArgumentNullException.ThrowIfNull(amount, "The 'amount' parameter is Null");
         
-        // if 'Number' is invalid (doesn't exist)
-        if (currencyAccount == null)
-        {
-            return null;
-        }
-        
-        var moneyCurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), money.CurrencyType);
-        var valueToBeMultiplied = currencyAccount?.Currency?.SecondExchangeValues?.FirstOrDefault(exValue=> exValue.FirstCurrency.CurrencyType == moneyCurrencyType).UnitOfFirstValue;
-        var amount = money.Amount * valueToBeMultiplied.Value;
-        
-        
-        CurrencyAccount updatedCurrencyAccount = _accountRepository.UpdateBalanceAmount(currencyAccount, amount);
+        CurrencyAccount updatedCurrencyAccount = _accountRepository.UpdateBalanceAmount(currencyAccount, amount.Value, calculationFunc);
         await _accountRepository.SaveChangesAsync();
-
+        
         return updatedCurrencyAccount.ToCurrencyAccountResponse();
     }
     

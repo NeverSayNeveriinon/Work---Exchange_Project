@@ -61,15 +61,23 @@ public class TransactionController : ControllerBase
     /// </remarks>
     /// <response code="201">The New Transaction is successfully added to Transactions List</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
-    [HttpPost]
-    // Post: api/Transaction
-    public async Task<IActionResult> PostTransaction(TransactionAddRequest transactionAddRequest)
+    [HttpPost("Transfer")]
+    // Post: api/Transaction/Transfer/{transactionAddRequest}
+    public async Task<IActionResult> AddTransferTransaction(TransactionTransferAddRequest transactionAddRequest)
     {
-        var transactionResponse = await _transactionService.AddTransaction(transactionAddRequest);
+        var transactionResponse = await _transactionService.AddTransferTransaction(transactionAddRequest);
         
         return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
     }
-
+    
+    [HttpPost("Balance-Increase")]
+    // Post: api/Transaction/Balance-Increase/{transactionAddRequest}
+    public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest)
+    {
+        var transactionResponse = await _transactionService.AddDepositTransaction(transactionAddRequest);
+        
+        return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+    }
     
     
     /// <summary>

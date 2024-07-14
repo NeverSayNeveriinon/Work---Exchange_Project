@@ -1,6 +1,8 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
+using Core.DTO;
 using Core.DTO.TransactionDTO;
+using Core.Enums;
 using Core.ServiceContracts;
 
 namespace Core.Services;
@@ -8,32 +10,80 @@ namespace Core.Services;
 public class TransactionService : ITransactionService
 {
     private readonly ITransactionRepository _transactionRepository;
+    private readonly ICommissionRateService _commissionRateService;
+    private readonly ICurrencyAccountService _currencyAccountService;
     
-    public TransactionService(ITransactionRepository transactionRepository)
+    public TransactionService(ITransactionRepository transactionRepository, ICommissionRateService commissionRateService, ICurrencyAccountService currencyAccountService)
     {
         _transactionRepository = transactionRepository;
+        _commissionRateService = commissionRateService;
+        _currencyAccountService = currencyAccountService;
     }
 
-    public async Task<TransactionResponse> AddTransaction(TransactionAddRequest? transactionAddRequest)
+    public async Task<TransactionResponse> AddTransferTransaction(TransactionTransferAddRequest? transactionAddRequest)
     {
         // 'transactionAddRequest' is Null //
-        ArgumentNullException.ThrowIfNull(transactionAddRequest,"The 'TransactionRequest' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(transactionAddRequest,"The 'transactionAddRequest' object parameter is Null");
         
-        // 'transactionAddRequest.Name' is valid and there is no problem //
         Transaction transaction = transactionAddRequest.ToTransaction();
         _transactionRepository.LoadReferences(transaction);
+        
+        
+        //
+        var sourceAmount = transactionAddRequest.Amount;
+        await _currencyAccountService.UpdateBalanceAmount(transaction.FromAccount, sourceAmount, (val1, val2) => val1 - val2);
+        
+        //
+        var valueToBeMultiplied = transaction?.FromAccount?.Currency?.FirstExchangeValues?
+            .FirstOrDefault(exValue => exValue.FirstCurrencyId == transaction.ToAccount?.CurrencyID)
+            ?.UnitOfFirstValue;
+        var destinationAmount = sourceAmount * valueToBeMultiplied.Value;
+        await _currencyAccountService.UpdateBalanceAmount(transaction.ToAccount, destinationAmount, (val1, val2) => val1 + val2);
+    
+        //
+        var money = new Money()
+        {
+            Amount = sourceAmount,
+            Currency = transaction.FromAccount!.Currency!
+        };
+        var cRate = await _commissionRateService.GetCRate(money);
+        var amountCommission = sourceAmount * cRate;
+        await _currencyAccountService.UpdateBalanceAmount(transaction.FromAccount, amountCommission, (val1, val2) => val1 - val2);
 
-        var valueToBeMultiplied = transaction?.FromAccount?.Currency?.FirstExchangeValues?.FirstOrDefault(exValue => exValue.FirstCurrencyId == transaction.ToAccount?.CurrencyID)?.UnitOfFirstValue;
-        var amount = transactionAddRequest.Amount * valueToBeMultiplied.Value;
-        transaction.Amount = amount;
-        // TODO: Calculate Commission
+        
         Transaction transactionAddReturned = await _transactionRepository.AddTransactionAsync(transaction);
         await _transactionRepository.SaveChangesAsync();
 
         // var transactionGetReturned = await _transactionRepository.GetTransactionByIDAsync(transactionAddReturned.Id);
         
         return transactionAddReturned.ToTransactionResponse();
-    }   
+    }
+
+    public async Task<TransactionResponse> AddDepositTransaction(TransactionDepositAddRequest? transactionAddRequest)
+    {
+        // 'transactionAddRequest' is Null //
+        ArgumentNullException.ThrowIfNull(transactionAddRequest,"The 'transactionAddRequest' object parameter is Null");
+        
+        Transaction transaction = transactionAddRequest.ToTransaction();
+        _transactionRepository.LoadReferences(transaction);
+
+        
+        var moneyCurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), transactionAddRequest.money.CurrencyType);
+        var valueToBeMultiplied = transaction?.FromAccount?.Currency?.SecondExchangeValues?.FirstOrDefault(exValue=> exValue.FirstCurrency.CurrencyType == moneyCurrencyType)!.UnitOfFirstValue;
+        var amount = transactionAddRequest.money.Amount * valueToBeMultiplied.Value;
+        
+        
+        //
+        await _currencyAccountService.UpdateBalanceAmount(new CurrencyAccount(), amount, (val1, val2) => val1 + val2);
+        
+        
+        Transaction transactionAddReturned = await _transactionRepository.AddTransactionAsync(transaction);
+        await _transactionRepository.SaveChangesAsync();
+
+        // var transactionGetReturned = await _transactionRepository.GetTransactionByIDAsync(transactionAddReturned.Id);
+        
+        return transactionAddReturned.ToTransactionResponse();
+    }
     
 
     public async Task<List<TransactionResponse>> GetAllTransactions()

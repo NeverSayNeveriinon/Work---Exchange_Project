@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
 
@@ -6,7 +7,9 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountAddRequest
 {
+    [AllowedValues("USD","Euro","Rial", ErrorMessage = "The Value Should be one of these 'USD,Euro,Rial' ")]
     public string CurrencyType { get; set; }
+    public MoneyOpenAccountRequest moneyToOpenAccount { get; set; }
 }
 
 public static partial class CurrencyAccountExtensions
@@ -17,7 +20,6 @@ public static partial class CurrencyAccountExtensions
         {
             Number = 0,
             Balance = 0,
-            // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyAccountAddRequest.CurrencyType)},
             CurrencyID = currencyId.Value,
             OwnerID = ownerID.Value,
             DateTimeOfOpen = DateTime.Now

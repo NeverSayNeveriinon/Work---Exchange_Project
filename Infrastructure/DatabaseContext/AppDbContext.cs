@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 
 namespace Infrastructure.DatabaseContext;
 
+// TODO: Move entity Config to separate file   
 public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
 {
     // public virtual DbSet<UserProfile> UserProfiles { get; set; }

@@ -4,11 +4,10 @@ namespace Core.Domain.RepositoryContracts;
 
 public interface ICurrencyAccountRepository
 {
-    public Task<List<CurrencyAccount>> GetAllCurrencyAccountsAsync();
-    public Task<CurrencyAccount?> GetCurrencyAccountByIDAsync(int id);
-    public Task<CurrencyAccount> AddCurrencyAccountAsync(CurrencyAccount account);
-    public CurrencyAccount UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount);
-    public bool DeleteCurrencyAccount(CurrencyAccount account);
+    public Task<List<CurrencyAccount>> GetAllCurrencyAccounts();
+    public Task<CurrencyAccount?> GetCurrencyAccountByID(int id);
+    public Task<CurrencyAccount> AddCurrencyAccount(CurrencyAccount account);
+    public Task<CurrencyAccount> UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount);
+    public Task<bool> DeleteCurrencyAccount(CurrencyAccount account);
     public Task SaveChangesAsync();
-    public CurrencyAccount UpdateBalanceAmount(CurrencyAccount account, decimal moneyAmount);
 }

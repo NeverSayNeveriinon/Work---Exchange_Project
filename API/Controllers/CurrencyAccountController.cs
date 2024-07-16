@@ -1,5 +1,4 @@
-﻿using Core.DTO;
-using Core.DTO.CurrencyAccountDTO;
+﻿using Core.DTO.CurrencyAccountDTO;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Mvc;
 
@@ -63,23 +62,31 @@ public class CurrencyAccountController : ControllerBase
     // Post: api/CurrencyAccount
     public async Task<IActionResult> PostCurrencyAccount(CurrencyAccountAddRequest currencyAccountAdd)
     {
-        var currencyAccountResponse = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
+        // No need to do this, because it is done by 'ApiController' attribute in BTS
+        // if (!ModelState.IsValid)
+        // {
+        //     return ValidationProblem(ModelState);
+        // }
+        
+        var currencyAccountResponse = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd);
         
         return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
     }    
     
-    [HttpPut("Balance/{currencyAccountID:int}")]
-    // Post: api/CurrencyAccount/Balance-Increase/{currencyAccountID}
-    public async Task<IActionResult> IncreaseBalanceAmount(int currencyAccountID, [FromBody]Money money)
-    {
-        var currencyAccountResponse = await _currencyAccountService.IncreaseBalanceAmount(currencyAccountID, money);
-        if (currencyAccountResponse is null)
-        {
-            return NotFound("notfound:");
-        }
-        
-        return NoContent();
-    }
+    // [HttpPost("Defined-Accounts")]
+    // // Post: api/CurrencyAccount/Defined-Accounts
+    // public async Task<IActionResult> PostDefinedAccount(int currencyDefinedAccountAdd)
+    // {
+    //     // No need to do this, because it is done by 'ApiController' attribute in BTS
+    //     // if (!ModelState.IsValid)
+    //     // {
+    //     //     return ValidationProblem(ModelState);
+    //     // }
+    //     
+    //     var currencyAccountResponse = await _currencyAccountService.AddDefinedAccount(currencyDefinedAccountAdd);
+    //     
+    //     return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
+    // }
     
     
     
@@ -128,6 +135,11 @@ public class CurrencyAccountController : ControllerBase
     // Put: api/CurrencyAccount/{currencyAccountID}
     public async Task<IActionResult> PutCurrencyAccount(CurrencyAccountUpdateRequest currencyAccountUpdateRequest, int currencyAccountID)
     {
+        // if (currencyAccountID != CurrencyAccountUpdateRequest.n)
+        // {
+        //     return Problem(detail:"The ID in Url doesn't match with the ID in Body", statusCode:400, title: "Problem With the ID");
+        // }
+
         CurrencyAccountResponse? existingObject = await _currencyAccountService.UpdateCurrencyAccount(currencyAccountUpdateRequest, currencyAccountID);
         if (existingObject is null)
         {

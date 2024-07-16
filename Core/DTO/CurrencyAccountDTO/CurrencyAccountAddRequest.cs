@@ -7,11 +7,12 @@ namespace Core.DTO.CurrencyAccountDTO;
 public class CurrencyAccountAddRequest
 {
     public int CurrencyId { get; set; }
+    public Guid OwnerID { get; set; }
 }
 
 public static partial class CurrencyAccountExtensions
 {
-    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest, Guid? OwnerID)
+    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest)
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
@@ -19,7 +20,7 @@ public static partial class CurrencyAccountExtensions
             Balance = 0,
             // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), CurrencyAccountAddRequest.CurrencyType)},
             CurrencyID = currencyAccountAddRequest.CurrencyId,
-            OwnerID = OwnerID.Value
+            OwnerID = currencyAccountAddRequest.OwnerID
             // Currency = new Currency(){Id = CurrencyAccountAddRequest.CurrencyId},
             // Owner = new UserProfile(){Id = CurrencyAccountAddRequest.OwnerID}
         };

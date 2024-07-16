@@ -9,7 +9,7 @@ public class UserProfile : IdentityUser<Guid>
     [StringLength(30, ErrorMessage = "The 'Person Name' Can't Be More Than 30 Characters")]
     public string? PersonName { get; set; }
     
-    public List<int>? DefinedAccountNumbers { get; set; } = new List<int>();
+    public List<int> DefinedAccountNumbers { get; set; } = new List<int>();
     
     // Relations //
     #region Relations

@@ -16,7 +16,7 @@ public class CurrencyRepository : ICurrencyRepository
     }
    
 
-    public async Task<List<Currency>> GetAllCurrenciesAsync()
+    public async Task<List<Currency>> GetAllCurrencies()
     {
         var currencies = _dbContext.Currencies.AsNoTracking();
         
@@ -25,7 +25,7 @@ public class CurrencyRepository : ICurrencyRepository
         return currenciesList;
     }
 
-    public async Task<Currency?> GetCurrencyByIDAsync(int id)
+    public async Task<Currency?> GetCurrencyByID(int id)
     {
         Currency? currency = await _dbContext.Currencies
                                              .AsNoTracking()
@@ -35,14 +35,14 @@ public class CurrencyRepository : ICurrencyRepository
     }
 
      
-    public async Task<Currency> AddCurrencyAsync(Currency currency)
+    public async Task<Currency> AddCurrency(Currency currency)
     {
         var currencyReturned = await _dbContext.Currencies.AddAsync(currency);
 
         return currencyReturned.Entity;
     }
     
-    public Currency UpdateCurrency(Currency currency, Currency updatedCurrency)
+    public async Task<Currency> UpdateCurrency(Currency currency, Currency updatedCurrency)
     {
         _dbContext.Entry(currency).Property(p => p.CurrencyType).IsModified = true;
         currency.CurrencyType = updatedCurrency.CurrencyType;
@@ -50,7 +50,7 @@ public class CurrencyRepository : ICurrencyRepository
         return currency;
     }
     
-    public bool DeleteCurrency(Currency currency)
+    public async Task<bool> DeleteCurrency(Currency currency)
     {
         var entityEntry = _dbContext.Currencies.Remove(currency);
         

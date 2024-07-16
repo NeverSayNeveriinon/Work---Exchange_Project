@@ -1,26 +1,20 @@
-﻿using System.Security.Claims;
-using Core.Domain.Entities;
-using Core.Domain.IdentityEntities;
+﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
-using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
 using Core.ServiceContracts;
-using Microsoft.AspNetCore.Identity;
 
 namespace Core.Services;
 
 public class CurrencyAccountService : ICurrencyAccountService
 {
     private readonly ICurrencyAccountRepository _accountRepository;
-    private readonly UserManager<UserProfile> _userManager;
-
-    public CurrencyAccountService(ICurrencyAccountRepository accountRepository, UserManager<UserProfile> userManager)
+    
+    public CurrencyAccountService(ICurrencyAccountRepository accountRepository)
     {
         _accountRepository = accountRepository;
-        _userManager = userManager;
     }
 
-    public async Task<CurrencyAccountResponse> AddCurrencyAccount(CurrencyAccountAddRequest? currencyAccountAddRequest, ClaimsPrincipal userClaims)
+    public async Task<CurrencyAccountResponse> AddCurrencyAccount(CurrencyAccountAddRequest? currencyAccountAddRequest)
     {
         // 'CurrencyAccountAddRequest' is Null //
         ArgumentNullException.ThrowIfNull(currencyAccountAddRequest,"The 'CurrencyAccountAddRequest' object parameter is Null");
@@ -36,18 +30,30 @@ public class CurrencyAccountService : ICurrencyAccountService
         
         
         // 'CurrencyAccountAddRequest.Name' is valid and there is no problem //
-        var user = await _userManager.GetUserAsync(userClaims);
-        CurrencyAccount currencyAccount = currencyAccountAddRequest.ToCurrencyAccount(user?.Id);
-        CurrencyAccount currencyAccountReturned = await _accountRepository.AddCurrencyAccountAsync(currencyAccount);
+        CurrencyAccount currencyAccount = currencyAccountAddRequest.ToCurrencyAccount();
+        CurrencyAccount currencyAccountReturned = await _accountRepository.AddCurrencyAccount(currencyAccount);
         await _accountRepository.SaveChangesAsync();
 
         return currencyAccountReturned.ToCurrencyAccountResponse();
     }   
     
+    // public async Task<CurrencyAccountResponse> AddDefinedAccount(int? currencyDefinedAccountAdd)
+    // {
+    //     // 'currencyDefinedAccountAdd' is Null //
+    //     ArgumentNullException.ThrowIfNull(currencyDefinedAccountAdd,"The 'currencyDefinedAccountAdd' object parameter is Null");
+    //     
+    //     // 'currencyDefinedAccountAdd.Name' is valid and there is no problem //
+    //     CurrencyAccount currencyAccount = currencyAccountAddRequest.ToCurrencyAccount();
+    //     CurrencyAccount currencyAccountReturned = await _accountRepository.AddCurrencyAccount(currencyAccount);
+    //     await _accountRepository.SaveChangesAsync();
+    //
+    //     return currencyAccountReturned.ToCurrencyAccountResponse();
+    // }   
+    
     public async Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts()
     {
         // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        List<CurrencyAccount> currencyAccounts = await _accountRepository.GetAllCurrencyAccountsAsync();
+        List<CurrencyAccount> currencyAccounts = await _accountRepository.GetAllCurrencyAccounts();
         
         List<CurrencyAccountResponse> currencyAccountResponses = currencyAccounts.Select(accountItem => accountItem.ToCurrencyAccountResponse()).ToList();
         return currencyAccountResponses;
@@ -59,7 +65,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         ArgumentNullException.ThrowIfNull(Id,"The CurrencyAccount'Id' parameter is Null");
 
         // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByIDAsync(Id.Value);
+        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByID(Id.Value);
 
         // if 'id' doesn't exist in 'currencyAccounts list' 
         if (currencyAccount == null)
@@ -78,7 +84,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         // if 'currencyAccount ID' is null
         ArgumentNullException.ThrowIfNull(currencyAccountID,"The CurrencyAccount'ID' parameter is Null");
         
-        // if 'currencyAccountUpdateRequest' is null
+        // if 'CurrencyAccountUpdateRequest' is null
         ArgumentNullException.ThrowIfNull(currencyAccountUpdateRequest,"The 'CurrencyAccountUpdateRequest' object parameter is Null");
 
         
@@ -86,7 +92,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         // ValidationHelper.ModelValidation(CurrencyAccountUpdateRequest);
 
         // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByIDAsync(currencyAccountID.Value);
+        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByID(currencyAccountID.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (currencyAccount == null)
@@ -94,7 +100,7 @@ public class CurrencyAccountService : ICurrencyAccountService
             return null;
         }
             
-        CurrencyAccount updatedCurrencyAccount = _accountRepository.UpdateCurrencyAccount(currencyAccount, currencyAccountUpdateRequest.ToCurrencyAccount());
+        CurrencyAccount updatedCurrencyAccount = await _accountRepository.UpdateCurrencyAccount(currencyAccount, currencyAccountUpdateRequest.ToCurrencyAccount());
         await _accountRepository.SaveChangesAsync();
 
         return updatedCurrencyAccount.ToCurrencyAccountResponse();
@@ -105,7 +111,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The CurrencyAccount'ID' parameter is Null");
 
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByIDAsync(Id.Value);
+        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByID(Id.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (currencyAccount == null) 
@@ -113,34 +119,9 @@ public class CurrencyAccountService : ICurrencyAccountService
             return null;
         }
     
-        bool result = _accountRepository.DeleteCurrencyAccount(currencyAccount);
+        bool result = await _accountRepository.DeleteCurrencyAccount(currencyAccount);
         await _accountRepository.SaveChangesAsync();
 
         return result;
     }
-    
-    
-
-    public async Task<CurrencyAccountResponse?> IncreaseBalanceAmount(int? currencyAccountID, Money? money)
-    {
-        // if 'currencyAccountID' is null
-        ArgumentNullException.ThrowIfNull(currencyAccountID,"The 'currencyAccountID' parameter is Null");
-        
-        // if 'money' is null
-        ArgumentNullException.ThrowIfNull(money,"The 'money' object parameter is Null");
-
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByIDAsync(currencyAccountID.Value);
-        
-        // if 'ID' is invalid (doesn't exist)
-        if (currencyAccount == null)
-        {
-            return null;
-        }
-            
-        CurrencyAccount updatedCurrencyAccount = _accountRepository.UpdateBalanceAmount(currencyAccount, money.Amount);
-        await _accountRepository.SaveChangesAsync();
-
-        return updatedCurrencyAccount.ToCurrencyAccountResponse();
-    }
-    
 }

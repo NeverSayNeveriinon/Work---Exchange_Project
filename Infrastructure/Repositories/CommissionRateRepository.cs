@@ -16,7 +16,7 @@ public class CommissionRateRepository : ICommissionRateRepository
     }
    
 
-    public async Task<List<CommissionRate>> GetAllCommissionRatesAsync()
+    public async Task<List<CommissionRate>> GetAllCommissionRates()
     {
         var commissionRates = _dbContext.CommissionRates.AsNoTracking();
         
@@ -25,7 +25,7 @@ public class CommissionRateRepository : ICommissionRateRepository
         return commissionRatesList;
     }
 
-    public async Task<CommissionRate?> GetCommissionRateByIDAsync(int id)
+    public async Task<CommissionRate?> GetCommissionRateByID(int id)
     {
         CommissionRate? currency = await _dbContext.CommissionRates
                                                    .AsNoTracking()
@@ -35,14 +35,14 @@ public class CommissionRateRepository : ICommissionRateRepository
     }
 
      
-    public async Task<CommissionRate> AddCommissionRateAsync(CommissionRate currency)
+    public async Task<CommissionRate> AddCommissionRate(CommissionRate currency)
     {
         var currencyReturned = await _dbContext.CommissionRates.AddAsync(currency);
 
         return currencyReturned.Entity;
     }
     
-    public CommissionRate UpdateCommissionRate(CommissionRate currency, CommissionRate updatedCommissionRate)
+    public async Task<CommissionRate> UpdateCommissionRate(CommissionRate currency, CommissionRate updatedCommissionRate)
     {
         _dbContext.Entry(currency).Property(p => p.CRate).IsModified = true;
         _dbContext.Entry(currency).Property(p => p.MaxUSDRange).IsModified = true;
@@ -53,7 +53,7 @@ public class CommissionRateRepository : ICommissionRateRepository
         return currency;
     }
     
-    public bool DeleteCommissionRate(CommissionRate currency)
+    public async Task<bool> DeleteCommissionRate(CommissionRate currency)
     {
         var entityEntry = _dbContext.CommissionRates.Remove(currency);
         

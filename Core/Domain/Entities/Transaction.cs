@@ -19,6 +19,6 @@ public class Transaction
     [ForeignKey("ToAccount")]
     public int ToAccountId { get; set; }
     
-    public CurrencyAccount? FromAccount { get; } = null!;
-    public CurrencyAccount? ToAccount { get; } = null!;
+    public CurrencyAccount FromAccount { get; } = null!;
+    public CurrencyAccount ToAccount { get; } = null!;
 }

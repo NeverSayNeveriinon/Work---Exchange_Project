@@ -4,10 +4,10 @@ namespace Core.Domain.RepositoryContracts;
 
 public interface ICommissionRateRepository
 {
-    public Task<List<CommissionRate>> GetAllCommissionRatesAsync();
-    public Task<CommissionRate?> GetCommissionRateByIDAsync(int id);
-    public Task<CommissionRate> AddCommissionRateAsync(CommissionRate account);
-    public CommissionRate UpdateCommissionRate(CommissionRate account, CommissionRate updatedCommissionRate);
-    public bool DeleteCommissionRate(CommissionRate account);
+    public Task<List<CommissionRate>> GetAllCommissionRates();
+    public Task<CommissionRate?> GetCommissionRateByID(int id);
+    public Task<CommissionRate> AddCommissionRate(CommissionRate account);
+    public Task<CommissionRate> UpdateCommissionRate(CommissionRate account, CommissionRate updatedCommissionRate);
+    public Task<bool> DeleteCommissionRate(CommissionRate account);
     public Task SaveChangesAsync();
 }

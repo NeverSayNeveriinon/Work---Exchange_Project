@@ -15,15 +15,24 @@ public class CommissionRateService : ICommissionRateService
         _commissionRateRepository = commissionRateRepository;
     }
 
-    public async Task<CommissionRateResponse> AddCommissionRate(CommissionRateRequest? commissionRateRequest)
+    public async Task<CommissionRateResponse> AddCommissionRate(decimal? MaxUSDRange, double? CRate)
     {
-        // 'commissionRateRequest' is Null //
-        ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' object parameter is Null");
+        // 'MaxUSDRange' is Null //
+        ArgumentNullException.ThrowIfNull(MaxUSDRange,"The 'MaxUSDRange' parameter is Null");
+        
+        // 'CRate' is Null //
+        ArgumentNullException.ThrowIfNull(CRate,"The 'CRate' parameter is Null");
         
         
         // 'commissionRateRequest.Name' is valid and there is no problem //
-        var commissionRate = commissionRateRequest.ToCommissionRate();
-        CommissionRate commissionRateReturned = await _commissionRateRepository.AddCommissionRateAsync(commissionRate);
+        var commissionRate = new CommissionRate()
+        {
+            Id = 0,
+            MaxUSDRange = MaxUSDRange.Value,
+            CRate = CRate.Value
+        };
+        
+        CommissionRate commissionRateReturned = await _commissionRateRepository.AddCommissionRate(commissionRate);
         await _commissionRateRepository.SaveChangesAsync();
 
         return commissionRateReturned.ToCommissionRateResponse();
@@ -31,7 +40,8 @@ public class CommissionRateService : ICommissionRateService
     
     public async Task<List<CommissionRateResponse>> GetAllCommissionRates()
     {
-        List<CommissionRate> CommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
+        // const string includeEntities = "Director,Writers,Artists,Genres"; 
+        List<CommissionRate> CommissionRates = await _commissionRateRepository.GetAllCommissionRates();
         
         List<CommissionRateResponse> CommissionRateResponses = CommissionRates.Select(accountItem => accountItem.ToCommissionRateResponse()).ToList();
         return CommissionRateResponses;
@@ -41,8 +51,9 @@ public class CommissionRateService : ICommissionRateService
     {
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The CommissionRate'Id' parameter is Null");
-        
-        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByIDAsync(Id.Value);
+
+        // const string includeEntities = "Director,Writers,Artists,Genres"; 
+        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByID(Id.Value);
 
         // if 'id' doesn't exist in 'CommissionRates list' 
         if (CommissionRate == null)
@@ -56,16 +67,20 @@ public class CommissionRateService : ICommissionRateService
         return CommissionRateResponse;;
     }
 
-    public async Task<CommissionRateResponse?> UpdateCommissionRate(int? commissionRateID, CommissionRateRequest? commissionRateRequest)
+    public async Task<CommissionRateResponse?> UpdateCommissionRate(decimal? MaxUSDRange, double? CRate, int? CommissionRateID)
     { 
-        // if 'commissionRateID' is null
-        ArgumentNullException.ThrowIfNull(commissionRateID,"The CommissionRate'ID' parameter is Null");
+        // if 'CommissionRate ID' is null
+        ArgumentNullException.ThrowIfNull(CommissionRateID,"The CommissionRate'ID' parameter is Null");
         
-        // 'commissionRateRequest' is Null //
-        ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' parameter is Null");
+        // 'MaxUSDRange' is Null //
+        ArgumentNullException.ThrowIfNull(MaxUSDRange,"The 'MaxUSDRange' parameter is Null");
+        
+        // 'CRate' is Null //
+        ArgumentNullException.ThrowIfNull(CRate,"The 'CRate' parameter is Null");
         
 
-        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByIDAsync(commissionRateID.Value);
+        // const string includeEntities = "Director,Writers,Artists,Genres"; 
+        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByID(CommissionRateID.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (CommissionRate == null)
@@ -73,8 +88,13 @@ public class CommissionRateService : ICommissionRateService
             return null;
         }
          
-    
-        CommissionRate updatedCommissionRateReturned = _commissionRateRepository.UpdateCommissionRate(CommissionRate, commissionRateRequest.ToCommissionRate());
+        var updatedCommissionRate = new CommissionRate()
+        {
+            Id = 0,
+            MaxUSDRange = MaxUSDRange.Value,
+            CRate = CRate.Value
+        };
+        CommissionRate updatedCommissionRateReturned = await _commissionRateRepository.UpdateCommissionRate(CommissionRate, updatedCommissionRate);
         await _commissionRateRepository.SaveChangesAsync();
 
         return updatedCommissionRateReturned.ToCommissionRateResponse();
@@ -85,7 +105,7 @@ public class CommissionRateService : ICommissionRateService
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The CommissionRate'ID' parameter is Null");
 
-        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByIDAsync(Id.Value);
+        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByID(Id.Value);
         
         // if 'ID' is invalid (doesn't exist)
         if (CommissionRate == null) 
@@ -93,7 +113,7 @@ public class CommissionRateService : ICommissionRateService
             return null;
         }
     
-        bool result = _commissionRateRepository.DeleteCommissionRate(CommissionRate);
+        bool result = await _commissionRateRepository.DeleteCommissionRate(CommissionRate);
         await _commissionRateRepository.SaveChangesAsync();
 
         return result;

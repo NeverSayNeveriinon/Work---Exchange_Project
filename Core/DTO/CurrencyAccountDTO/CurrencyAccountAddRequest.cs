@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
 
@@ -6,23 +7,22 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountAddRequest
 {
-    public int CurrencyId { get; set; }
-    public Guid OwnerID { get; set; }
+    [AllowedValues("USD","Euro","Rial", ErrorMessage = "The Value Should be one of these 'USD,Euro,Rial' ")]
+    public string CurrencyType { get; set; }
+    public MoneyOpenAccountRequest moneyToOpenAccount { get; set; }
 }
 
 public static partial class CurrencyAccountExtensions
 {
-    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest)
+    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest, Guid? ownerID, int? currencyId)
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
             Number = 0,
             Balance = 0,
-            // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), CurrencyAccountAddRequest.CurrencyType)},
-            CurrencyID = currencyAccountAddRequest.CurrencyId,
-            OwnerID = currencyAccountAddRequest.OwnerID
-            // Currency = new Currency(){Id = CurrencyAccountAddRequest.CurrencyId},
-            // Owner = new UserProfile(){Id = CurrencyAccountAddRequest.OwnerID}
+            CurrencyID = currencyId.Value,
+            OwnerID = ownerID.Value,
+            DateTimeOfOpen = DateTime.Now
         };
 
         return currencyAccount;

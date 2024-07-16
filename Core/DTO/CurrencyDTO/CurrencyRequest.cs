@@ -1,11 +1,14 @@
-﻿using Core.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
 using Core.Enums;
 
 namespace Core.DTO.CurrencyDTO;
 
+// TODO: Change Aloedalues
 public class CurrencyRequest
 {
-    public string CuurrencyType { get; set; }
+    [AllowedValues("USD","Euro","Rial", ErrorMessage = "The Value Should be one of these 'USD,Euro,Rial' ")]
+    public string CurrencyType { get; set; } 
 }
 
 public static partial class CurrencyExtensions
@@ -15,9 +18,8 @@ public static partial class CurrencyExtensions
         Currency currency = new Currency()
         {
             Id = 0,
-            CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyRequest.CuurrencyType)
+            CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyRequest.CurrencyType)
         };
-
         return currency;
     }
 }

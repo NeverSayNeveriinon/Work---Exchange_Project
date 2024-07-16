@@ -6,20 +6,19 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountUpdateRequest
 {
-    public int CurrencyId { get; set; }
+    public string CurrencyType { get; set; }
 }
 
 public static partial class CurrencyAccountExtensions
 {
-    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountUpdateRequest currencyAccountUpdateRequest)
+    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountUpdateRequest currencyAccountUpdateRequest, int? currencyId)
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
             Number = 0,
             Balance = 0,
-            // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), CurrencyAccountUpdateRequest.CurrencyType)},
-            CurrencyID = currencyAccountUpdateRequest.CurrencyId,
-            // Currency = new Currency(){Id = CurrencyAccountUpdateRequest.CurrencyId},
+            // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyAccountUpdateRequest.CurrencyType)},
+            CurrencyID = currencyId.Value
         };
 
         return currencyAccount;

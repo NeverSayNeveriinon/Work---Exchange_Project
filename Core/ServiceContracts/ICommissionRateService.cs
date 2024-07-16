@@ -1,12 +1,14 @@
-﻿using Core.DTO.CommissionRateDTO;
+﻿using Core.DTO;
+using Core.DTO.CommissionRateDTO;
 
 namespace Core.ServiceContracts;
 
 public interface ICommissionRateService
 {
-    public Task<CommissionRateResponse> AddCommissionRate(decimal? MaxUSDRange, double? CRate);
+    public Task<CommissionRateResponse> AddCommissionRate(CommissionRateRequest? commissionRateRequest);
     public Task<List<CommissionRateResponse>> GetAllCommissionRates();
     public Task<CommissionRateResponse?> GetCommissionRateByID(int? Id);
-    public Task<CommissionRateResponse?> UpdateCommissionRate(decimal? MaxUSDRange, double? CRate, int? CommissionRateID);
+    public Task<decimal> GetCRate(Money money);
+    public Task<CommissionRateResponse?> UpdateCommissionRate(int? CommissionRateID, CommissionRateRequest commissionRateRequest);
     public Task<bool?> DeleteCommissionRate(int? Id);
 }

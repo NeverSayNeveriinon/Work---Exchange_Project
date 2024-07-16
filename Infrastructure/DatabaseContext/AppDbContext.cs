@@ -1,11 +1,13 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 
 namespace Infrastructure.DatabaseContext;
 
+// TODO: Move entity Config to separate file   
 public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
 {
     // public virtual DbSet<UserProfile> UserProfiles { get; set; }
@@ -23,7 +25,47 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        #region Role_Seed
+            var adminRole = new UserRole()
+            {
+                Id = Guid.Parse("0D8EA822-1454-4853-9753-78FCDBD429D3"),
+                Name = "Admin",
+                NormalizedName = "Admin".ToUpper(),
+                ConcurrencyStamp = Guid.Parse("878EEDAF-E795-411E-A0FC-847D0D4193DC").ToString()
+            };
+            var userRole = new UserRole()
+            {
+                Id = Guid.Parse("6C1FC012-261F-4E18-AAB5-0B4A685B2860"),
+                Name = "User",
+                NormalizedName = "User".ToUpper(),
+                ConcurrencyStamp = Guid.Parse("7702FAFB-3813-46DB-9695-66A6E8FE9D41").ToString()
+            };
+            modelBuilder.Entity<UserRole>().HasData([adminRole,userRole]);
+        #endregion
+
+        #region AdminProfile_Seed
+            PasswordHasher<UserProfile> ph = new PasswordHasher<UserProfile>();
+            var adminProfile = new UserProfile()
+            {
+                Id = Guid.Parse("692DE906-FF0C-4ECB-9B79-9D94FC72DEAD"),
+                PersonName = "Admin Admini",
+                UserName = "admin@gmail.com",
+                NormalizedUserName = "admin@gmail.com".ToUpper(),
+                Email = "admin@gmail.com",
+                NormalizedEmail = "admin@gmail.com".ToUpper(),
+                EmailConfirmed = true,
+                DefinedAccountNumbers = new List<int>(),
+                PhoneNumber = "09991234567",
+                ConcurrencyStamp = Guid.Parse("D594E4F9-C74E-43A4-90AC-F7FEC50C15E1").ToString(),
+                PasswordHash = null
+            };
+            adminProfile.PasswordHash = ph.HashPassword(adminProfile, "adminpass");
+            modelBuilder.Entity<UserProfile>().HasData(adminProfile);
+            modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid>{RoleId = adminRole.Id, UserId = adminProfile.Id});
+        #endregion
         
+
         // modelBuilder.Entity<Currency>()
         //     .Property(entity => entity.ExchangeValues)
         //     .HasConversion(
@@ -72,10 +114,10 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             .UsingEntity<Transaction>(
                 l => l.HasOne<CurrencyAccount>(e => e.ToAccount)
                     .WithMany(e => e.ToTransactions)
-                    .HasForeignKey(e => e.ToAccountId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
+                    .HasForeignKey(e => e.ToAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
                 r => r.HasOne<CurrencyAccount>(e => e.FromAccount)
                     .WithMany(e => e.FromTransactions)
-                    .HasForeignKey(e => e.FromAccountId).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
+                    .HasForeignKey(e => e.FromAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
         
         // CurrencyAccount(as FirstCurrency) 'N'----......----'N' Currency(as SecondCurrency)
         modelBuilder.Entity<Currency>()

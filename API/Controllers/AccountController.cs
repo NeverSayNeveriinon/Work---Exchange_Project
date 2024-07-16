@@ -5,146 +5,74 @@ using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 // TODO: Add Role Logic
 // TODO: Add Email Confirm Token Life Time
-// TODO: Add Defined Accounts
 
 [Route("api/[controller]")]
 [ApiController]
 public class AccountController : ControllerBase
 {
-    private readonly UserManager<UserProfile> _userManager;
-    private readonly SignInManager<UserProfile> _signInManager;
-    private readonly IJwtService _jwtService;
-    private readonly INotificationService _notifyService;
+    private readonly IAccountService _accountService;
     
-    public AccountController(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IJwtService jwtService, INotificationService notifyService)
+    public AccountController(IAccountService accountService)
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _jwtService = jwtService;
-        _notifyService = notifyService;
+        _accountService = accountService;
     }
     
     // Register//
+    [Authorize("NotAuthorized")]
     [HttpPost("register")]
     public async Task<IActionResult> Register(UserRegister userRegister)
     {
-        // Validation
-        if (ModelState.IsValid == false)
-        {
-            string errorMessage = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-            return Problem(errorMessage);
-        }
+        var serviceResult = await _accountService.Register(userRegister);
         
-        var userReturned = await _userManager.FindByEmailAsync(userRegister.Email);
-        if (userReturned != null) // means a user with this email is already in db
-        {
-            return Problem("The Email is Already Registered");
-        }
-       
-        var user = new UserProfile()
-        {
-            UserName = userRegister.Email,
-            PersonName = userRegister.PersonName,
-            Email = userRegister.Email,
-            PhoneNumber = userRegister.Phone
-        };
-
-        var result = await _userManager.CreateAsync(user, userRegister.Password);
-        if (result.Succeeded)
-        {
-            await SendConfirmationEmail(user);
-            return Ok("Please Check Your Email");
-        }
+        if (serviceResult.isValid)
+            return Ok(serviceResult.Message);
         else
-        {
-            string errorMessage = string.Join(" | ", result.Errors.Select(e => e.Description)); //error1 | error2
-            return Problem(errorMessage);
-        }   
+            return BadRequest(serviceResult.Message);
     }
     
         
     // Login //
+    [Authorize("NotAuthorized")]
     [HttpPost("login")]
     public async Task<IActionResult> Login(UserLogin loginDTO)
     {
-        // Validation
-        if (ModelState.IsValid == false)
-        {
-            string errorMessage = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-            return Problem(errorMessage);
-        }
+        var serviceResult = await _accountService.Login(loginDTO);
         
-        var result = await _signInManager.PasswordSignInAsync(loginDTO.Email, loginDTO.Password, isPersistent: false, lockoutOnFailure: false);
-
-        if (result.Succeeded)
-        {
-            UserProfile? user = await _userManager.FindByEmailAsync(loginDTO.Email);
-
-            if (user == null)
-            {
-                return NoContent();
-            }
-            
-            // Sign in
-            await _signInManager.SignInAsync(user, isPersistent: false);
-
-            var authenticationResponse = _jwtService.CreateJwtToken(user);
-
-            return Ok(authenticationResponse);
-        }
-
+        if (serviceResult.isValid)
+            return Ok(serviceResult.obj);
         else
-        {
-            return Problem("Invalid email or password");
-        }
+            return BadRequest(serviceResult.Message);
     }
         
         
-    // Logout //
-    [HttpGet("logout")]
-    public async Task<IActionResult> Logout()
-    {
-        await _signInManager.SignOutAsync();
-
-        return NoContent();
-    }
+    // // Logout //
+    // // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    // [HttpGet("logout")]
+    // public async Task<IActionResult> Logout()
+    // {
+    //     var serviceResult = await _accountService.Logout();
+    //     return Ok(serviceResult.Message);
+    // }
     
     
     // Confirm Email //
+    [Authorize("NotAuthorized")]
     [HttpGet("/confirm-email")]
     public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (userId == null || token == null)
-        {
-            return Problem("Link expired");
-        }
-        else if (user == null)
-        {
-            return Problem("User not Found");
-        }
+        var serviceResult = await _accountService.ConfirmEmail(userId, token);
+        
+        if (serviceResult.isValid)
+            return Ok(serviceResult.obj);
         else
-        {
-            token = token.Replace(" ", "+");
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (result.Succeeded)
-            {
-                
-                await _signInManager.SignInAsync(user, isPersistent: false);
-                var authenticationResponse = _jwtService.CreateJwtToken(user);
-                return Ok(authenticationResponse);
-            }
-            else
-            {
-                return Problem("Email not confirmed");
-            }
-        }
+            return BadRequest(serviceResult.Message);
     }
     
     // Confirm Email //
@@ -156,32 +84,16 @@ public class AccountController : ControllerBase
     }
     
     
-    // [HttpPost("Defined-Accounts")]
-    // // Post: api/Account/Defined-Accounts
-    // public async Task<IActionResult> PostDefinedAccount(int currencyDefinedAccountAdd)
-    // {
-    //     // No need to do this, because it is done by 'ApiController' attribute in BTS
-    //     // if (!ModelState.IsValid)
-    //     // {
-    //     //     return ValidationProblem(ModelState);
-    //     // }
-    //
-    //     var currencyAccountResponse = await _userManager.;
-    //     
-    //     return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountID = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
-    // }
-    
-    
-    
-    
-    
-    
-    
-    
-    private async Task SendConfirmationEmail(UserProfile? user)
+    [HttpPost("Defined-Accounts")]
+    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
+    // Post: api/Account/Defined-Accounts
+    public async Task<IActionResult> PostDefinedAccount(int definedAccountAddNumber)
     {
-        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var confirmationLink = $"http://localhost:5214/confirm-email?userId={user.Id}&Token={token}";
-        await _notifyService.SendAsync(user.Email, "Open and Confirm Your Email", $"Please confirm your account by clicking <a href='{confirmationLink}'>this link</a>;.", true);
+        var serviceResult = await _accountService.AddDefinedAccount(definedAccountAddNumber, User);
+        
+        if (serviceResult.isValid)
+            return Ok(serviceResult.Message);
+        else
+            return BadRequest(serviceResult.Message);
     }
 }

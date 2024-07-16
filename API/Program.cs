@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text;
 using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
@@ -7,6 +8,7 @@ using Core.Services;
 using Infrastructure.DatabaseContext;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,6 +17,8 @@ using Microsoft.OpenApi.Models;
 
 namespace API;
 
+// TODO: Add Exception Middleware
+// TODO: Change ids to  Custom ID
 public class Program
 {
     public static void Main(string[] args)
@@ -25,6 +29,8 @@ public class Program
         // Services IOC        
         builder.Services.AddTransient<IJwtService, JwtService>();
         builder.Services.AddTransient<INotificationService, EmailService>();
+        
+        builder.Services.AddScoped<IAccountService, AccountService>();
         
         builder.Services.AddScoped<ICurrencyAccountRepository, CurrencyAccountRepository>();
         builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
@@ -37,6 +43,10 @@ public class Program
 
         builder.Services.AddScoped<IExchangeValueRepository, ExchangeValueRepository>();
         builder.Services.AddScoped<IExchangeValueService, ExchangeValueService>();
+        
+        builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+        builder.Services.AddScoped<ITransactionService, TransactionService>();
+
 
         
         // DataBase IOC
@@ -68,7 +78,12 @@ public class Program
             .AddDefaultTokenProviders();
         
         // JWT
-        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        builder.Services.AddAuthentication(options => 
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        })
             .AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters()
@@ -116,8 +131,32 @@ public class Program
             });
         }); 
         
+        // Authorization
+        // configure a policy to authorization
+        builder.Services.AddAuthorization(options =>
+        {
+            // enforces authorization policy (user must be authenticated) for all the action methods
+            var policyBuilder = new AuthorizationPolicyBuilder();
+            var policy = policyBuilder.RequireAuthenticatedUser().Build(); 
+            options.FallbackPolicy = policy;
+            
+            // add a custom policy to be used in 'AccountController'
+            options.AddPolicy("NotAuthorized", custompolicy =>
+            {
+                custompolicy.RequireAssertion(context =>
+                {
+                    return !context.User.Identity?.IsAuthenticated ?? false;
+                });
+            });
+        });
+        
+        
+        
         var app = builder.Build();
 
+        
+        // Middlewares //
+        
         app.UseHsts();
         app.UseHttpsRedirection();
         
@@ -126,7 +165,8 @@ public class Program
         app.UseSwaggerUI(); // Creates swagger UI for testing all endpoints (action methods)
         
         app.UseStaticFiles();
-        
+
+        app.UseRouting();
         app.UseAuthentication(); 
         app.UseAuthorization(); 
         app.MapControllers();

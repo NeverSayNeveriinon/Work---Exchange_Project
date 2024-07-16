@@ -30,4 +30,10 @@ public class UserRegister
     [DataType(DataType.Password)]
     [Compare("Password", ErrorMessage = "Password and confirm password do not match")]
     public string ConfirmPassword { get; set; }
+    
+      
+    [Required(ErrorMessage = "The 'Role' of You Must be Specified in System!!!")]
+    [StringLength(15, ErrorMessage = "The 'Role' Can't Be More Than 15 Characters")]
+    [AllowedValues("User", ErrorMessage = "The Role Must be 'User'")]
+    public string Role { get; set; }
 }

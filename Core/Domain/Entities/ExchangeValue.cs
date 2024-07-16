@@ -21,6 +21,6 @@ public class ExchangeValue
     [ForeignKey("SecondCurrency")]
     public int SecondCurrencyId { get; set; }
     
-    public Currency FirstCurrency { get; } = null!;
-    public Currency SecondCurrency { get; } = null!;
+    public Currency FirstCurrency { get; set; } = null!;
+    public Currency SecondCurrency { get; set; } = null!;
 }

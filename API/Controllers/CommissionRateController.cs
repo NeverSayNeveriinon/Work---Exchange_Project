@@ -1,11 +1,14 @@
 ﻿using Core.DTO.CommissionRateDTO;
 using Core.ServiceContracts;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Roles = "Admin")]
 public class CommissionRateController : ControllerBase
 {
     private readonly ICommissionRateService _commissionRateService;
@@ -59,9 +62,9 @@ public class CommissionRateController : ControllerBase
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [HttpPost]
     // Post: api/CommissionRate
-    public async Task<IActionResult> PostCommissionRate([FromBody]decimal MaxUSDRange, double CRate)
+    public async Task<IActionResult> PostCommissionRate(CommissionRateRequest commissionRateRequest)
     {
-        var commissionRateResponse = await _commissionRateService.AddCommissionRate(MaxUSDRange, CRate);
+        var commissionRateResponse = await _commissionRateService.AddCommissionRate(commissionRateRequest);
 
         return CreatedAtAction(nameof(GetCommissionRate), new { commissionRateID = commissionRateResponse.Id },
             new { commissionRateResponse.Id });
@@ -112,19 +115,18 @@ public class CommissionRateController : ControllerBase
     /// <response code="204">The CommissionRate is successfully found and has been updated with New CommissionRate</response>
     /// <response code="404">A CommissionRate with Given ID has not been found</response>
     // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
-    [HttpPut("{commissionRateID:int}")]
-    // Put: api/CommissionRate/{commissionRateID}
-    public async Task<IActionResult> PutCommissionRate([FromBody]decimal MaxUSDRange, [FromBody]double CRate, [FromRoute]int commissionRateID)
-    {
-        CommissionRateResponse? existingObject =
-            await _commissionRateService.UpdateCommissionRate(MaxUSDRange, CRate, commissionRateID);
-        if (existingObject is null)
-        {
-            return NotFound("notfound:");
-        }
-
-        return NoContent();
-    }
+    // [HttpPut("{commissionRateID:int}")]
+    // // Put: api/CommissionRate/{commissionRateID}
+    // public async Task<IActionResult> PutCommissionRate(int commissionRateID, CommissionRateRequest commissionRateRequest)
+    // {
+    //     CommissionRateResponse? existingObject = await _commissionRateService.UpdateCommissionRate(commissionRateID, commissionRateRequest);
+    //     if (existingObject is null)
+    //     {
+    //         return NotFound("notfound:");
+    //     }
+    //
+    //     return NoContent();
+    // }
 
 
     /// <summary>

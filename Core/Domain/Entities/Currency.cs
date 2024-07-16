@@ -1,12 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Enums;
+using Microsoft.EntityFrameworkCore;
 
 namespace Core.Domain.Entities;
 
+[Index(nameof(CurrencyType), IsUnique = true)]
 public class Currency
 {
     [Key]
     public int Id { get; set; }
+    
     public CurrencyTypeOptions CurrencyType  { get; set; }
     
     

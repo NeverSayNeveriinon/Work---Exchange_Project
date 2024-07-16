@@ -22,7 +22,7 @@ namespace Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Core.Domain.Entities.CommissionRateRepository", b =>
+            modelBuilder.Entity("Core.Domain.Entities.CommissionRate", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,6 +55,9 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CurrencyType")
+                        .IsUnique();
+
                     b.ToTable("Currencies");
                 });
 
@@ -71,6 +74,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<int>("CurrencyID")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("DateTimeOfOpen")
+                        .HasColumnType("datetime2");
 
                     b.Property<Guid>("OwnerID")
                         .HasColumnType("uniqueidentifier");
@@ -124,20 +130,23 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("money");
 
-                    b.Property<int>("FromAccountId")
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FromAccountNumber")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsSuccess")
                         .HasColumnType("bit");
 
-                    b.Property<int>("ToAccountId")
+                    b.Property<int>("ToAccountNumber")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FromAccountId");
+                    b.HasIndex("FromAccountNumber");
 
-                    b.HasIndex("ToAccountId");
+                    b.HasIndex("ToAccountNumber");
 
                     b.ToTable("Transactions");
                 });
@@ -156,7 +165,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DefinedAccountNumbers")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Email")
@@ -208,6 +216,24 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("692de906-ff0c-4ecb-9b79-9d94fc72dead"),
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "d594e4f9-c74e-43a4-90ac-f7fec50c15e1",
+                            DefinedAccountNumbers = "[]",
+                            Email = "admin@gmail.com",
+                            EmailConfirmed = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "ADMIN@GMAIL.COM",
+                            NormalizedUserName = "ADMIN@GMAIL.COM",
+                            PasswordHash = "AQAAAAIAAYagAAAAEGaAzQdIX4ZNM+6vICn6ueOCEM88NDVHZS8YfX9ZgUi3X7yL5lHzbgLD1RCEnm3m/A==",
+                            PersonName = "Admin Admini",
+                            TwoFactorEnabled = false,
+                            UserName = "admin@gmail.com"
+                        });
                 });
 
             modelBuilder.Entity("Core.Domain.IdentityEntities.UserRole", b =>
@@ -236,6 +262,22 @@ namespace Infrastructure.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("0d8ea822-1454-4853-9753-78fcdbd429d3"),
+                            ConcurrencyStamp = "878eedaf-e795-411e-a0fc-847d0d4193dc",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = new Guid("6c1fc012-261f-4e18-aab5-0b4a685b2860"),
+                            ConcurrencyStamp = "7702fafb-3813-46db-9695-66a6e8fe9d41",
+                            Name = "User",
+                            NormalizedName = "USER"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -320,6 +362,13 @@ namespace Infrastructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = new Guid("692de906-ff0c-4ecb-9b79-9d94fc72dead"),
+                            RoleId = new Guid("0d8ea822-1454-4853-9753-78fcdbd429d3")
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
@@ -381,12 +430,12 @@ namespace Infrastructure.Migrations
                 {
                     b.HasOne("Core.Domain.Entities.CurrencyAccount", "FromAccount")
                         .WithMany("FromTransactions")
-                        .HasForeignKey("FromAccountId")
+                        .HasForeignKey("FromAccountNumber")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Core.Domain.Entities.CurrencyAccount", "ToAccount")
                         .WithMany("ToTransactions")
-                        .HasForeignKey("ToAccountId")
+                        .HasForeignKey("ToAccountNumber")
                         .OnDelete(DeleteBehavior.ClientCascade);
 
                     b.Navigation("FromAccount");

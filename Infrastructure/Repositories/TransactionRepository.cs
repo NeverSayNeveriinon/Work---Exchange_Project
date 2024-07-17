@@ -70,7 +70,16 @@ public class TransactionRepository : ITransactionRepository
         // transaction.CurrencyID = updatedTransaction.CurrencyID;
         
         return transaction;
+    }  
+    
+    public Transaction UpdateIsConfirmedOfTransaction(Transaction transaction, bool isConfirmed)
+    {
+        _dbContext.Entry(transaction).Property(p => p.IsConfirmed).IsModified = true;
+        transaction.IsConfirmed = isConfirmed;
+        
+        return transaction;
     }
+    
     
     public bool DeleteTransaction(Transaction transaction)
     {

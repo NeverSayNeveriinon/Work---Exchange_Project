@@ -43,7 +43,7 @@ public class CommissionRateService : ICommissionRateService
     {
         var valueToBeMultiplied = money.Currency.FirstExchangeValues?.FirstOrDefault(exValue=> exValue.SecondCurrency.CurrencyType == CurrencyTypeOptions.USD)!.UnitOfFirstValue;
         var usdAmount = money.Amount * valueToBeMultiplied;
-        var cRate = await _commissionRateRepository.GetCRateByAmount(usdAmount.Value);
+        var cRate = await _commissionRateRepository.GetCRateByAmountAsync(usdAmount.Value);
         
         return cRate;
     }

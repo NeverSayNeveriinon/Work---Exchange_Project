@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
 
-// TODO: Add Role Logic
 // TODO: Add Email Confirm Token Life Time
 
 [Route("api/[controller]")]
@@ -24,35 +23,76 @@ public class AccountController : ControllerBase
         _accountService = accountService;
     }
     
+    
+    [HttpGet("/")]
+    public IActionResult Index()
+    {
+        return Ok("Here is The Home Page");
+    }
+    
+    
     // Register//
     [Authorize("NotAuthorized")]
     [HttpPost("register")]
+    // Post: api/Account/register
     public async Task<IActionResult> Register(UserRegister userRegister)
     {
-        var serviceResult = await _accountService.Register(userRegister);
+        var (isValid, message) = await _accountService.Register(userRegister);
         
-        if (serviceResult.isValid)
-            return Ok(serviceResult.Message);
-        else
-            return BadRequest(serviceResult.Message);
+        if (!isValid)
+            return BadRequest(message);
+        
+        return Ok(message);
     }
     
         
     // Login //
     [Authorize("NotAuthorized")]
     [HttpPost("login")]
+    // Post: api/Account/login
     public async Task<IActionResult> Login(UserLogin loginDTO)
     {
-        var serviceResult = await _accountService.Login(loginDTO);
+        var (isValid, message, obj) = await _accountService.Login(loginDTO);
+
+        if (!isValid)
+            return BadRequest(message);
         
-        if (serviceResult.isValid)
-            return Ok(serviceResult.obj);
-        else
-            return BadRequest(serviceResult.Message);
+        return Ok(obj);
     }
+    
+    
+    // Confirm Email //
+    [Authorize("NotAuthorized")]
+    [HttpGet("confirm-email")]
+    // Get: api/Account/Confirm-Email
+    public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
+    {
+        var (isValid, message, obj) = await _accountService.ConfirmEmail(userId, token);
+
+        if (!isValid)
+            return BadRequest(message);
         
+        return Ok(obj);
+    }
+    
+    
+    
+    [HttpPost("Defined-Accounts")]
+    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
+    // Post: api/Account/Defined-Accounts
+    public async Task<IActionResult> AddDefinedAccount(string definedAccountAddNumber)
+    {
+        var (isValid, message) = await _accountService.AddDefinedAccount(definedAccountAddNumber, User);
+
+        if (!isValid)
+            return BadRequest(message);
         
-    // // Logout //
+        return Ok(message);
+    }
+    
+    
+            
+    // Logout //
     // // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     // [HttpGet("logout")]
     // public async Task<IActionResult> Logout()
@@ -60,40 +100,4 @@ public class AccountController : ControllerBase
     //     var serviceResult = await _accountService.Logout();
     //     return Ok(serviceResult.Message);
     // }
-    
-    
-    // Confirm Email //
-    [Authorize("NotAuthorized")]
-    [HttpGet("/confirm-email")]
-    public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
-    {
-        var serviceResult = await _accountService.ConfirmEmail(userId, token);
-        
-        if (serviceResult.isValid)
-            return Ok(serviceResult.obj);
-        else
-            return BadRequest(serviceResult.Message);
-    }
-    
-    // Confirm Email //
-    [HttpGet("/")]
-    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Index()
-    {
-        return Ok("Ooooo");
-    }
-    
-    
-    [HttpPost("Defined-Accounts")]
-    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
-    // Post: api/Account/Defined-Accounts
-    public async Task<IActionResult> PostDefinedAccount(int definedAccountAddNumber)
-    {
-        var serviceResult = await _accountService.AddDefinedAccount(definedAccountAddNumber, User);
-        
-        if (serviceResult.isValid)
-            return Ok(serviceResult.Message);
-        else
-            return BadRequest(serviceResult.Message);
-    }
 }

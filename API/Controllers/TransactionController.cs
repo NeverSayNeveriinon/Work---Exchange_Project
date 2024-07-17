@@ -11,6 +11,7 @@ namespace API.Controllers;
 [Route("api/[controller]")] 
 [ApiController]
 [Authorize]
+// TODO: Add Transaction Exchange
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;

@@ -25,6 +25,7 @@ using Microsoft.OpenApi.Models;
 namespace API;
 
 // TODO: Add Exception Middleware
+// TODO: Add Eager,Lazy Loading
 public class Program
 {
     public static void Main(string[] args)

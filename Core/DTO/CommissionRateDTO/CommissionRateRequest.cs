@@ -20,8 +20,8 @@ public static partial class CommissionRateExtensions
         CommissionRate response = new CommissionRate()
         {
             Id = 0,
-            MaxUSDRange = commissionRate.MaxUSDRange.Value,
-            CRate = commissionRate.CRate.Value
+            MaxUSDRange = commissionRate.MaxUSDRange!.Value,
+            CRate = commissionRate.CRate!.Value
         };
 
         return response;

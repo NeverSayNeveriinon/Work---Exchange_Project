@@ -21,11 +21,16 @@ public class CommissionRateService : ICommissionRateService
     {
         // 'commissionRateRequest' is Null //
         ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' object parameter is Null");
+
+        var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
+        var allUSDRanges = allCommissionRates.Select(commisionRate => commisionRate.MaxUSDRange).ToHashSet();
+        if (allUSDRanges.Contains(commissionRateRequest.MaxUSDRange.Value)) // means there is already a same range, we don't want that 
+        {
+            return null;
+        }
         
-        
-        // 'commissionRateRequest.Name' is valid and there is no problem //
         var commissionRate = commissionRateRequest.ToCommissionRate();
-        CommissionRate commissionRateReturned = await _commissionRateRepository.AddCommissionRateAsync(commissionRate);
+        var commissionRateReturned = await _commissionRateRepository.AddCommissionRateAsync(commissionRate);
         await _commissionRateRepository.SaveChangesAsync();
 
         return commissionRateReturned.ToCommissionRateResponse();

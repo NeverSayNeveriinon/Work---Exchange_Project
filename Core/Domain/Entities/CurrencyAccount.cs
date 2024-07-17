@@ -7,7 +7,8 @@ namespace Core.Domain.Entities;
 public class CurrencyAccount
 {
     [Key]
-    public int Number { get; set; }
+    [StringLength(10)]
+    public string Number { get; set; }
     
     [Column(TypeName="money")]
     public decimal Balance { get; set; }

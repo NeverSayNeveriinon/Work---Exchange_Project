@@ -3,12 +3,13 @@ using Core.Enums;
 
 namespace Core.DTO.TransactionDTO;
 
+[Serializable]
 public class TransactionResponse
 {
     public int Id { get; set; }
     public decimal Amount { get; set; }
-    public int FromAccountNumber { get; set; }
-    public int? ToAccountNumber { get; set; }
+    public string FromAccountNumber { get; set; }
+    public string? ToAccountNumber { get; set; }
 
     public DateTime DateTime { get; set; }
     public string? RealTimeExchangeValue { get; set; }

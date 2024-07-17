@@ -2,14 +2,16 @@
 using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
+using Core.Helpers;
 
 namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountAddRequest
 {
-    [AllowedValues("USD","Euro","Rial", ErrorMessage = "The Value Should be one of these 'USD,Euro,Rial' ")]
+    [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
     public string CurrencyType { get; set; }
-    public MoneyOpenAccountRequest moneyToOpenAccount { get; set; }
+    
+    public MoneyOpenAccountRequest MoneyToOpenAccount { get; set; }
 }
 
 public static partial class CurrencyAccountExtensions
@@ -18,7 +20,7 @@ public static partial class CurrencyAccountExtensions
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
-            Number = 0,
+            Number = Generator.RandomString(),
             Balance = 0,
             CurrencyID = currencyId.Value,
             OwnerID = ownerID.Value,

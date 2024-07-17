@@ -5,7 +5,9 @@ namespace Core.DTO;
 
 public class MoneyOpenAccountRequest
 {
-    public decimal Amount { get; set; }
-    [AllowedValues("USD","Euro","Rial", ErrorMessage = "The Value Should be one of these 'USD,Euro,Rial' ")]
+    [Required(ErrorMessage = "The 'Amount' Can't Be Blank!!!")]
+    public decimal? Amount { get; set; }
+    
+    [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
     public string CurrencyType { get; set; }
 }

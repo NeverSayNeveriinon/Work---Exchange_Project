@@ -5,7 +5,7 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountResponse
 {
-    public int Number { get; set; }
+    public string Number { get; set; }
     public Guid OwnerId { get; set; }
     public string? FullName { get; set; }
     public decimal Balance { get; set; }

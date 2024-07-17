@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Core.Domain.Entities;
 
-// TODO: maybe it's better to change double to decimal for cRate
+[Index(nameof(MaxUSDRange), IsUnique = true)]
 public class CommissionRate
 {
     [Key]
@@ -12,5 +13,7 @@ public class CommissionRate
     [Column(TypeName="money")]
     public decimal MaxUSDRange { get; set; }
     
+    [Range(0,100)]
+    [Column(TypeName="decimal")]
     public decimal CRate { get; set; }
 }

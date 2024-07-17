@@ -5,7 +5,7 @@ namespace Core.Domain.RepositoryContracts;
 public interface ICurrencyAccountRepository
 {
     public Task<List<CurrencyAccount>> GetAllCurrencyAccountsAsync();
-    public Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(int number);
+    public Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(string number);
     public Task<CurrencyAccount> AddCurrencyAccountAsync(CurrencyAccount account);
     public CurrencyAccount UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount);
     public bool DeleteCurrencyAccount(CurrencyAccount account);

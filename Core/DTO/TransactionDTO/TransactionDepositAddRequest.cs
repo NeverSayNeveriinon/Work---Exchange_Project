@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
 
@@ -6,8 +7,10 @@ namespace Core.DTO.TransactionDTO;
 
 public class TransactionDepositAddRequest
 {
-    public MoneyRequest money { get; set; }
-    public int AccountNumber { get; set; }
+    public MoneyRequest Money { get; set; }
+    
+    [Required(ErrorMessage = "The 'AccountNumber' Can't Be Blank!!!")]
+    public string AccountNumber { get; set; }
 }
 
 public static partial class TransactionExtensions
@@ -21,7 +24,8 @@ public static partial class TransactionExtensions
             FromAccountNumber = transactionAddRequest.AccountNumber,
             ToAccountNumber = null,
             DateTime = DateTime.Now,
-            TransactionType = TransactionTypeOptions.Deposit
+            TransactionType = TransactionTypeOptions.Deposit,
+            IsConfirmed = false
         };
 
         return transaction;

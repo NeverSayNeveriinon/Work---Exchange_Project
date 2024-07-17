@@ -17,15 +17,8 @@ public class CommissionRateController : ControllerBase
     {
         _commissionRateService = commissionRateService;
     }
-
-    [Route("index")]
-    [ApiExplorerSettings(IgnoreApi = true)] // For not showing in 'Swagger'
-    public IActionResult Index()
-    {
-        return Content("Here is the \"CommissionRate\" Home Page");
-    }
     
-
+    
     /// <summary>
     /// Get All Existing CommissionRates
     /// </summary>
@@ -39,9 +32,9 @@ public class CommissionRateController : ControllerBase
     /// <response code="200">The CommissionRates List is successfully returned</response>
     [HttpGet]
     // GET: api/CommissionRate
-    public async Task<ActionResult<IEnumerable<CommissionRateResponse>>> GetCommissionRates()
+    public async Task<ActionResult<IEnumerable<CommissionRateResponse>>> GetAllCommissionRates()
     {
-        List<CommissionRateResponse> commissionRatesList = await _commissionRateService.GetAllCommissionRates();
+        var commissionRatesList = await _commissionRateService.GetAllCommissionRates();
         return Ok(commissionRatesList);
     }
 
@@ -62,17 +55,14 @@ public class CommissionRateController : ControllerBase
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [HttpPost]
     // Post: api/CommissionRate
-    public async Task<IActionResult> PostCommissionRate(CommissionRateRequest commissionRateRequest)
+    public async Task<IActionResult> AddCommissionRate(CommissionRateRequest commissionRateRequest)
     {
         var commissionRateResponse = await _commissionRateService.AddCommissionRate(commissionRateRequest);
 
-        return CreatedAtAction(nameof(GetCommissionRate), new { commissionRateID = commissionRateResponse.Id },
-            new { commissionRateResponse.Id });
+        return CreatedAtAction(nameof(GetCommissionRateByID), new { commissionRateID = commissionRateResponse.Id }, new { commissionRateResponse.Id });
     }
 
-
-
-
+    
     /// <summary>
     /// Get an Existing CommissionRate Based On Given ID
     /// </summary>
@@ -87,48 +77,18 @@ public class CommissionRateController : ControllerBase
     /// <response code="404">A CommissionRate with Given ID has not been found</response>
     [HttpGet("{commissionRateID:int}")]
     // GET: api/CommissionRate/{commissionRateID}
-    public async Task<ActionResult<CommissionRateResponse>> GetCommissionRate(int commissionRateID)
+    public async Task<ActionResult<CommissionRateResponse>> GetCommissionRateByID(int commissionRateID)
     {
-        CommissionRateResponse? commissionRateObject =
-            await _commissionRateService.GetCommissionRateByID(commissionRateID);
-        if (commissionRateObject is null)
+        var commissionRateResponse = await _commissionRateService.GetCommissionRateByID(commissionRateID);
+        if (commissionRateResponse is null)
         {
-            return NotFound("notfound:");
+            return NotFound("!!A Commission Rate With This ID Has Not Been Found!!");
         }
 
-        return Ok(commissionRateObject);
+        return Ok(commissionRateResponse);
     }
 
-
-    /// <summary>
-    /// Update an Existing CommissionRate Based on Given ID and New CommissionRate Object
-    /// </summary>
-    /// <returns>Nothing</returns>
-    /// <remarks>       
-    /// Sample request:
-    /// 
-    ///     Put -> "api/CommissionRate/..."
-    ///     {
-    ///     }
-    /// 
-    /// </remarks>
-    /// <response code="204">The CommissionRate is successfully found and has been updated with New CommissionRate</response>
-    /// <response code="404">A CommissionRate with Given ID has not been found</response>
-    // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
-    // [HttpPut("{commissionRateID:int}")]
-    // // Put: api/CommissionRate/{commissionRateID}
-    // public async Task<IActionResult> PutCommissionRate(int commissionRateID, CommissionRateRequest commissionRateRequest)
-    // {
-    //     CommissionRateResponse? existingObject = await _commissionRateService.UpdateCommissionRate(commissionRateID, commissionRateRequest);
-    //     if (existingObject is null)
-    //     {
-    //         return NotFound("notfound:");
-    //     }
-    //
-    //     return NoContent();
-    // }
-
-
+    
     /// <summary>
     /// Delete an Existing CommissionRate Based on Given ID
     /// </summary>
@@ -143,12 +103,12 @@ public class CommissionRateController : ControllerBase
     /// <response code="404">A CommissionRate with Given ID has not been found</response>
     [HttpDelete("{commissionRateID:int}")]
     // Delete: api/CommissionRate/{commissionRateID}
-    public async Task<IActionResult> DeleteCommissionRate(int commissionRateID)
+    public async Task<IActionResult> DeleteCommissionRateByID(int commissionRateID)
     {
-        bool? commissionRateObject = await _commissionRateService.DeleteCommissionRate(commissionRateID);
-        if (commissionRateObject is null)
+        bool? commissionRateResponse = await _commissionRateService.DeleteCommissionRate(commissionRateID);
+        if (commissionRateResponse is null)
         {
-            return NotFound("notfound:");
+            return NotFound("!!A Commission Rate With This ID Has Not Been Found!!");
         }
 
         return NoContent();

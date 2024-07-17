@@ -16,112 +16,116 @@ public class AccountService : IAccountService
     private readonly UserManager<UserProfile> _userManager;
     private readonly RoleManager<UserRole> _roleManager;
     private readonly SignInManager<UserProfile> _signInManager;
+    
     private readonly IJwtService _jwtService;
     private readonly INotificationService _notifyService;
     
-    public AccountService(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IJwtService jwtService, INotificationService notifyService, RoleManager<UserRole> roleManager)
+    public AccountService(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IJwtService jwtService,
+                          INotificationService notifyService, RoleManager<UserRole> roleManager)
     {
         _userManager = userManager;
+        _roleManager = roleManager;
         _signInManager = signInManager;
+        
         _jwtService = jwtService;
         _notifyService = notifyService;
-        _roleManager = roleManager;
     }
     
     
     public async Task<(bool isValid, string Message)> Register(UserRegister userRegister)
     {
+        // First Validation
         var userReturned = await _userManager.FindByEmailAsync(userRegister.Email);
         if (userReturned != null) // if userReturned has sth, means a user with this email is already in db
             return (false, "The Email is Already Registered");
-       
+        
         var user = new UserProfile()
         {
             UserName = userRegister.Email,
-            PersonName = userRegister.PersonName,
             Email = userRegister.Email,
+            PersonName = userRegister.PersonName,
             PhoneNumber = userRegister.Phone,
-            DefinedAccountNumbers = new List<int>()
+            DefinedAccountNumbers = new List<string>()
         };
         
         var result = await _userManager.CreateAsync(user, userRegister.Password);
         
-        if (!await _roleManager.RoleExistsAsync(userRegister.Role))
-        {
-            UserRole userRole = new UserRole() { Name = userRegister.Role };
-            await _roleManager.CreateAsync(userRole);
-            await _roleManager.AddClaimAsync(userRole,new Claim(ClaimTypes.Role, userRole.Name));
-        }
-        await _userManager.AddClaimAsync(user,new Claim(ClaimTypes.Role, userRegister.Role));
+        // if (!await _roleManager.RoleExistsAsync(userRegister.Role))
+        // {
+        //     UserRole userRole = new UserRole() { Name = userRegister.Role };
+        //     await _roleManager.CreateAsync(userRole);
+        //     await _roleManager.AddClaimAsync(userRole,new Claim(ClaimTypes.Role, userRole.Name));
+        // }
+        await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.Role, userRegister.Role));
         await _userManager.AddToRoleAsync(user, userRegister.Role);
         
         if (result.Succeeded)
-        {
-            await SendConfirmationEmail(user);
-            return (true, "Please Check Your Email");
-        }
+            return await SendConfirmationEmail(user);
+        
         else
         {
-            string errorMessage = string.Join(" | ", result.Errors.Select(e => e.Description)); //error1 | error2
+            string errorMessage = string.Join(" | ", result.Errors.Select(e => e.Description)); // error1 | error2
             return (false , errorMessage);
         }   
     }
 
 
-    public async Task<(bool isValid, string? Message, object? obj)> Login(UserLogin loginDTO)
+    public async Task<(bool isValid, string? Message, AuthenticationResponse? obj)> Login(UserLogin loginDTO)
     {
         var result = await _signInManager.PasswordSignInAsync(loginDTO.Email, loginDTO.Password, isPersistent: false, lockoutOnFailure: false);
         UserProfile? user = await _userManager.FindByEmailAsync(loginDTO.Email);
 
+        // Validations
         if (result.IsNotAllowed)
             return (false, "You Are Not Allowed to Log in (Have You Tried to Confirm Your Email?)", null);
         
-        else if (result.Succeeded)
+        if (user == null)
+            return (false, "Invalid Email", null); 
+        
+        if (!await _userManager.CheckPasswordAsync(user, loginDTO.Password))
+            return (false, "Invalid Password", null);
+        
+        // If Everything is Correct
+        if (result.Succeeded)
         {
-            if (user == null)
-                return (false, "Your Email has not been Found!!", null);
-            
-            var userRoles = await _userManager.GetRolesAsync(user);
-            var authClaims = new List<Claim>();
-            foreach (var userRole in userRoles)
-            {
-                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-            }
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            // var authClaims = new List<Claim>();
+            // foreach (var userRole in userRoles)
+            // {
+            //     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+            // }
             
             // Sign in
             await _signInManager.SignInAsync(user, isPersistent: false);
 
-            var authenticationResponse = _jwtService.CreateJwtToken(user,authClaims);
-
+            var authenticationResponse = _jwtService.CreateJwtToken(user,userClaims.ToList());
             return (true, null, authenticationResponse);
         }
-        else if (user == null)
-            return (false, "Invalid email", null); 
-        
-        else if (!await _userManager.CheckPasswordAsync(user, loginDTO.Password))
-            return (false, "Invalid password", null);
 
         return (false, null, null);
     }
         
         
-    public async Task<(bool isValid, string? Message)> Logout()
-    {
-        await _signInManager.SignOutAsync();
-
-        return (true, "You Have Successfully Logged Out");
-    }
+    // public async Task<(bool isValid, string? Message)> Logout()
+    // {
+    //     await _signInManager.SignOutAsync();
+    //
+    //     return (true, "You Have Successfully Logged Out");
+    // }
     
     
-    public async Task<(bool isValid, string? Message, object? obj)> ConfirmEmail(Guid userId, string token)
+    public async Task<(bool isValid, string? Message, AuthenticationResponse? obj)> ConfirmEmail(Guid userId, string token)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
-        
-        if (userId == null || token == null)
-            return (false, "Link expired", null);
-        
-        else if (user == null)
+
+        if (!Guid.TryParse(userId.ToString(), out Guid guidResult))
+            return (false, "userid is invalid", null);
+            
+        if (user == null)
             return (false, "User not Found", null);
+        
+        if (string.IsNullOrEmpty(token))
+            return (false, "Link Expired (Or Token is Invalid)", null);
         
         else
         {
@@ -130,15 +134,16 @@ public class AccountService : IAccountService
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
+
+                var userClaims = await _userManager.GetClaimsAsync(user);
+                // var userRoles = await _userManager.GetRolesAsync(user);
+                // var authClaims = new List<Claim>();
+                // foreach (var userRole in userRoles)
+                // {
+                //     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                // }
                 
-                var userRoles = await _userManager.GetRolesAsync(user);
-                var authClaims = new List<Claim>();
-                foreach (var userRole in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                }
-                
-                var authenticationResponse = _jwtService.CreateJwtToken(user,authClaims);
+                var authenticationResponse = _jwtService.CreateJwtToken(user, userClaims.ToList());
                 return (true, null, authenticationResponse);
             }
             else
@@ -147,11 +152,11 @@ public class AccountService : IAccountService
     }
     
     
-    public async Task<(bool isValid, string? Message)> AddDefinedAccount(int definedAccountAddNumber, ClaimsPrincipal userClaims)
+    public async Task<(bool isValid, string? Message)> AddDefinedAccount(string definedAccountAddNumber, ClaimsPrincipal userClaims)
     {
         var existingUser = await _userManager.GetUserAsync(userClaims);
         if (existingUser == null)
-            return (false, "Try to Log-In Again,if it doesn't worked it seems you haven't signed up!!");
+            return (false, "Try to Log-In Again, if it doesn't worked it seems you haven't signed up!!");
         
         existingUser.DefinedAccountNumbers!.Add(definedAccountAddNumber);
         
@@ -164,10 +169,12 @@ public class AccountService : IAccountService
     
     
     
-    private async Task SendConfirmationEmail(UserProfile? user)
+    // Private Methods //
+    
+    private async Task<(bool isValid, string message)> SendConfirmationEmail(UserProfile user)
     {
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var confirmationLink = $"http://localhost:7160/confirm-email?userId={user.Id}&Token={token}";
-        await _notifyService.SendAsync(user.Email, "Open and Confirm Your Email", $"Please confirm your account by clicking <a href='{confirmationLink}'>this link</a>;.", true);
+        var confirmationLink = $"http://localhost:7160/api/Account/confirm-email?userId={user.Id}&Token={token}";
+        return await _notifyService.SendAsync(user.Email!, "Open and Confirm Your Email", $"Please confirm your account by clicking <a href='{confirmationLink}'>this link</a>;.", true);
     }
 }

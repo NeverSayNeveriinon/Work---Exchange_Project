@@ -1,6 +1,8 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
+using Core.DTO.CurrencyDTO;
 using Core.DTO.ExchangeValueDTO;
+using Core.Enums;
 using Core.ServiceContracts;
 
 namespace Core.Services;
@@ -61,6 +63,28 @@ public class ExchangeValueService : IExchangeValueService
         return exchangeValueResponse;;
     }
 
+    public async Task<decimal?> GetEquivalentUSDByCurrencyType(string? currencyType)
+    {
+        // if 'currencyType' is null
+        ArgumentNullException.ThrowIfNull(currencyType,"The 'currencyType' parameter is Null");
+
+        var sourceCurrencyResponse = await _currencyService.GetCurrencyByCurrencyType(currencyType);
+        var usdCurrencyResponse = await _currencyService.GetCurrencyByCurrencyType("USD");
+
+        // if 'id' doesn't exist in 'currencies list' 
+        if (sourceCurrencyResponse == null)
+        {
+            return null;
+        }
+
+        var valueToBeMultiplied = await _exchangeValueRepository.GetEquivalentUSDByCurrencyTypeAsync(sourceCurrencyResponse.Id, usdCurrencyResponse.Id);
+        if (valueToBeMultiplied == null)
+        {
+            return null;
+        }
+        return valueToBeMultiplied;
+    }
+    
     public async Task<ExchangeValueResponse?> UpdateExchangeValue(ExchangeValueUpdateRequest? exchangeValueUpdateRequest, int? exchangeValueID)
     {
         // if 'exchangeValue ID' is null

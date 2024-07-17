@@ -1,4 +1,5 @@
 ﻿using Core.DTO.ExchangeValueDTO;
+using Core.Helpers;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -13,10 +14,12 @@ namespace API.Controllers;
 public class ExchangeValueController : ControllerBase
 {
     private readonly IExchangeValueService _exchangeValueService;
+    private readonly IValidator _validator ;
     
-    public ExchangeValueController(IExchangeValueService exchangeValueService)
+    public ExchangeValueController(IExchangeValueService exchangeValueService, IValidator validator)
     {
         _exchangeValueService = exchangeValueService;
+        _validator = validator;
     }
     
     [Route("index")]
@@ -66,6 +69,14 @@ public class ExchangeValueController : ControllerBase
     // Post: api/ExchangeValue
     public async Task<IActionResult> PostExchangeValue(ExchangeValueAddRequest exchangeValueAddRequest)
     {
+        bool isValid = await _validator.ExistsInCurrentCurrencies(exchangeValueAddRequest.FirstCurrencyType) &&
+                       await _validator.ExistsInCurrentCurrencies(exchangeValueAddRequest.FirstCurrencyType);
+        if (!isValid)
+        {
+            ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
+            return BadRequest(ModelState);
+        }
+        
         var exchangeValueResponse = await _exchangeValueService.AddExchangeValue(exchangeValueAddRequest);
         
         return CreatedAtAction(nameof(GetExchangeValue), new {exchangeValueID = exchangeValueResponse.Id}, new { exchangeValueResponse.Id });

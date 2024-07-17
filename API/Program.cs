@@ -1,11 +1,18 @@
 using System.Security.Claims;
 using System.Text;
+using API.Helpers;
+using ConnectingApps.SmartInject;
 using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
 using Core.Domain.RepositoryContracts;
+using Core.Helpers;
 using Core.ServiceContracts;
 using Core.Services;
+using IdempotentAPI.Cache.DistributedCache.Extensions.DependencyInjection;
+using IdempotentAPI.Core;
+using IdempotentAPI.Extensions.DependencyInjection;
 using Infrastructure.DatabaseContext;
+using Infrastructure.ExternalServices;
 using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -18,7 +25,6 @@ using Microsoft.OpenApi.Models;
 namespace API;
 
 // TODO: Add Exception Middleware
-// TODO: Change ids to  Custom ID
 public class Program
 {
     public static void Main(string[] args)
@@ -45,9 +51,10 @@ public class Program
         builder.Services.AddScoped<IExchangeValueService, ExchangeValueService>();
         
         builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
-        builder.Services.AddScoped<ITransactionService, TransactionService>();
+        builder.Services.AddLazyScoped<ITransactionService, TransactionService>();
 
-
+        builder.Services.AddScoped<IValidator, Validator>();
+        
         
         // DataBase IOC
         var DBconnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -149,14 +156,18 @@ public class Program
                 });
             });
         });
-        
+
+        builder.Services.AddIdempotentAPI(new IdempotencyOptions());
+        builder.Services.AddDistributedMemoryCache(); 
+        builder.Services.AddIdempotentAPIUsingDistributedCache();
         
         
         var app = builder.Build();
-
+        
+        app.CreateDatabase<AppDbContext>();
         
         // Middlewares //
-        
+            
         app.UseHsts();
         app.UseHttpsRedirection();
         

@@ -3,7 +3,7 @@ using System.Net.Mail;
 using Core.Domain.ExternalServicesContracts;
 using Microsoft.Extensions.Configuration;
 
-namespace Core.Services;
+namespace Infrastructure.ExternalServices;
 
 // TODO: Options Pattern 
 public class EmailService : INotificationService
@@ -15,23 +15,29 @@ public class EmailService : INotificationService
         _config = config;
     }
     
-    public Task SendAsync(string toEmail, string subject, string body, bool isBodyHTML)
+    public async Task<(bool isValid, string message)> SendAsync(string toEmail, string subject, string body, bool isBodyHTML)
     {
-        string MailServer = _config["EmailSettings:MailServer"];
-        int Port = int.Parse(_config["EmailSettings:MailPort"]);
+        var MailServer = _config["EmailSettings:MailServer"];
+        var Port = _config["EmailSettings:MailPort"];
         
-        string FromEmail = _config["EmailSettings:FromEmail"];
-        string Password = _config["EmailSettings:Password"];
+        var FromEmail = _config["EmailSettings:FromEmail"];
+        var Password = _config["EmailSettings:Password"];
+
+        if ( new List<string?>(){MailServer,Port,FromEmail,Password}.Exists(string.IsNullOrEmpty) )
+            throw new InvalidOperationException("Check EmailSettings(MailServer,MailPort,FromEmail,Password) In Your Configuration");
         
-        var client = new SmtpClient(MailServer, Port)
+        var PortNumber = int.Parse(Port);
+        var client = new SmtpClient(MailServer, PortNumber)
         {
             Credentials = new NetworkCredential(FromEmail, Password),
             EnableSsl = true,
         };
-        MailMessage mailMessage = new MailMessage(FromEmail, toEmail, subject, body)
-        {
-            IsBodyHtml = isBodyHTML
-        };
-        return client.SendMailAsync(mailMessage);
+        
+        MailMessage mailMessage = new MailMessage(FromEmail!, toEmail, subject, body) { IsBodyHtml = isBodyHTML };
+        
+        try { await client.SendMailAsync(mailMessage); }
+        catch (Exception e) { return (false, "There is Something Wrong in Sending The Confirmation Email to You, Please Try Again"); }
+
+        return (true, "The Confirmation Link Has Successfully Sent\n!!Please Check Your Email!!");
     }
 }

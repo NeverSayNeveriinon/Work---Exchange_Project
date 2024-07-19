@@ -14,16 +14,16 @@ namespace Core.Services;
 public class CurrencyAccountService : ICurrencyAccountService
 {
     private readonly ICurrencyAccountRepository _accountRepository;
-    // private readonly ITransactionService _transactionService;
+    private readonly Lazy<ITransactionService> _transactionService;
     private readonly ICurrencyService _currencyService;
     private readonly UserManager<UserProfile> _userManager;
 
-    public CurrencyAccountService(ICurrencyAccountRepository accountRepository, UserManager<UserProfile> userManager, ICurrencyService currencyService)
+    public CurrencyAccountService(ICurrencyAccountRepository accountRepository, UserManager<UserProfile> userManager, ICurrencyService currencyService, Lazy<ITransactionService> transactionService)
     {
         _accountRepository = accountRepository;
         _userManager = userManager;
         _currencyService = currencyService;
-        // _transactionService = transactionService;
+        _transactionService = transactionService;
     }
 
     public async Task<CurrencyAccountResponse> AddCurrencyAccount(CurrencyAccountAddRequest? currencyAccountAddRequest, ClaimsPrincipal userClaims)
@@ -31,17 +31,20 @@ public class CurrencyAccountService : ICurrencyAccountService
         // 'CurrencyAccountAddRequest' is Null //
         ArgumentNullException.ThrowIfNull(currencyAccountAddRequest,"The 'CurrencyAccountAddRequest' object parameter is Null");
         
-        // var transactionAddRequest = new TransactionDepositAddRequest()
-        // {
-        //     AccountNumber = currencyAccountResponse.Number,
-        //     money = new MoneyRequest(){Amount = moneyToOpenAccount, CurrencyType = currencyType}
-        // };
-        //         
-        // var f = await _transactionService.AddDepositTransaction(transactionAddRequest);
-
         var currency = await _currencyService.GetCurrencyByCurrencyType(currencyAccountAddRequest.CurrencyType);
         var user = await _userManager.GetUserAsync(userClaims);
+        
         CurrencyAccount currencyAccount = currencyAccountAddRequest.ToCurrencyAccount(user?.Id, currency?.Id);
+        
+        var transactionAddRequest = new TransactionDepositAddRequest()
+        {
+            AccountNumber = currencyAccount.Number,
+            Money = new MoneyRequest(){Amount = currencyAccountAddRequest.MoneyToOpenAccount.Amount.Value, CurrencyType = currencyAccountAddRequest.MoneyToOpenAccount.CurrencyType}
+        };
+                
+        var f = await _transactionService.Value.AddDepositTransaction(transactionAddRequest);
+
+        
         CurrencyAccount currencyAccountReturned = await _accountRepository.AddCurrencyAccountAsync(currencyAccount);
         await _accountRepository.SaveChangesAsync();
 
@@ -57,13 +60,13 @@ public class CurrencyAccountService : ICurrencyAccountService
         return currencyAccountResponses;
     }
 
-    public async Task<CurrencyAccountResponse?> GetCurrencyAccountByNumber(int? number)
+    public async Task<CurrencyAccountResponse?> GetCurrencyAccountByNumber(string? number)
     {
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(number,"The CurrencyAccount'number' parameter is Null");
 
         // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(number.Value);
+        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(number);
 
         // if 'id' doesn't exist in 'currencyAccounts list' 
         if (currencyAccount == null)
@@ -77,7 +80,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         return currencyAccountResponse;;
     }
 
-    public async Task<CurrencyAccountResponse?> UpdateCurrencyAccount(CurrencyAccountUpdateRequest? currencyAccountUpdateRequest, int? currencyAccountNumber)
+    public async Task<CurrencyAccountResponse?> UpdateCurrencyAccount(CurrencyAccountUpdateRequest? currencyAccountUpdateRequest, string? currencyAccountNumber)
     {
         // if 'currencyAccount Number' is null
         ArgumentNullException.ThrowIfNull(currencyAccountNumber,"The CurrencyAccount'Number' parameter is Null");
@@ -90,7 +93,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         // ValidationHelper.ModelValidation(CurrencyAccountUpdateRequest);
 
         // const string includeEntities = "Director,Writers,Artists,Genres"; 
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(currencyAccountNumber.Value);
+        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(currencyAccountNumber);
         
         // if 'Number' is invalid (doesn't exist)
         if (currencyAccount == null)
@@ -105,12 +108,12 @@ public class CurrencyAccountService : ICurrencyAccountService
         return updatedCurrencyAccount.ToCurrencyAccountResponse();
     }
     
-    public async Task<bool?> DeleteCurrencyAccount(int? number)
+    public async Task<bool?> DeleteCurrencyAccount(string? number)
     {
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(number,"The CurrencyAccount'Number' parameter is Null");
 
-        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(number.Value);
+        CurrencyAccount? currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(number);
         
         // if 'Number' is invalid (doesn't exist)
         if (currencyAccount == null) 

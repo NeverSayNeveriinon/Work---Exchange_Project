@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
 
@@ -6,6 +7,7 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountUpdateRequest
 {
+    [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
     public string CurrencyType { get; set; }
 }
 
@@ -15,9 +17,7 @@ public static partial class CurrencyAccountExtensions
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
-            Number = 0,
             Balance = 0,
-            // Currency = new Currency(){CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyAccountUpdateRequest.CurrencyType)},
             CurrencyID = currencyId.Value
         };
 

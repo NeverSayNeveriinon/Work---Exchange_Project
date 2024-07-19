@@ -6,10 +6,11 @@ namespace Core.Domain.IdentityEntities;
 
 public class UserProfile : IdentityUser<Guid>
 {
-    [StringLength(30, ErrorMessage = "The 'Person Name' Can't Be More Than 30 Characters")]
+    [StringLength(30)]
     public string? PersonName { get; set; }
     
-    public List<int>? DefinedAccountNumbers { get; set; } = new List<int>();
+    [StringLength(500)]
+    public List<string>? DefinedAccountNumbers { get; set; } = new List<string>();
     
     // Relations //
     #region Relations

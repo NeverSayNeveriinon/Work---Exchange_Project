@@ -1,5 +1,7 @@
 ﻿using Core.DTO.TransactionDTO;
+using Core.Helpers;
 using Core.ServiceContracts;
+using IdempotentAPI.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,13 +11,16 @@ namespace API.Controllers;
 [Route("api/[controller]")] 
 [ApiController]
 [Authorize]
+// TODO: Add Transaction Exchange
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
+    private readonly IValidator _validator ;
     
-    public TransactionController(ITransactionService transactionService)
+    public TransactionController(ITransactionService transactionService, IValidator validator)
     {
         _transactionService = transactionService;
+        _validator = validator;
     }
     
     [Route("index")]
@@ -61,20 +66,53 @@ public class TransactionController : ControllerBase
     /// </remarks>
     /// <response code="201">The New Transaction is successfully added to Transactions List</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
+    [Idempotent(ExpireHours = 1)]
     [HttpPost("Transfer")]
     // Post: api/Transaction/Transfer/{transactionAddRequest}
-    public async Task<IActionResult> AddTransferTransaction(TransactionTransferAddRequest transactionAddRequest)
+    public async Task<IActionResult> AddTransferTransaction(TransactionTransferAddRequest transactionAddRequest, [FromHeader]string? IdempotencyKey)
     {
-        var transactionResponse = await _transactionService.AddTransferTransaction(transactionAddRequest);
+        if (string.IsNullOrEmpty(IdempotencyKey))
+        {
+            return BadRequest("You Must Set 'IdempotencyKey' in Header");
+        }
+        var transactionResponse = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
         
-        return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+        // return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+        return Ok("Please Confirm The Transaction");
     }
     
+    [Idempotent(ExpireHours = 1)]
     [HttpPost("Balance-Increase")]
     // Post: api/Transaction/Balance-Increase/{transactionAddRequest}
-    public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest)
+    public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest, [FromHeader]string? IdempotencyKey)
     {
+        if (string.IsNullOrEmpty(IdempotencyKey))
+        {
+            return BadRequest("You Must Set 'IdempotencyKey' in Header");
+        }
+        
+        bool isValid = await _validator.ExistsInCurrentCurrencies(transactionAddRequest.Money.CurrencyType);
+        if (!isValid)
+        {
+            ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
+            return BadRequest(ModelState);
+        }
+        
         var transactionResponse = await _transactionService.AddDepositTransaction(transactionAddRequest);
+        
+        // return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+        return Ok("Please Confirm The Transaction");
+    } 
+    
+    [HttpPatch("Confirm")]
+    // Post: api/Transaction/Confirm/{transactionId}
+    public async Task<IActionResult> ConfirmTransaction(int transactionId, bool isConfirmed)
+    {
+        var transactionResponse = await _transactionService.UpdateIsConfirmedOfTransaction(transactionId, isConfirmed, DateTime.Now.TimeOfDay);
+        if (transactionResponse is null)
+        {
+            return NotFound("notfound:");
+        }
         
         return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
     }

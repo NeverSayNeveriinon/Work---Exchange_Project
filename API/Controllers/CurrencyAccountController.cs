@@ -1,6 +1,7 @@
 ﻿using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
 using Core.DTO.TransactionDTO;
+using Core.Helpers;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -14,10 +15,12 @@ namespace API.Controllers;
 public class CurrencyAccountController : ControllerBase
 {
     private readonly ICurrencyAccountService _currencyAccountService;
+    private readonly IValidator _validator;
     
-    public CurrencyAccountController(ICurrencyAccountService currencyAccountService)
+    public CurrencyAccountController(ICurrencyAccountService currencyAccountService, IValidator validator)
     {
         _currencyAccountService = currencyAccountService;
+        _validator = validator;
     }
     
     [Route("index")]
@@ -68,8 +71,16 @@ public class CurrencyAccountController : ControllerBase
     // Post: api/CurrencyAccount/{moneyToOpenAccount}
     public async Task<IActionResult> PostCurrencyAccount(CurrencyAccountAddRequest currencyAccountAdd)
     {
+        bool isValid = await _validator.ExistsInCurrentCurrencies(currencyAccountAdd.CurrencyType) &&
+                       await _validator.ExistsInCurrentCurrencies(currencyAccountAdd.MoneyToOpenAccount.CurrencyType);
+        if (!isValid)
+        {
+            ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
+            return BadRequest(ModelState);
+        }
+        
+        
         var currencyAccountResponse = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
-
         
         return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountNumber = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
     }    
@@ -89,7 +100,7 @@ public class CurrencyAccountController : ControllerBase
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
     [HttpGet("{currencyAccountNumber:int}")]
     // GET: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccount(int currencyAccountNumber)
+    public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccount(string currencyAccountNumber)
     {
         CurrencyAccountResponse? currencyAccountObject = await _currencyAccountService.GetCurrencyAccountByNumber(currencyAccountNumber);
         if (currencyAccountObject is null)
@@ -116,10 +127,17 @@ public class CurrencyAccountController : ControllerBase
     /// <response code="204">The CurrencyAccount is successfully found and has been updated with New CurrencyAccount</response>
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
     // /// <response code="400">The Number in Url doesn't match with the Number in Body</response>
-    [HttpPut("{currencyAccountNumber:int}")]
+    [HttpPut]
     // Put: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<IActionResult> PutCurrencyAccount(CurrencyAccountUpdateRequest currencyAccountUpdateRequest, int currencyAccountNumber)
+    public async Task<IActionResult> PutCurrencyAccount(CurrencyAccountUpdateRequest currencyAccountUpdateRequest, string currencyAccountNumber)
     {
+        bool isValid = await _validator.ExistsInCurrentCurrencies(currencyAccountUpdateRequest.CurrencyType);
+        if (!isValid)
+        {
+            ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
+            return BadRequest(ModelState);
+        }
+        
         CurrencyAccountResponse? existingObject = await _currencyAccountService.UpdateCurrencyAccount(currencyAccountUpdateRequest, currencyAccountNumber);
         if (existingObject is null)
         {
@@ -142,9 +160,9 @@ public class CurrencyAccountController : ControllerBase
     /// </remarks>
     /// <response code="204">The CurrencyAccount is successfully found and has been deleted from CurrencyAccounts List</response>
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
-    [HttpDelete("{currencyAccountNumber:int}")]
+    [HttpDelete]
     // Delete: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<IActionResult> DeleteCurrencyAccount(int currencyAccountNumber)
+    public async Task<IActionResult> DeleteCurrencyAccount(string currencyAccountNumber)
     {
         bool? currencyAccountObject = await _currencyAccountService.DeleteCurrencyAccount(currencyAccountNumber);
         if (currencyAccountObject is null)

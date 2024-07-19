@@ -10,7 +10,6 @@ namespace Infrastructure.DatabaseContext;
 // TODO: Move entity Config to separate file   
 public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
 {
-    // public virtual DbSet<UserProfile> UserProfiles { get; set; }
     public virtual DbSet<CurrencyAccount> CurrencyAccounts { get; set; }
     public virtual DbSet<Currency> Currencies { get; set; }
     public virtual DbSet<ExchangeValue> ExchangeValues { get; set; }
@@ -55,9 +54,10 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
                 Email = "admin@gmail.com",
                 NormalizedEmail = "admin@gmail.com".ToUpper(),
                 EmailConfirmed = true,
-                DefinedAccountNumbers = new List<int>(),
+                DefinedAccountNumbers = new List<string>(),
                 PhoneNumber = "09991234567",
                 ConcurrencyStamp = Guid.Parse("D594E4F9-C74E-43A4-90AC-F7FEC50C15E1").ToString(),
+                SecurityStamp = Guid.Parse("A05F9E4A-A0CB-483C-B242-285E0E8FA27D").ToString(),
                 PasswordHash = null
             };
             adminProfile.PasswordHash = ph.HashPassword(adminProfile, "adminpass");
@@ -76,7 +76,7 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             .Property(entity => entity.DefinedAccountNumbers)
             .HasConversion(
                 v => JsonConvert.SerializeObject(v),
-                v1 => JsonConvert.DeserializeObject<List<int>>(v1)!);
+                v1 => JsonConvert.DeserializeObject<List<string>>(v1)!);
 
         modelBuilder.Entity<UserProfile>()
             .Ignore(entity => entity.PhoneNumber)
@@ -87,7 +87,7 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             .Property(entity => entity.CRate)
             .HasPrecision(6,3);
         
-        // modelBuilder.Entity<CommissionRateRepository>()
+        // modelBuilder.Entity<CommissionRate>()
         //     .Property(entity => entity.MaxUSDRange)
         //     .HasPrecision(20,3);
         

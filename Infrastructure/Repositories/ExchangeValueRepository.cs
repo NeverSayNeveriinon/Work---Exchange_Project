@@ -33,7 +33,16 @@ public class ExchangeValueRepository : IExchangeValueRepository
 
         return exchangeValue;
     }
+    
+    public async Task<decimal?> GetEquivalentUSDByCurrencyTypeAsync(int? sourceCurrencyId, int? usdCurrencyId)
+    {
+        ExchangeValue? exchangeValue = await _dbContext.ExchangeValues
+                                                .AsNoTracking()
+                                                .FirstOrDefaultAsync(exchangeValueItem => exchangeValueItem.FirstCurrencyId == sourceCurrencyId && 
+                                                                                            exchangeValueItem.FirstCurrencyId == usdCurrencyId);
 
+        return exchangeValue?.UnitOfFirstValue;
+    }
      
     public async Task<ExchangeValue> AddExchangeValueAsync(ExchangeValue exchangeValue)
     {

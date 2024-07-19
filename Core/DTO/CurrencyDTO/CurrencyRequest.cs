@@ -4,10 +4,10 @@ using Core.Enums;
 
 namespace Core.DTO.CurrencyDTO;
 
-// TODO: Change Aloedalues
+// TODO: Change AlowedValues
 public class CurrencyRequest
 {
-    [AllowedValues("USD","Euro","Rial", ErrorMessage = "The Value Should be one of these 'USD,Euro,Rial' ")]
+    [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
     public string CurrencyType { get; set; } 
 }
 

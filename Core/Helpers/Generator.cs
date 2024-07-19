@@ -10,7 +10,7 @@ public static class Generator
     {
         // String that contain both alphabets and numbers 
         String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; 
-        int size = 8; 
+        int size = 10; 
   
         // Initializing the empty string 
         StringBuilder randomstring = new StringBuilder(); 

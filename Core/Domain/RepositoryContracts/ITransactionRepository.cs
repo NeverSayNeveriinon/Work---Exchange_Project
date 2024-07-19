@@ -10,6 +10,7 @@ public interface ITransactionRepository
     public Transaction Attach(Transaction transaction);
     public void LoadReferences(Transaction transaction);
     public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction);
+    public Transaction UpdateIsConfirmedOfTransaction(Transaction transaction, bool isConfirmed);
     public bool DeleteTransaction(Transaction transaction);
     public Task SaveChangesAsync();
 }

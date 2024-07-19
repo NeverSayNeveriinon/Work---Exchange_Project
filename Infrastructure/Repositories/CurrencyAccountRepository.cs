@@ -28,7 +28,7 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
         return accountsList;
     }
 
-    public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(int number)
+    public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(string number)
     {
         CurrencyAccount? account = await _dbContext.CurrencyAccounts
                                               .Include(property => property.Owner)

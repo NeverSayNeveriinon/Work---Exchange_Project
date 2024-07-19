@@ -16,7 +16,7 @@ public class JwtService : IJwtService
 
     public JwtService(IConfiguration configuration)
     {
-    _configuration = configuration;
+        _configuration = configuration;
     }
 
 
@@ -24,34 +24,41 @@ public class JwtService : IJwtService
     /// Generates a JWT token using the given user's information and the configuration settings.
     /// </summary>
     /// <param name="user">UserProfile object</param>
+    /// <param name="claims">User Claims</param>
     /// <returns>AuthenticationResponse that includes token</returns>
     public AuthenticationResponse CreateJwtToken(UserProfile user, List<Claim> claims)
     {
-        DateTime expiration = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:EXPIRATION_MINUTES"]));
+        var jwt_EXPIRATION_MINUTES = _configuration["Jwt:EXPIRATION_MINUTES"];
+        var jwt_key = _configuration["Jwt:Key"];
+        var jwt_Issuer = _configuration["Jwt:Issuer"];
+        var jwt_Audience = _configuration["Jwt:Audience"];
+        
+        if ( new List<string?>(){jwt_EXPIRATION_MINUTES,jwt_key,jwt_Issuer,jwt_Audience}.Exists(string.IsNullOrEmpty) )
+            throw new InvalidOperationException("Check Jwt Settings (EXPIRATION_MINUTES,Key,Issuer,Audience) In Your Configuration");
+        
+        var expiration = DateTime.Now.AddMinutes(Convert.ToDouble(jwt_EXPIRATION_MINUTES));
  
         claims.AddRange(
         [
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), //Subject (user id)
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()), //JWT unique ID
-            // new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()), //Issued at (date and time of token generation)
             new Claim(ClaimTypes.Name, user.Email), //Unique name of the user (Email)
             new Claim(ClaimTypes.Email, user.Email), //Unique email of the user (Email)
+            // new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()), //Issued at (date and time of token generation)
         ]);
 
-        SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-
-        SigningCredentials signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-        JwtSecurityToken tokenGenerator = new JwtSecurityToken
+        var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt_key!));
+        var signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        var tokenGenerator = new JwtSecurityToken
         (
-            _configuration["Jwt:Issuer"],
-            _configuration["Jwt:Audience"],
+            jwt_Issuer,
+            jwt_Audience,
             claims,
             expires: expiration,
             signingCredentials: signingCredentials
         );
 
-        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+        var tokenHandler = new JwtSecurityTokenHandler();
         string token = tokenHandler.WriteToken(tokenGenerator);
 
         // Create and return an AuthenticationResponse object containing the token, user email and token expiration time.

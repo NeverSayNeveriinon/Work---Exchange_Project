@@ -22,16 +22,7 @@ public class CurrencyAccountController : ControllerBase
         _currencyAccountService = currencyAccountService;
         _validator = validator;
     }
-    
-    [Route("index")]
-    [ApiExplorerSettings(IgnoreApi = true)] // For not showing in 'Swagger'
-    public IActionResult Index()
-    {
-        return Content("Here is the \"CurrencyAccount\" Home Page");
-    }
-    
-    
-    
+
     /// <summary>
     /// Get All Existing CurrencyAccounts
     /// </summary>
@@ -45,9 +36,9 @@ public class CurrencyAccountController : ControllerBase
     /// <response code="200">The CurrencyAccounts List is successfully returned</response>
     [HttpGet]
     // GET: api/CurrencyAccount
-    public async Task<ActionResult<IEnumerable<CurrencyAccountResponse>>> GetCurrencyAccounts()
+    public async Task<ActionResult<IEnumerable<CurrencyAccountResponse>>> GetAllCurrencyAccounts()
     {
-        List<CurrencyAccountResponse> currencyAccountsList = await _currencyAccountService.GetAllCurrencyAccounts();
+        var currencyAccountsList = await _currencyAccountService.GetAllCurrencyAccounts(User);
         return Ok(currencyAccountsList);
     }
     
@@ -67,9 +58,9 @@ public class CurrencyAccountController : ControllerBase
     /// </remarks>
     /// <response code="201">The New CurrencyAccount is successfully added to CurrencyAccounts List</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
-    [HttpPost("moneyToOpenAccount:decimal")]
-    // Post: api/CurrencyAccount/{moneyToOpenAccount}
-    public async Task<IActionResult> PostCurrencyAccount(CurrencyAccountAddRequest currencyAccountAdd)
+    [HttpPost]
+    // Post: api/CurrencyAccount
+    public async Task<IActionResult> AddCurrencyAccount(CurrencyAccountAddRequest currencyAccountAdd)
     {
         bool isValid = await _validator.ExistsInCurrentCurrencies(currencyAccountAdd.CurrencyType) &&
                        await _validator.ExistsInCurrentCurrencies(currencyAccountAdd.MoneyToOpenAccount.CurrencyType);
@@ -79,10 +70,11 @@ public class CurrencyAccountController : ControllerBase
             return BadRequest(ModelState);
         }
         
+        var (isValidCurrencyAccount, message, currencyAccountResponse) = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
+        if (!isValidCurrencyAccount)
+            return BadRequest(message);
         
-        var currencyAccountResponse = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
-        
-        return CreatedAtAction(nameof(GetCurrencyAccount), new {currencyAccountNumber = currencyAccountResponse.Number}, new { currencyAccountResponse.Number });
+        return CreatedAtAction(nameof(GetCurrencyAccountByNumber), new {currencyAccountNumber = currencyAccountResponse!.Number}, new { currencyAccountResponse.Number });
     }    
     
     
@@ -98,53 +90,19 @@ public class CurrencyAccountController : ControllerBase
     /// </remarks>
     /// <response code="200">The CurrencyAccount is successfully found and returned</response>
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
-    [HttpGet("{currencyAccountNumber:int}")]
+    [HttpGet]
     // GET: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccount(string currencyAccountNumber)
+    public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccountByNumber(string currencyAccountNumber)
     {
-        CurrencyAccountResponse? currencyAccountObject = await _currencyAccountService.GetCurrencyAccountByNumber(currencyAccountNumber);
-        if (currencyAccountObject is null)
-        {
-            return NotFound("notfound:");
-        }
+        var (isValid, message, currencyAccountResponse) = await _currencyAccountService.GetCurrencyAccountByNumber(currencyAccountNumber, User);
         
-        return Ok(currencyAccountObject);
-    }
-    
-    
-    /// <summary>
-    /// Update an Existing CurrencyAccount Based on Given Number and New CurrencyAccount Object
-    /// </summary>
-    /// <returns>Nothing</returns>
-    /// <remarks>       
-    /// Sample request:
-    /// 
-    ///     Put -> "api/CurrencyAccount/..."
-    ///     {
-    ///     }
-    /// 
-    /// </remarks>
-    /// <response code="204">The CurrencyAccount is successfully found and has been updated with New CurrencyAccount</response>
-    /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
-    // /// <response code="400">The Number in Url doesn't match with the Number in Body</response>
-    [HttpPut]
-    // Put: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<IActionResult> PutCurrencyAccount(CurrencyAccountUpdateRequest currencyAccountUpdateRequest, string currencyAccountNumber)
-    {
-        bool isValid = await _validator.ExistsInCurrentCurrencies(currencyAccountUpdateRequest.CurrencyType);
+        if (!isValid && message is null)
+            return NotFound("!!A Currency Account With This Number Has Not Been Found!!");
+        
         if (!isValid)
-        {
-            ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
-            return BadRequest(ModelState);
-        }
+            return BadRequest(message);
         
-        CurrencyAccountResponse? existingObject = await _currencyAccountService.UpdateCurrencyAccount(currencyAccountUpdateRequest, currencyAccountNumber);
-        if (existingObject is null)
-        {
-            return NotFound("notfound:");
-        }
-        
-        return NoContent();
+        return Ok(currencyAccountResponse);
     }
     
     
@@ -164,12 +122,13 @@ public class CurrencyAccountController : ControllerBase
     // Delete: api/CurrencyAccount/{currencyAccountNumber}
     public async Task<IActionResult> DeleteCurrencyAccount(string currencyAccountNumber)
     {
-        bool? currencyAccountObject = await _currencyAccountService.DeleteCurrencyAccount(currencyAccountNumber);
-        if (currencyAccountObject is null)
-        {
-            return NotFound("notfound:");
-        }
-
+        var (isValid, isFound, message) = await _currencyAccountService.DeleteCurrencyAccount(currencyAccountNumber, User);
+        
+        if (!isValid && !isFound)
+            return NotFound("!!A Currency Account With This Number Has Not Been Found!!");
+        if (!isValid)
+            return BadRequest(message);
+        
         return NoContent();
     }
 }

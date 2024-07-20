@@ -9,13 +9,11 @@ namespace Infrastructure.Repositories;
 public class CurrencyAccountRepository : ICurrencyAccountRepository
 {
     private readonly AppDbContext _dbContext;
-
     
     public CurrencyAccountRepository(AppDbContext dbContext)
     {
         _dbContext = dbContext;
     }
-   
 
     public async Task<List<CurrencyAccount>> GetAllCurrencyAccountsAsync()
     {
@@ -23,14 +21,24 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
                                                   .Include(property => property.Currency)
                                                   .AsNoTracking();
         
-        List<CurrencyAccount> accountsList = await accounts.ToListAsync();
+        var accountsList = await accounts.ToListAsync();
+        return accountsList;
+    }
+    
+    public async Task<List<CurrencyAccount>> GetAllCurrencyAccountsByUserAsync(Guid ownerID)
+    {
+        var accounts = _dbContext.CurrencyAccounts.Include(property => property.Owner)
+                                                  .Include(property => property.Currency)
+                                                  .Where(property => property.OwnerID == ownerID)
+                                                  .AsNoTracking();
         
+        var accountsList = await accounts.ToListAsync();
         return accountsList;
     }
 
     public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(string number)
     {
-        CurrencyAccount? account = await _dbContext.CurrencyAccounts
+        var account = await _dbContext.CurrencyAccounts
                                               .Include(property => property.Owner)
                                               .Include(property => property.Currency)
                                               .ThenInclude(property => property.SecondExchangeValues)
@@ -49,20 +57,10 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
         return currencyAccountReturned.Entity;
     }
     
-    
-    public CurrencyAccount UpdateCurrencyAccount(CurrencyAccount account, CurrencyAccount updatedCurrencyAccount)
-    {
-        _dbContext.Entry(account).Property(p => p.CurrencyID).IsModified = true;
-        account.CurrencyID = updatedCurrencyAccount.CurrencyID;
-        
-        return account;
-    }
-    
     public CurrencyAccount UpdateBalanceAmount(CurrencyAccount account, decimal moneyAmount, Func<decimal,decimal,decimal> calculationFunc)
     {
         _dbContext.Entry(account).Property(p => p.Balance).IsModified = true;
-        var calculationResult = calculationFunc(account.Balance, moneyAmount);
-        account.Balance = calculationResult;
+        account.Balance = calculationFunc(account.Balance, moneyAmount);
         
         return account;
     }

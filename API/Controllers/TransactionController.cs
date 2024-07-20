@@ -11,7 +11,6 @@ namespace API.Controllers;
 [Route("api/[controller]")] 
 [ApiController]
 [Authorize]
-// TODO: Add Transaction Exchange
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
@@ -22,16 +21,7 @@ public class TransactionController : ControllerBase
         _transactionService = transactionService;
         _validator = validator;
     }
-    
-    [Route("index")]
-    [ApiExplorerSettings(IgnoreApi = true)] // For not showing in 'Swagger'
-    public IActionResult Index()
-    {
-        return Content("Here is the \"Transaction\" Home Page");
-    }
-    
-    
-    
+
     /// <summary>
     /// Get All Existing Transactions
     /// </summary>
@@ -45,9 +35,9 @@ public class TransactionController : ControllerBase
     /// <response code="200">The Transactions List is successfully returned</response>
     [HttpGet]
     // GET: api/Transaction
-    public async Task<ActionResult<IEnumerable<TransactionResponse>>> GetTransactions()
+    public async Task<ActionResult<IEnumerable<TransactionResponse>>> GetAllTransactions()
     {
-        List<TransactionResponse> transactionsList = await _transactionService.GetAllTransactions();
+        var transactionsList = await _transactionService.GetAllTransactions(User);
         return Ok(transactionsList);
     }
     
@@ -64,7 +54,7 @@ public class TransactionController : ControllerBase
     ///     }
     /// 
     /// </remarks>
-    /// <response code="201">The New Transaction is successfully added to Transactions List</response>
+    /// <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [Idempotent(ExpireHours = 1)]
     [HttpPost("Transfer")]
@@ -72,24 +62,37 @@ public class TransactionController : ControllerBase
     public async Task<IActionResult> AddTransferTransaction(TransactionTransferAddRequest transactionAddRequest, [FromHeader]string? IdempotencyKey)
     {
         if (string.IsNullOrEmpty(IdempotencyKey))
-        {
             return BadRequest("You Must Set 'IdempotencyKey' in Header");
-        }
-        var transactionResponse = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
+        
+        var (isValid, message, _) = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
+        if (!isValid)
+            return BadRequest(message);
         
         // return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
         return Ok("Please Confirm The Transaction");
     }
     
+    /// <summary>
+    /// Add a New Transaction to Transactions List
+    /// </summary>
+    /// <returns>Redirect to 'GetTransaction' action to return Transaction That Has Been Added</returns>
+    /// <remarks>       
+    /// Sample request:
+    /// 
+    ///     POST -> "api/Transaction"
+    ///     {
+    ///     }
+    /// 
+    /// </remarks>
+    /// <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm</response>
+    /// <response code="400">There is sth wrong in Validation of properties</response>
     [Idempotent(ExpireHours = 1)]
     [HttpPost("Balance-Increase")]
     // Post: api/Transaction/Balance-Increase/{transactionAddRequest}
     public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest, [FromHeader]string? IdempotencyKey)
     {
         if (string.IsNullOrEmpty(IdempotencyKey))
-        {
             return BadRequest("You Must Set 'IdempotencyKey' in Header");
-        }
         
         bool isValid = await _validator.ExistsInCurrentCurrencies(transactionAddRequest.Money.CurrencyType);
         if (!isValid)
@@ -98,7 +101,9 @@ public class TransactionController : ControllerBase
             return BadRequest(ModelState);
         }
         
-        var transactionResponse = await _transactionService.AddDepositTransaction(transactionAddRequest);
+        var (isValidTransaction, message, _) = await _transactionService.AddDepositTransaction(transactionAddRequest, User);
+        if (!isValidTransaction)
+            return BadRequest(message);
         
         // return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
         return Ok("Please Confirm The Transaction");
@@ -108,13 +113,14 @@ public class TransactionController : ControllerBase
     // Post: api/Transaction/Confirm/{transactionId}
     public async Task<IActionResult> ConfirmTransaction(int transactionId, bool isConfirmed)
     {
-        var transactionResponse = await _transactionService.UpdateIsConfirmedOfTransaction(transactionId, isConfirmed, DateTime.Now.TimeOfDay);
-        if (transactionResponse is null)
-        {
-            return NotFound("notfound:");
-        }
+        var (isValid, message, transactionResponse) = await _transactionService.UpdateIsConfirmedOfTransaction(transactionId, User, isConfirmed, DateTime.Now.TimeOfDay);
+        if (!isValid && message is null)
+            return NotFound("!!A Transaction With This ID Has Not Been Found!!");
+
+        if (!isValid)
+            return BadRequest(message);
         
-        return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+        return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse!.Id}, new { transactionResponse.Id });
     }
     
     
@@ -132,45 +138,47 @@ public class TransactionController : ControllerBase
     /// <response code="404">A Transaction with Given ID has not been found</response>
     [HttpGet("{transactionID:int}")]
     // GET: api/Transaction/{transactionID}
-    public async Task<ActionResult<TransactionResponse>> GetTransaction(int transactionID)
+    public async Task<ActionResult<TransactionResponse>> GetTransactionByID(int transactionID)
     {
-        TransactionResponse? transactionObject = await _transactionService.GetTransactionByID(transactionID);
-        if (transactionObject is null)
-        {
-            return NotFound("notfound:");
-        }
+        var (isValid, message, transactionResponse) = await _transactionService.GetTransactionByID(transactionID, User);
+
+        if (!isValid && message is null)
+            return NotFound("!!A Transaction With This ID Has Not Been Found!!");
         
-        return Ok(transactionObject);
+        if (!isValid)
+            return BadRequest(message);
+        
+        return Ok(transactionResponse);
     }
     
     
-    /// <summary>
-    /// Update an Existing Transaction Based on Given ID and New Transaction Object
-    /// </summary>
-    /// <returns>Nothing</returns>
-    /// <remarks>       
-    /// Sample request:
-    /// 
-    ///     Put -> "api/Transaction/..."
-    ///     {
-    ///     }
-    /// 
-    /// </remarks>
-    /// <response code="204">The Transaction is successfully found and has been updated with New Transaction</response>
-    /// <response code="404">A Transaction with Given ID has not been found</response>
-    // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
-    [HttpPut("{transactionID:int}")]
-    // Put: api/Transaction/{transactionID}
-    public async Task<IActionResult> PutTransaction(TransactionUpdateRequest transactionUpdateRequest, int transactionID)
-    {
-        TransactionResponse? existingObject = await _transactionService.UpdateTransaction(transactionUpdateRequest, transactionID);
-        if (existingObject is null)
-        {
-            return NotFound("notfound:");
-        }
-        
-        return NoContent();
-    }
+    // /// <summary>
+    // /// Update an Existing Transaction Based on Given ID and New Transaction Object
+    // /// </summary>
+    // /// <returns>Nothing</returns>
+    // /// <remarks>       
+    // /// Sample request:
+    // /// 
+    // ///     Put -> "api/Transaction/..."
+    // ///     {
+    // ///     }
+    // /// 
+    // /// </remarks>
+    // /// <response code="204">The Transaction is successfully found and has been updated with New Transaction</response>
+    // /// <response code="404">A Transaction with Given ID has not been found</response>
+    // // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
+    // [HttpPut("{transactionID:int}")]
+    // // Put: api/Transaction/{transactionID}
+    // public async Task<IActionResult> PutTransaction(TransactionUpdateRequest transactionUpdateRequest, int transactionID)
+    // {
+    //     TransactionResponse? existingObject = await _transactionService.UpdateTransaction(transactionUpdateRequest, transactionID);
+    //     if (existingObject is null)
+    //     {
+    //         return NotFound("notfound:");
+    //     }
+    //     
+    //     return NoContent();
+    // }
     
     
     /// <summary>
@@ -189,12 +197,13 @@ public class TransactionController : ControllerBase
     // Delete: api/Transaction/{transactionID}
     public async Task<IActionResult> DeleteTransaction(int transactionID)
     {
-        bool? transactionObject = await _transactionService.DeleteTransaction(transactionID);
-        if (transactionObject is null)
-        {
-            return NotFound("notfound:");
-        }
+        var (isValid, isFound, message) = await _transactionService.DeleteTransaction(transactionID, User);
 
+        if (!isValid && !isFound)
+            return NotFound("!!A Transaction With This ID Has Not Been Found!!");
+        if (!isValid)
+            return BadRequest(message);
+        
         return NoContent();
     }
 }

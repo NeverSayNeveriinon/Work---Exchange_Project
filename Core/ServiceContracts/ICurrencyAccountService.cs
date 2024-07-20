@@ -7,10 +7,9 @@ namespace Core.ServiceContracts;
 
 public interface ICurrencyAccountService
 {
-    public Task<CurrencyAccountResponse> AddCurrencyAccount(CurrencyAccountAddRequest? CurrencyAccountAddRequest, ClaimsPrincipal userClaims);
-    public Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts();
-    public Task<CurrencyAccountResponse?> GetCurrencyAccountByNumber(string? number);
-    public Task<CurrencyAccountResponse?> UpdateCurrencyAccount(CurrencyAccountUpdateRequest? currencyAccountUpdateRequest, string? currencyAccountNumber);
-    public Task<bool?> DeleteCurrencyAccount(string? number);
+    public Task<(bool isValid, string? message, CurrencyAccountResponse? obj)> AddCurrencyAccount(CurrencyAccountAddRequest? currencyAccountAddRequest, ClaimsPrincipal userClaims);
+    public Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts(ClaimsPrincipal userClaims);
+    public Task<(bool isValid, string? message, CurrencyAccountResponse? obj)> GetCurrencyAccountByNumber(string? number, ClaimsPrincipal userClaims);
+    public Task<(bool isValid, bool isFound, string? message)> DeleteCurrencyAccount(string? number, ClaimsPrincipal userClaims);
     public Task<CurrencyAccountResponse?> UpdateBalanceAmount(CurrencyAccount? currencyAccount, decimal? amount, Func<decimal, decimal, decimal> calculationFunc);
 }

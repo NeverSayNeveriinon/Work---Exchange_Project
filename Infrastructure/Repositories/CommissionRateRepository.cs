@@ -8,7 +8,6 @@ namespace Infrastructure.Repositories;
 public class CommissionRateRepository : ICommissionRateRepository
 {
     private readonly AppDbContext _dbContext;
-
     
     public CommissionRateRepository(AppDbContext dbContext)
     {
@@ -18,51 +17,49 @@ public class CommissionRateRepository : ICommissionRateRepository
 
     public async Task<List<CommissionRate>> GetAllCommissionRatesAsync()
     {
-        var commissionRates = _dbContext.CommissionRates.AsNoTracking();
-        
-        List<CommissionRate> commissionRatesList = await commissionRates.ToListAsync();
-        
+        var commissionRatesList = await _dbContext.CommissionRates.AsNoTracking()
+                                                                  .ToListAsync();
         return commissionRatesList;
     }
 
-    public async Task<CommissionRate?> GetCommissionRateByIDAsync(int id)
+    public async Task<CommissionRate?> GetCommissionRateByMaxRangeAsync(decimal maxRange)
     {
-        CommissionRate? currency = await _dbContext.CommissionRates
-                                                   .AsNoTracking()
-                                                   .FirstOrDefaultAsync(currencyItem => currencyItem.Id == id);
+        var commissionRate = await _dbContext.CommissionRates.AsNoTracking()
+                                                             .FirstOrDefaultAsync(commissionRateItem => commissionRateItem.MaxUSDRange == maxRange);
 
-        return currency;
+        return commissionRate;
     }
 
-    public async Task<decimal> GetCRateByAmountAsync(decimal amount)
+    public async Task<decimal?> GetCRateByUSDAmountAsync(decimal amount)
     {
-        var f = await _dbContext.CommissionRates.ToListAsync();
-        var g = ~(f.Select(commissionRate => commissionRate.CRate).ToList().BinarySearch(amount));
-        var j = f.ElementAtOrDefault(g).CRate;
-        return j;
-    }
-    
-    public async Task<CommissionRate> AddCommissionRateAsync(CommissionRate currency)
-    {
-        var currencyReturned = await _dbContext.CommissionRates.AddAsync(currency);
-
-        return currencyReturned.Entity;
-    }
-    
-    public CommissionRate UpdateCommissionRate(CommissionRate currency, CommissionRate updatedCommissionRate)
-    {
-        _dbContext.Entry(currency).Property(p => p.CRate).IsModified = true;
-        _dbContext.Entry(currency).Property(p => p.MaxUSDRange).IsModified = true;
+        var commissionRatesList = await _dbContext.CommissionRates.ToListAsync();
+        if (commissionRatesList.Count == 0) return null;
         
-        currency.CRate = updatedCommissionRate.CRate;
-        currency.MaxUSDRange = updatedCommissionRate.MaxUSDRange;
-
-        return currency;
+        var cRateIndex = ~(commissionRatesList.Select(commissionRate => commissionRate.MaxUSDRange).Order().ToList().BinarySearch(amount));
+        if (cRateIndex == commissionRatesList.Count) return null;
+        
+        var finalCRate = commissionRatesList.ElementAtOrDefault(cRateIndex)!.CRate;
+        return finalCRate;
     }
     
-    public bool DeleteCommissionRate(CommissionRate currency)
+    public async Task<CommissionRate> AddCommissionRateAsync(CommissionRate commissionRate)
     {
-        var entityEntry = _dbContext.CommissionRates.Remove(currency);
+        var commissionRateReturned = await _dbContext.CommissionRates.AddAsync(commissionRate);
+
+        return commissionRateReturned.Entity;
+    }
+    
+    public CommissionRate UpdateCRate(CommissionRate commissionRate, decimal commissionCRate)
+    {
+        _dbContext.Entry(commissionRate).Property(p => p.CRate).IsModified = true;
+        commissionRate.CRate = commissionCRate;
+
+        return commissionRate;
+    }
+    
+    public bool DeleteCommissionRate(CommissionRate commissionRate)
+    {
+        var entityEntry = _dbContext.CommissionRates.Remove(commissionRate);
         
         return entityEntry.State == EntityState.Deleted;
     }

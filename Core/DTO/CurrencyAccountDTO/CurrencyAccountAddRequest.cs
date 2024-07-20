@@ -16,14 +16,14 @@ public class CurrencyAccountAddRequest
 
 public static partial class CurrencyAccountExtensions
 {
-    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest, Guid? ownerID, int? currencyId)
+    public static CurrencyAccount ToCurrencyAccount(this CurrencyAccountAddRequest currencyAccountAddRequest, Guid ownerID, int currencyId)
     {
         CurrencyAccount currencyAccount = new CurrencyAccount()
         {
             Number = Generator.RandomString(),
             Balance = 0,
-            CurrencyID = currencyId.Value,
-            OwnerID = ownerID.Value,
+            CurrencyID = currencyId,
+            OwnerID = ownerID,
             DateTimeOfOpen = DateTime.Now
         };
 

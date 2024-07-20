@@ -5,11 +5,11 @@ namespace Core.Domain.RepositoryContracts;
 public interface ICommissionRateRepository
 {
     public Task<List<CommissionRate>> GetAllCommissionRatesAsync();
-    public Task<CommissionRate?> GetCommissionRateByIDAsync(int id);
-    public Task<decimal> GetCRateByAmountAsync(decimal amount);
-    public Task<CommissionRate> AddCommissionRateAsync(CommissionRate account);
-    public CommissionRate UpdateCommissionRate(CommissionRate account, CommissionRate updatedCommissionRate);
-    public bool DeleteCommissionRate(CommissionRate account);
+    public Task<CommissionRate?> GetCommissionRateByMaxRangeAsync(decimal maxRange);
+    public Task<decimal?> GetCRateByUSDAmountAsync(decimal amount);
+    public Task<CommissionRate> AddCommissionRateAsync(CommissionRate commissionRate);
+    public CommissionRate UpdateCRate(CommissionRate commissionRate, decimal commissionCRate);
+    public bool DeleteCommissionRate(CommissionRate commissionRate);
     public Task SaveChangesAsync();
     
 }

@@ -25,14 +25,28 @@ public class TransactionRepository : ITransactionRepository
                                                   .ThenInclude(property => property.Currency)
                                                   .AsNoTracking();
         
-        List<Transaction> transactionsList = await transactions.ToListAsync();
+        var transactionsList = await transactions.ToListAsync();
+        return transactionsList;
+    }
+    
+    public async Task<List<Transaction>> GetAllTransactionsByUserAsync(Guid ownerID)
+    {
+        var transactions = _dbContext.Transactions.Include(property => property.FromAccount)
+                                                  .ThenInclude(Property => Property.Currency)
+                                                  .ThenInclude(Property => Property.FirstExchangeValues)
+                                                  .Include(property => property.ToAccount)
+                                                  .ThenInclude(property => property.Currency)
+                                                  .AsNoTracking()
+                                                  .Where(transactionItem => transactionItem.FromAccount!.OwnerID == ownerID ||
+                                                                            transactionItem.ToAccount!.OwnerID == ownerID);
         
+        var transactionsList = await transactions.ToListAsync();
         return transactionsList;
     }
 
     public async Task<Transaction?> GetTransactionByIDAsync(int id)
     {
-        Transaction? transaction = await _dbContext.Transactions.Include(property => property.FromAccount)
+        var transaction = await _dbContext.Transactions.Include(property => property.FromAccount)
                                                                 .ThenInclude(Property => Property.Currency)
                                                                 .ThenInclude(Property => Property.FirstExchangeValues)
                                                                 .Include(property => property.ToAccount)
@@ -42,7 +56,6 @@ public class TransactionRepository : ITransactionRepository
 
         return transaction;
     }
-
      
     public async Task<Transaction> AddTransactionAsync(Transaction transaction)
     {
@@ -64,13 +77,13 @@ public class TransactionRepository : ITransactionRepository
         _dbContext.Entry(transaction).Reference(c => c.ToAccount).Load();
     }
     
-    public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction)
-    {
-        // _dbContext.Entry(transaction).Property(p => p.CurrencyID).IsModified = true;
-        // transaction.CurrencyID = updatedTransaction.CurrencyID;
-        
-        return transaction;
-    }  
+    // public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction)
+    // {
+    //     // _dbContext.Entry(transaction).Property(p => p.FromAccount).IsModified = true;
+    //     // transaction.FromAccount = updatedTransaction.FromAccount;
+    //     
+    //     return transaction;
+    // }  
     
     public Transaction UpdateIsConfirmedOfTransaction(Transaction transaction, bool isConfirmed)
     {

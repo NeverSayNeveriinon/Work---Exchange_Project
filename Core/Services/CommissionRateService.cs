@@ -17,99 +17,106 @@ public class CommissionRateService : ICommissionRateService
         _commissionRateRepository = commissionRateRepository;
     }
 
-    public async Task<CommissionRateResponse> AddCommissionRate(CommissionRateRequest? commissionRateRequest)
+    public async Task<(bool isValid, string? message, CommissionRateResponse? obj)> AddCommissionRate(CommissionRateRequest? commissionRateRequest)
     {
         // 'commissionRateRequest' is Null //
         ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' object parameter is Null");
 
+        
+        // Validation For Valid MaxSDRange (We shouldn't have same MaxUSDRange) //
         var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
         var allUSDRanges = allCommissionRates.Select(commisionRate => commisionRate.MaxUSDRange).ToHashSet();
-        if (allUSDRanges.Contains(commissionRateRequest.MaxUSDRange.Value)) // means there is already a same range, we don't want that 
+        if (allUSDRanges.Contains(commissionRateRequest.MaxUSDRange!.Value)) // means there is already a same range, we don't want that 
         {
-            return null;
+            return (false, "There is Already a Commission Rate Object With This 'MaxUSDRange'", null);
+        }
+        
+        // Validation For Valid CRate (More USDRange has to have less CRate) //
+        var priviousCommissionRate = allCommissionRates.OrderByDescending(commisionRate => commisionRate.MaxUSDRange)
+                                                       .FirstOrDefault(commisionRate => commisionRate.MaxUSDRange < commissionRateRequest.MaxUSDRange);
+        if (priviousCommissionRate != null && (priviousCommissionRate.CRate < commissionRateRequest.CRate!.Value)) // means first lesser USDRange has lesser CRate, we don't want that
+        {
+            return (false, "The 'CRate' Can't be More Than the CRate's of Lesser USDRanges", null);
         }
         
         var commissionRate = commissionRateRequest.ToCommissionRate();
         var commissionRateReturned = await _commissionRateRepository.AddCommissionRateAsync(commissionRate);
         await _commissionRateRepository.SaveChangesAsync();
 
-        return commissionRateReturned.ToCommissionRateResponse();
+        var commissionRateResponse = commissionRateReturned.ToCommissionRateResponse();
+        return (true, null, commissionRateResponse);
     }   
     
     public async Task<List<CommissionRateResponse>> GetAllCommissionRates()
     {
-        List<CommissionRate> CommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
+        var CommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
         
-        List<CommissionRateResponse> CommissionRateResponses = CommissionRates.Select(accountItem => accountItem.ToCommissionRateResponse()).ToList();
+        var CommissionRateResponses = CommissionRates.Select(accountItem => accountItem.ToCommissionRateResponse()).ToList();
         return CommissionRateResponses;
     }    
     
-    public async Task<decimal> GetCRate(Money money)
+    public async Task<decimal?> GetUSDAmountCRate(Money money)
     {
         var valueToBeMultiplied = money.Currency.FirstExchangeValues?.FirstOrDefault(exValue=> exValue.SecondCurrency.CurrencyType == CurrencyTypeOptions.USD)!.UnitOfFirstValue;
         var usdAmount = money.Amount * valueToBeMultiplied;
-        var cRate = await _commissionRateRepository.GetCRateByAmountAsync(usdAmount.Value);
+        var cRate = await _commissionRateRepository.GetCRateByUSDAmountAsync(usdAmount!.Value);
         
         return cRate;
     }
 
-    public async Task<CommissionRateResponse?> GetCommissionRateByID(int? Id)
+    public async Task<CommissionRateResponse?> GetCommissionRateByMaxRange(decimal? maxRange)
     {
-        // if 'id' is null
-        ArgumentNullException.ThrowIfNull(Id,"The CommissionRate'Id' parameter is Null");
+        // if 'maxRange' is null
+        ArgumentNullException.ThrowIfNull(maxRange,"The CommissionRate'maxRange' parameter is Null");
         
-        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByIDAsync(Id.Value);
+        var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(maxRange.Value);
 
         // if 'id' doesn't exist in 'CommissionRates list' 
-        if (CommissionRate == null)
-        {
-            return null;
-        }
+        if (commissionRate == null)  return null;
 
         // if there is no problem
-        CommissionRateResponse CommissionRateResponse = CommissionRate.ToCommissionRateResponse();
-
-        return CommissionRateResponse;;
+        var commissionRateResponse = commissionRate.ToCommissionRateResponse();
+        return commissionRateResponse;
     }
 
-    public async Task<CommissionRateResponse?> UpdateCommissionRate(int? commissionRateID, CommissionRateRequest? commissionRateRequest)
+    public async Task<(bool isValid, string? message, CommissionRateResponse? obj)> UpdateCRateByMaxRange(CommissionRateRequest? commissionRateRequest)
     { 
-        // if 'commissionRateID' is null
-        ArgumentNullException.ThrowIfNull(commissionRateID,"The CommissionRate'ID' parameter is Null");
-        
         // 'commissionRateRequest' is Null //
-        ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' parameter is Null");
+        ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' object parameter is Null");
         
-
-        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByIDAsync(commissionRateID.Value);
         
-        // if 'ID' is invalid (doesn't exist)
-        if (CommissionRate == null)
+        // Validation For Valid CRate (More USDRange has to have less CRate) //
+        var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
+        var priviousCommissionRate = allCommissionRates.OrderByDescending(commisionRate => commisionRate.MaxUSDRange)
+                                                       .FirstOrDefault(commisionRate => commisionRate.MaxUSDRange < commissionRateRequest.MaxUSDRange);
+        if (priviousCommissionRate != null && (priviousCommissionRate.CRate < commissionRateRequest.CRate!.Value)) // means first lesser USDRange has lesser CRate, we don't want that
         {
-            return null;
+            return (false, "The 'CRate' Can't be More Than the CRate's of Lesser USDRanges", null);
         }
-         
+        
+        var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(commissionRateRequest.MaxUSDRange!.Value);
+        
+        // if 'maxRange' is invalid (doesn't exist)
+        if (commissionRate == null)  return (false, null, null);
     
-        CommissionRate updatedCommissionRateReturned = _commissionRateRepository.UpdateCommissionRate(CommissionRate, commissionRateRequest.ToCommissionRate());
+        var updatedCommissionRateReturned = _commissionRateRepository.UpdateCRate(commissionRate, commissionRateRequest.CRate!.Value);
         await _commissionRateRepository.SaveChangesAsync();
 
-        return updatedCommissionRateReturned.ToCommissionRateResponse();
+        var commissionRateResponse = updatedCommissionRateReturned.ToCommissionRateResponse();
+        return (true, null, commissionRateResponse);
     }
 
-    public async Task<bool?> DeleteCommissionRate(int? Id)
+    public async Task<bool?> DeleteCommissionRateByMaxRange(decimal? maxRange)
     {
-        // if 'id' is null
-        ArgumentNullException.ThrowIfNull(Id,"The CommissionRate'ID' parameter is Null");
+        // if 'maxRange' is null
+        ArgumentNullException.ThrowIfNull(maxRange,"The CommissionRate'maxRange' parameter is Null");
 
-        CommissionRate? CommissionRate = await _commissionRateRepository.GetCommissionRateByIDAsync(Id.Value);
+        var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(maxRange.Value);
         
-        // if 'ID' is invalid (doesn't exist)
-        if (CommissionRate == null) 
-        {
-            return null;
-        }
+        // if 'maxRange' is invalid (doesn't exist)
+        if (commissionRate == null) return null;
     
-        bool result = _commissionRateRepository.DeleteCommissionRate(CommissionRate);
+        bool result = _commissionRateRepository.DeleteCommissionRate(commissionRate);
         await _commissionRateRepository.SaveChangesAsync();
 
         return result;

@@ -4,7 +4,6 @@ using Core.Enums;
 
 namespace Core.DTO.CurrencyDTO;
 
-// TODO: Change AlowedValues
 public class CurrencyRequest
 {
     [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]

@@ -82,6 +82,8 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             .Ignore(entity => entity.PhoneNumber)
             .Ignore(entity => entity.PhoneNumberConfirmed);
         
+        modelBuilder.Entity<Transaction>()
+                    .HasQueryFilter(entity => entity.IsConfirmed);
         
         modelBuilder.Entity<CommissionRate>()
             .Property(entity => entity.CRate)

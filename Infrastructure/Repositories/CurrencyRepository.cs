@@ -19,27 +19,24 @@ public class CurrencyRepository : ICurrencyRepository
 
     public async Task<List<Currency>> GetAllCurrenciesAsync()
     {
-        var currencies = _dbContext.Currencies.AsNoTracking();
-        
-        List<Currency> currenciesList = await currencies.ToListAsync();
+        var currenciesList = await _dbContext.Currencies.AsNoTracking()
+                                                        .ToListAsync();
         
         return currenciesList;
     }
 
     public async Task<Currency?> GetCurrencyByIDAsync(int id)
     {
-        Currency? currency = await _dbContext.Currencies
-                                             .AsNoTracking()
-                                             .FirstOrDefaultAsync(currencyItem => currencyItem.Id == id);
+        var currency = await _dbContext.Currencies.AsNoTracking()
+                                                  .FirstOrDefaultAsync(currencyItem => currencyItem.Id == id);
 
         return currency;
     }
     
     public async Task<Currency?> GetCurrencyByCurrencyTypeAsync(CurrencyTypeOptions currencyType)
     {
-        Currency? currency = await _dbContext.Currencies
-                                             .AsNoTracking()
-                                             .FirstOrDefaultAsync(currencyItem => currencyItem.CurrencyType == currencyType);
+        var currency = await _dbContext.Currencies.AsNoTracking()
+                                                  .FirstOrDefaultAsync(currencyItem => currencyItem.CurrencyType == currencyType);
 
         return currency;
     }
@@ -52,13 +49,6 @@ public class CurrencyRepository : ICurrencyRepository
         return currencyReturned.Entity;
     }
     
-    public Currency UpdateCurrency(Currency currency, Currency updatedCurrency)
-    {
-        _dbContext.Entry(currency).Property(p => p.CurrencyType).IsModified = true;
-        currency.CurrencyType = updatedCurrency.CurrencyType;
-
-        return currency;
-    }
     
     public bool DeleteCurrency(Currency currency)
     {

@@ -18,15 +18,6 @@ public class CurrencyController : ControllerBase
         _currencyService = currencyService;
     }
     
-    [Route("index")]
-    [ApiExplorerSettings(IgnoreApi = true)] // For not showing in 'Swagger'
-    public IActionResult Index()
-    {
-        return Content("Here is the \"Currency\" Home Page");
-    }
-    
-    
-    
     /// <summary>
     /// Get All Existing Currencies
     /// </summary>
@@ -40,9 +31,9 @@ public class CurrencyController : ControllerBase
     /// <response code="200">The Currencies List is successfully returned</response>
     [HttpGet]
     // GET: api/Currency
-    public async Task<ActionResult<IEnumerable<CurrencyResponse>>> GetCurrencies()
+    public async Task<ActionResult<IEnumerable<CurrencyResponse>>> GetAllCurrencies()
     {
-        List<CurrencyResponse> currenciesList = await _currencyService.GetAllCurrencies();
+        var currenciesList = await _currencyService.GetAllCurrencies();
         return Ok(currenciesList);
     }
     
@@ -63,17 +54,13 @@ public class CurrencyController : ControllerBase
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [HttpPost]
     // Post: api/Currency
-    public async Task<IActionResult> PostCurrency(CurrencyRequest currencyRequest)
+    public async Task<IActionResult> AddCurrency(CurrencyRequest currencyRequest)
     {
-        // No need to do this, because it is done by 'ApiController' attribute in BTS
-        // if (!ModelState.IsValid)
-        // {
-        //     return ValidationProblem(ModelState);
-        // }
+        var (isValid, message, currencyResponse) = await _currencyService.AddCurrency(currencyRequest);
+        if (!isValid)
+            return BadRequest(message);
         
-        var currencyResponse = await _currencyService.AddCurrency(currencyRequest);
-        
-        return CreatedAtAction(nameof(GetCurrency), new {currencyID = currencyResponse.Id}, new { currencyResponse.Id });
+        return CreatedAtAction(nameof(GetCurrencyByID), new {currencyID = currencyResponse!.Id}, new { currencyResponse.Id });
     }
 
     
@@ -92,49 +79,13 @@ public class CurrencyController : ControllerBase
     /// <response code="404">A Currency with Given ID has not been found</response>
     [HttpGet("{currencyID:int}")]
     // GET: api/Currency/{currencyID}
-    public async Task<ActionResult<CurrencyResponse>> GetCurrency(int currencyID)
+    public async Task<ActionResult<CurrencyResponse>> GetCurrencyByID(int currencyID)
     {
-        CurrencyResponse? currencyObject = await _currencyService.GetCurrencyByID(currencyID);
-        if (currencyObject is null)
-        {
-            return NotFound("notfound:");
-        }
+        var currencyResponse = await _currencyService.GetCurrencyByID(currencyID);
+        if (currencyResponse is null)
+            return NotFound("!!A Currency With This ID Has Not Been Found!!");
         
-        return Ok(currencyObject);
-    }
-    
-    
-    /// <summary>
-    /// Update an Existing Currency Based on Given ID and New Currency Object
-    /// </summary>
-    /// <returns>Nothing</returns>
-    /// <remarks>       
-    /// Sample request:
-    /// 
-    ///     Put -> "api/Currency/..."
-    ///     {
-    ///     }
-    /// 
-    /// </remarks>
-    /// <response code="204">The Currency is successfully found and has been updated with New Currency</response>
-    /// <response code="404">A Currency with Given ID has not been found</response>
-    // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
-    [HttpPut("{currencyID:int}")]
-    // Put: api/Currency/{currencyID}
-    public async Task<IActionResult> PutCurrency(CurrencyRequest currencyRequest, int currencyID)
-    {
-        // if (currencyID != currencyRequest.n)
-        // {
-        //     return Problem(detail:"The ID in Url doesn't match with the ID in Body", statusCode:400, title: "Problem With the ID");
-        // }
-
-        CurrencyResponse? existingObject = await _currencyService.UpdateCurrency(currencyRequest, currencyID);
-        if (existingObject is null)
-        {
-            return NotFound("notfound:");
-        }
-        
-        return NoContent();
+        return Ok(currencyResponse);
     }
     
     
@@ -154,11 +105,9 @@ public class CurrencyController : ControllerBase
     // Delete: api/Currency/{currencyID}
     public async Task<IActionResult> DeleteCurrency(int currencyID)
     {
-        bool? currencyObject = await _currencyService.DeleteCurrency(currencyID);
-        if (currencyObject is null)
-        {
-            return NotFound("notfound:");
-        }
+        bool? currencyResponse = await _currencyService.DeleteCurrency(currencyID);
+        if (currencyResponse is null)
+            return NotFound("!!A Currency With This ID Has Not Been Found!!");
 
         return NoContent();
     }

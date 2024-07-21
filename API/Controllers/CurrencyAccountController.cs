@@ -90,7 +90,7 @@ public class CurrencyAccountController : ControllerBase
     /// </remarks>
     /// <response code="200">The CurrencyAccount is successfully found and returned</response>
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
-    [HttpGet]
+    [HttpGet("{currencyAccountNumber}")]
     // GET: api/CurrencyAccount/{currencyAccountNumber}
     public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccountByNumber(string currencyAccountNumber)
     {

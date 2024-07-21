@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.Security.Claims;
+using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -54,7 +55,6 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
                 Email = "admin@gmail.com",
                 NormalizedEmail = "admin@gmail.com".ToUpper(),
                 EmailConfirmed = true,
-                DefinedAccountNumbers = new List<string>(),
                 PhoneNumber = "09991234567",
                 ConcurrencyStamp = Guid.Parse("D594E4F9-C74E-43A4-90AC-F7FEC50C15E1").ToString(),
                 SecurityStamp = Guid.Parse("A05F9E4A-A0CB-483C-B242-285E0E8FA27D").ToString(),
@@ -63,6 +63,8 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             adminProfile.PasswordHash = ph.HashPassword(adminProfile, "adminpass");
             modelBuilder.Entity<UserProfile>().HasData(adminProfile);
             modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid>{RoleId = adminRole.Id, UserId = adminProfile.Id});
+            modelBuilder.Entity<IdentityUserClaim<Guid>>().HasData(new IdentityUserClaim<Guid>
+            { ClaimType = ClaimTypes.Role, ClaimValue = "Admin", UserId = adminProfile.Id, Id = 1});
         #endregion
         
 
@@ -72,11 +74,11 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
         //         v => JsonConvert.SerializeObject(v),
         //         v => JsonConvert.DeserializeObject<Dictionary<int, decimal>>(v));
         
-        modelBuilder.Entity<UserProfile>()
-            .Property(entity => entity.DefinedAccountNumbers)
-            .HasConversion(
-                v => JsonConvert.SerializeObject(v),
-                v1 => JsonConvert.DeserializeObject<List<string>>(v1)!);
+        // modelBuilder.Entity<UserProfile>()
+        //     .Property(entity => entity.DefinedAccountNumbers)
+        //     .HasConversion(
+        //         v => JsonConvert.SerializeObject(v),
+        //         v1 => JsonConvert.DeserializeObject<List<string>>(v1)!);
 
         modelBuilder.Entity<UserProfile>()
             .Ignore(entity => entity.PhoneNumber)
@@ -131,7 +133,18 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
                     .HasForeignKey(e => e.SecondCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
                 r => r.HasOne<Currency>(e => e.FirstCurrency)
                     .WithMany(e => e.FirstExchangeValues)
-                    .HasForeignKey(e => e.FirstCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
-
+                    .HasForeignKey(e => e.FirstCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.Cascade)); 
+        
+        // CurrencyAccount 'N'----......----'N' UserProfile
+        modelBuilder.Entity<CurrencyAccount>()
+            .HasMany(e => e.DefinedUserProfiles)
+            .WithMany(e => e.DefinedCurrencyAccounts)
+            .UsingEntity<DefinedAccount>(
+                l => l.HasOne<UserProfile>(e => e.UserProfile)
+                    .WithMany(e => e.DefinedAccountsJoin)
+                    .HasForeignKey(e => e.UserProfileId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
+                r => r.HasOne<CurrencyAccount>(e => e.CurrencyAccount)
+                    .WithMany(e => e.DefinedAccountsJoin)
+                    .HasForeignKey(e => e.CurrencyAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
     }
 }

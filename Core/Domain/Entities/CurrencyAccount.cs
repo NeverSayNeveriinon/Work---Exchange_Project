@@ -7,7 +7,7 @@ namespace Core.Domain.Entities;
 public class CurrencyAccount
 {
     [Key]
-    [StringLength(10)]
+    [Length(10,10)]  
     public string Number { get; set; }
     
     [Column(TypeName="money")]
@@ -40,6 +40,11 @@ public class CurrencyAccount
     // With "CurrencyAccount(As FromCurrencyAccount)" ---> ToCurrencyAccount 'N'----......----'N' FromCurrencyAccount -> in 'Transaction' Entity
     public List<CurrencyAccount>? FromCurrencyAccounts { get; } = new List<CurrencyAccount>(); // Navigation to 'CurrencyAccount(As FromCurrencyAccount)' entity
     public List<Transaction>? ToTransactions { get; } = new List<Transaction>(); // Navigation to 'ExchangeValue(Join Entity)' entity
+    
+    
+    // With "UserProfile(Defined)" ---> CurrencyAccount 'N'----......----'N' UserProfile -> in 'DefinedAccount' Entity
+    public List<UserProfile>? DefinedUserProfiles { get; } = new List<UserProfile>(); // Navigation to 'UserProfile' entity
+    public List<DefinedAccount>? DefinedAccountsJoin { get; } = new List<DefinedAccount>(); // Navigation to 'DefinedAccount(Join Entity)' entity
 
     #endregion
 }

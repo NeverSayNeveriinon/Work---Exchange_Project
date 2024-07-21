@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -32,6 +33,10 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.Services.AddControllers();
+        // builder.Services.AddControllers(options =>
+        // {
+        //     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+        // });
 
         // Services IOC        
         builder.Services.AddTransient<IJwtService, JwtService>();
@@ -176,7 +181,7 @@ public class Program
         app.UseSwagger(); // Creates endpoints for swagger.json
         app.UseSwaggerUI(); // Creates swagger UI for testing all endpoints (action methods)
         
-        app.UseStaticFiles();
+        // app.UseStaticFiles();
 
         app.UseRouting();
         app.UseAuthentication(); 

@@ -51,34 +51,63 @@ public class CurrencyAccountService : ICurrencyAccountService
         return (true, null, currencyAccountResponse);
     }   
     
-    public async Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts(ClaimsPrincipal userClaims)
+    public async Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts(ClaimsPrincipal? userClaims)
     {
         var user = await _userManager.GetUserAsync(userClaims);
-
+        
         List<CurrencyAccount> currencyAccounts;
-        if (await _userManager.IsInRoleAsync(user!, "Admin"))
-            currencyAccounts = await _accountRepository.GetAllCurrencyAccountsAsync();
-        else
-            currencyAccounts = await _accountRepository.GetAllCurrencyAccountsByUserAsync(user!.Id);
+        if (userClaims.IsInRole("Admin"))
+            return GetAllCurrencyAccountsInternal();
+       
+        currencyAccounts = _accountRepository.GetCurrencyAccounts()
+                                             .Where(property => property.OwnerID == user.Id)
+                                             .ToList();
         
         var currencyAccountResponses = currencyAccounts.Select(accountItem => accountItem.ToCurrencyAccountResponse()).ToList();
         return currencyAccountResponses;
     }
-
+    
+    public List<CurrencyAccountResponse> GetAllCurrencyAccountsInternal()
+    {
+        var currencyAccounts = _accountRepository.GetCurrencyAccounts().ToList();
+        var currencyAccountResponses = currencyAccounts.Select(accountItem => accountItem.ToCurrencyAccountResponse()).ToList();
+        return currencyAccountResponses;
+    }
+    
     public async Task<(bool isValid, string? message, CurrencyAccountResponse? obj)> GetCurrencyAccountByNumber(string? number, ClaimsPrincipal userClaims)
     {
         // if 'number' is null
         ArgumentNullException.ThrowIfNull(number,"The CurrencyAccount'number' parameter is Null");
         
+        if (userClaims.IsInRole("Admin"))
+            return GetCurrencyAccountByNumberInternal(number);
+        
         var user = await _userManager.GetUserAsync(userClaims);
-        var currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(number);
+        var currencyAccount = _accountRepository.GetCurrencyAccounts()
+                                                .FirstOrDefault(property => property.Number == number);
 
         // if 'number' doesn't exist in 'currencyAccounts list' 
         if (currencyAccount == null) 
             return (false, null, null);
-
+        
         if (currencyAccount.OwnerID != user!.Id)
             return (false, "This Account Number Doesn't Belong To You", null);
+        
+        var currencyAccountResponse = currencyAccount.ToCurrencyAccountResponse();
+        return (true, null, currencyAccountResponse);
+    }
+    
+    public (bool isValid, string? message, CurrencyAccountResponse? obj) GetCurrencyAccountByNumberInternal(string? number)
+    {
+        // if 'number' is null
+        ArgumentNullException.ThrowIfNull(number,"The CurrencyAccount'number' parameter is Null");
+
+        var currencyAccount = _accountRepository.GetCurrencyAccounts()
+                                                .FirstOrDefault(property => property.Number == number);
+        
+        // if 'number' doesn't exist in 'currencyAccounts list' 
+        if (currencyAccount == null) 
+            return (false, null, null);
         
         var currencyAccountResponse = currencyAccount.ToCurrencyAccountResponse();
         return (true, null, currencyAccountResponse);
@@ -89,7 +118,8 @@ public class CurrencyAccountService : ICurrencyAccountService
         // if 'number' is null
         ArgumentNullException.ThrowIfNull(number,"The CurrencyAccount'Number' parameter is Null");
 
-        var currencyAccount = await _accountRepository.GetCurrencyAccountByNumberAsync(number);
+        var currencyAccount =  _accountRepository.GetCurrencyAccounts()
+                                                 .FirstOrDefault(property => property.Number == number);
         
         // if 'Number' is invalid (doesn't exist)
         if (currencyAccount == null)

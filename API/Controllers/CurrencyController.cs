@@ -56,6 +56,7 @@ public class CurrencyController : ControllerBase
     // Post: api/Currency
     public async Task<IActionResult> AddCurrency(CurrencyRequest currencyRequest)
     {
+        //todo: convert to well-structured
         var (isValid, message, currencyResponse) = await _currencyService.AddCurrency(currencyRequest);
         if (!isValid)
             return BadRequest(message);

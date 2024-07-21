@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Infrastructure.Repositories;
 
 // TODO: Using Generic Repository
+// todo: return Iqueryable from repository
 public class CurrencyAccountRepository : ICurrencyAccountRepository
 {
     private readonly AppDbContext _dbContext;
@@ -15,14 +16,16 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
         _dbContext = dbContext;
     }
 
-    public async Task<List<CurrencyAccount>> GetAllCurrencyAccountsAsync()
+    public IQueryable<CurrencyAccount> GetCurrencyAccounts()
     {
         var accounts = _dbContext.CurrencyAccounts.Include(property => property.Owner)
                                                   .Include(property => property.Currency)
+                                                  .ThenInclude(property => property.SecondExchangeValues)
+                                                  .ThenInclude(property => property.FirstCurrency)
                                                   .AsNoTracking();
         
-        var accountsList = await accounts.ToListAsync();
-        return accountsList;
+        // var accountsList = await accounts.ToListAsync();
+        return accounts;
     }
     
     public async Task<List<CurrencyAccount>> GetAllCurrencyAccountsByUserAsync(Guid ownerID)
@@ -36,18 +39,18 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
         return accountsList;
     }
 
-    public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(string number)
-    {
-        var account = await _dbContext.CurrencyAccounts
-                                              .Include(property => property.Owner)
-                                              .Include(property => property.Currency)
-                                              .ThenInclude(property => property.SecondExchangeValues)
-                                              .ThenInclude(property => property.FirstCurrency)
-                                              .AsNoTracking()
-                                              .FirstOrDefaultAsync(accountItem => accountItem.Number == number);
-
-        return account;
-    }
+    // public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(string number)
+    // {
+    //     var account = await _dbContext.CurrencyAccounts
+    //                                           .Include(property => property.Owner)
+    //                                           .Include(property => property.Currency)
+    //                                           .ThenInclude(property => property.SecondExchangeValues)
+    //                                           .ThenInclude(property => property.FirstCurrency)
+    //                                           .AsNoTracking()
+    //                                           .FirstOrDefaultAsync(accountItem => accountItem.Number == number);
+    //
+    //     return account;
+    // }
 
      
     public async Task<CurrencyAccount> AddCurrencyAccountAsync(CurrencyAccount account)

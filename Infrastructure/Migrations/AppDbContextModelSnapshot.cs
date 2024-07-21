@@ -174,7 +174,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DefinedAccountNumbers")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -238,7 +239,7 @@ namespace Infrastructure.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@GMAIL.COM",
                             NormalizedUserName = "ADMIN@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEOUwbW8VevRw2R0HvuQCHMYhyqnpK2ifPCQBZT/ENAl/Im16CMOXhFtu45Fs9kScFw==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEKQ6kmK01k7iwH/Nv1FdXoChJL8KHekbtQTPuxaU2vhy4A86ypUMSimrJUzzNYkfQg==",
                             PersonName = "Admin Admini",
                             SecurityStamp = "a05f9e4a-a0cb-483c-b242-285e0e8fa27d",
                             TwoFactorEnabled = false,

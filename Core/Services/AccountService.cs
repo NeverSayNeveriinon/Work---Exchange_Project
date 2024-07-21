@@ -156,6 +156,9 @@ public class AccountService : IAccountService
         if (!isValid)
             return (false, "The DefinedAccount Number is not in Currency Accounts");
 
+        if (user.DefinedCurrencyAccounts!.Any(acc => acc.Number == definedAccountAddNumber))
+            return (false, "This DefinedAccount Number is Already Added");
+        
         user.DefinedAccountsJoin!.Add(new DefinedAccount()
         {
             UserProfileId = user.Id,

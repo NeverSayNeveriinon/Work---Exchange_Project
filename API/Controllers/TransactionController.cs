@@ -109,9 +109,9 @@ public class TransactionController : ControllerBase
         return Ok("Please Confirm The Transaction");
     } 
     
-    [HttpPatch("Confirm")]
+    [HttpPatch("Confirm/{transactionId:guid}")]
     // Post: api/Transaction/Confirm/{transactionId}
-    public async Task<IActionResult> ConfirmTransaction(int transactionId, bool isConfirmed)
+    public async Task<IActionResult> ConfirmTransaction(Guid transactionId, bool isConfirmed)
     {
         var (isValid, message, transactionResponse) = await _transactionService.UpdateIsConfirmedOfTransaction(transactionId, User, isConfirmed, DateTime.Now.TimeOfDay);
         if (!isValid && message is null)
@@ -136,9 +136,9 @@ public class TransactionController : ControllerBase
     /// </remarks>
     /// <response code="200">The Transaction is successfully found and returned</response>
     /// <response code="404">A Transaction with Given ID has not been found</response>
-    [HttpGet("{transactionID:int}")]
+    [HttpGet("{transactionID:guid}")]
     // GET: api/Transaction/{transactionID}
-    public async Task<ActionResult<TransactionResponse>> GetTransactionByID(int transactionID)
+    public async Task<ActionResult<TransactionResponse>> GetTransactionByID(Guid transactionID)
     {
         var (isValid, message, transactionResponse) = await _transactionService.GetTransactionByID(transactionID, User);
 
@@ -167,9 +167,9 @@ public class TransactionController : ControllerBase
     // /// <response code="204">The Transaction is successfully found and has been updated with New Transaction</response>
     // /// <response code="404">A Transaction with Given ID has not been found</response>
     // // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
-    // [HttpPut("{transactionID:int}")]
+    // [HttpPut("{transactionID:guid}")]
     // // Put: api/Transaction/{transactionID}
-    // public async Task<IActionResult> PutTransaction(TransactionUpdateRequest transactionUpdateRequest, int transactionID)
+    // public async Task<IActionResult> PutTransaction(TransactionUpdateRequest transactionUpdateRequest, Guid transactionID)
     // {
     //     TransactionResponse? existingObject = await _transactionService.UpdateTransaction(transactionUpdateRequest, transactionID);
     //     if (existingObject is null)
@@ -193,9 +193,9 @@ public class TransactionController : ControllerBase
     /// </remarks>
     /// <response code="204">The Transaction is successfully found and has been deleted from Transactions List</response>
     /// <response code="404">A Transaction with Given ID has not been found</response>
-    [HttpDelete("{transactionID:int}")]
+    [HttpDelete("{transactionID:guid}")]
     // Delete: api/Transaction/{transactionID}
-    public async Task<IActionResult> DeleteTransaction(int transactionID)
+    public async Task<IActionResult> DeleteTransaction(Guid transactionID)
     {
         var (isValid, isFound, message) = await _transactionService.DeleteTransaction(transactionID, User);
 

@@ -6,7 +6,7 @@ namespace Core.DTO.TransactionDTO;
 [Serializable]
 public class TransactionResponse
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     public decimal Amount { get; set; }
     public string FromAccountNumber { get; set; }
     public string? ToAccountNumber { get; set; }

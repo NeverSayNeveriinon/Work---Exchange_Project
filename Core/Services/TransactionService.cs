@@ -40,8 +40,8 @@ public class TransactionService : ITransactionService
         if (!userAccountsIdSet.Contains(transactionAddRequest.FromAccountNumber))
             return (false, "'FromAccountNumber' is Not One of Your Accounts Number", null);
         
-        // 'ToAccountNumber' has to be one the user DefinedAccounts Number //
-        var userDefinedAccountsIdSet = user.DefinedAccountNumbers?.ToHashSet();
+        // 'ToAccountNumber' has to be one of the user DefinedAccounts Number //
+        var userDefinedAccountsIdSet = user.DefinedCurrencyAccounts?.Select(acc => acc.Number).ToHashSet();
         if (!userDefinedAccountsIdSet!.Contains(transactionAddRequest.ToAccountNumber))
             return (false, "'ToAccountNumber' is Not One of Your DefinedAccounts Number", null);
 
@@ -150,7 +150,7 @@ public class TransactionService : ITransactionService
     }
 
     
-    public async Task<(bool isValid, string? message, TransactionResponse? obj)> UpdateIsConfirmedOfTransaction(int? transactionId, ClaimsPrincipal userClaims, bool? isConfirmed, TimeSpan TimeNow)
+    public async Task<(bool isValid, string? message, TransactionResponse? obj)> UpdateIsConfirmedOfTransaction(Guid? transactionId, ClaimsPrincipal userClaims, bool? isConfirmed, TimeSpan TimeNow)
     {
         // if 'transactionId' is null
         ArgumentNullException.ThrowIfNull(transactionId,"The 'transactionId' parameter is Null");
@@ -195,7 +195,7 @@ public class TransactionService : ITransactionService
         return transactionResponses;
     }
 
-    public async Task<(bool isValid, string? message, TransactionResponse? obj)> GetTransactionByID(int? Id, ClaimsPrincipal userClaims)
+    public async Task<(bool isValid, string? message, TransactionResponse? obj)> GetTransactionByID(Guid? Id, ClaimsPrincipal userClaims)
     {
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Transaction'Id' parameter is Null");
@@ -214,7 +214,7 @@ public class TransactionService : ITransactionService
         return (true, null, transactionResponse);
     }
 
-    // public async Task<TransactionResponse?> UpdateTransaction(TransactionUpdateRequest? transactionUpdateRequest, int? transactionID)
+    // public async Task<TransactionResponse?> UpdateTransaction(TransactionUpdateRequest? transactionUpdateRequest, Guid? transactionID)
     // {
     //     // if 'transaction ID' is null
     //     ArgumentNullException.ThrowIfNull(transactionID,"The Transaction'ID' parameter is Null");
@@ -233,7 +233,7 @@ public class TransactionService : ITransactionService
     //     return updatedTransaction.ToTransactionResponse();
     // }
 
-    public async Task<(bool isValid, bool isFound, string? message)> DeleteTransaction(int? Id, ClaimsPrincipal userClaims)
+    public async Task<(bool isValid, bool isFound, string? message)> DeleteTransaction(Guid? Id, ClaimsPrincipal userClaims)
     {
         // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Transaction'ID' parameter is Null");

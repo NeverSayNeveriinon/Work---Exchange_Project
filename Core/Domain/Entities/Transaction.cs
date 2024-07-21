@@ -8,7 +8,8 @@ namespace Core.Domain.Entities;
 public class Transaction
 {
     [Key]
-    public int Id { get; set; }
+    public Guid Id { get; set; }
+    
     [Column(TypeName="money")]
     public decimal Amount { get; set; }
     public bool IsConfirmed { get; set; }

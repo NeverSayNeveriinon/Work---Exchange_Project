@@ -23,7 +23,7 @@ public static partial class TransactionExtensions
     {
         Transaction transaction = new Transaction()
         {
-            Id = 0,
+            Id = Guid.NewGuid(),
             Amount = 0,
             FromAccountNumber = transactionAddRequest.FromAccountNumber,
             ToAccountNumber = transactionAddRequest.ToAccountNumber,

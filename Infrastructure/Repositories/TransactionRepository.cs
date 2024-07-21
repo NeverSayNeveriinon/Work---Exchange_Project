@@ -44,7 +44,7 @@ public class TransactionRepository : ITransactionRepository
         return transactionsList;
     }
 
-    public async Task<Transaction?> GetTransactionByIDAsync(int id)
+    public async Task<Transaction?> GetTransactionByIDAsync(Guid id)
     {
         var transaction = await _dbContext.Transactions.Include(property => property.FromAccount)
                                                                 .ThenInclude(Property => Property.Currency)

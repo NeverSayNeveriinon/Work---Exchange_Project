@@ -61,7 +61,7 @@ public class ExchangeValueController : ControllerBase
     public async Task<IActionResult> AddExchangeValue(ExchangeValueAddRequest exchangeValueAddRequest)
     {
         bool isValid = await _validator.ExistsInCurrentCurrencies(exchangeValueAddRequest.FirstCurrencyType) &&
-                       await _validator.ExistsInCurrentCurrencies(exchangeValueAddRequest.FirstCurrencyType);
+                       await _validator.ExistsInCurrentCurrencies(exchangeValueAddRequest.SecondCurrencyType);
         if (!isValid)
         {
             ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");

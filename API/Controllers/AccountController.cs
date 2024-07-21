@@ -1,4 +1,5 @@
-﻿using Core.Domain.ExternalServicesContracts;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
 using Core.DTO.Auth;
 using Core.ServiceContracts;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace API.Controllers;
 
@@ -25,6 +27,8 @@ public class AccountController : ControllerBase
     
     
     [HttpGet("/")]
+    // [AllowAnonymous]
+    [ApiExplorerSettings(IgnoreApi = true)] // For not showing in 'Swagger'
     public IActionResult Index()
     {
         return Ok("Here is The Home Page");
@@ -32,11 +36,18 @@ public class AccountController : ControllerBase
     
     
     // Register//
-    [Authorize("NotAuthorized")]
+    // [Authorize("NotAuthorized")]
+    [AllowAnonymous]
     [HttpPost("register")]
     // Post: api/Account/register
     public async Task<IActionResult> Register(UserRegister userRegister)
     {
+        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole("Admin"))
+            return Unauthorized("You Have Already Logged-In");
+        
+        if (userRegister.Role == "Admin" && !User.IsInRole("Admin"))
+            return Problem("You Are Not Allowed to Create an 'Admin' account", statusCode:403);
+        
         var (isValid, message) = await _accountService.Register(userRegister);
         
         if (!isValid)
@@ -47,12 +58,16 @@ public class AccountController : ControllerBase
     
         
     // Login //
-    [Authorize("NotAuthorized")]
+    // [Authorize("NotAuthorized")]
+    [AllowAnonymous]
     [HttpPost("login")]
     // Post: api/Account/login
-    public async Task<IActionResult> Login(UserLogin loginDTO)
+    public async Task<IActionResult> Login(UserLogin userLogin)
     {
-        var (isValid, message, obj) = await _accountService.Login(loginDTO);
+        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole("Admin"))
+            return Unauthorized("You Have Already Logged-In");
+        
+        var (isValid, message, obj) = await _accountService.Login(userLogin);
 
         if (!isValid)
             return BadRequest(message);
@@ -62,27 +77,54 @@ public class AccountController : ControllerBase
     
     
     // Confirm Email //
-    [Authorize("NotAuthorized")]
+    // [Authorize("NotAuthorized")]
+    [AllowAnonymous]
     [HttpGet("confirm-email")]
     // Get: api/Account/Confirm-Email
-    public async Task<IActionResult> ConfirmEmail(Guid userId, string token)
+    public async Task<IActionResult> ConfirmEmail([BindRequired]Guid userId, string token)
     {
-        var (isValid, message, obj) = await _accountService.ConfirmEmail(userId, token);
+        if (User.Identity?.IsAuthenticated ?? false)
+            return Unauthorized("You Have Already Logged-In");
+        
+        if (!Guid.TryParse(userId.ToString(), out _))
+            return BadRequest("User id Is Not In a Correct Format");
+        
+        if (string.IsNullOrEmpty(token))
+            return BadRequest("Token Can't Be Blank");
+        
+        var (isValid, message) = await _accountService.ConfirmEmail(userId, token);
 
         if (!isValid)
             return BadRequest(message);
         
-        return Ok(obj);
+        return Ok("Email Has Successfully Confirmed");
+    } 
+    
+    // Confirm Email //
+    // [Authorize("NotAuthorized")]
+    [AllowAnonymous]
+    [HttpGet("send-confirm-email")]
+    // Get: api/Account/Confirm-Email
+    public async Task<IActionResult> SendConfirmEmail(string userName)
+    {
+        if (User.Identity?.IsAuthenticated ?? false)
+            return Unauthorized("You Have Already Logged-In");
+        
+        var (isValid, message) = await _accountService.SendConfirmationEmail(userName);
+
+        if (!isValid)
+            return BadRequest(message);
+        
+        return Ok(message);
     }
     
     
-    
     [HttpPost("Defined-Accounts")]
-    [Authorize(JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize]
     // Post: api/Account/Defined-Accounts
-    public async Task<IActionResult> AddDefinedAccount(string definedAccountAddNumber)
+    public async Task<IActionResult> AddDefinedAccount([Length(10,10)]string definedAccountAddNumber)
     {
-        var (isValid, message) = await _accountService.AddDefinedAccount(definedAccountAddNumber, User);
+        var (isValid, message) = await _accountService.AddDefinedAccount(definedAccountAddNumber, User.Identity!.Name!);
 
         if (!isValid)
             return BadRequest(message);

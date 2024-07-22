@@ -19,25 +19,19 @@ public class CommissionRateService : ICommissionRateService
 
     public async Task<(bool isValid, string? message, CommissionRateResponse? obj)> AddCommissionRate(CommissionRateRequest? commissionRateRequest)
     {
-        // 'commissionRateRequest' is Null //
         ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' object parameter is Null");
-
+        
+        var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
         
         // Validation For Valid MaxSDRange (We shouldn't have same MaxUSDRange) //
-        var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
-        var allUSDRanges = allCommissionRates.Select(commisionRate => commisionRate.MaxUSDRange).ToHashSet();
-        if (allUSDRanges.Contains(commissionRateRequest.MaxUSDRange!.Value)) // means there is already a same range, we don't want that 
-        {
-            return (false, "There is Already a Commission Rate Object With This 'MaxUSDRange'", null);
-        }
+        var isValidUSDRange = await ValidateMaxUSDRangeDuplicate(commissionRateRequest.MaxUSDRange, allCommissionRates);
+        if (!isValidUSDRange.isValid)
+            return (false, isValidUSDRange.message, null);
         
         // Validation For Valid CRate (More USDRange has to have less CRate) //
-        var priviousCommissionRate = allCommissionRates.OrderByDescending(commisionRate => commisionRate.MaxUSDRange)
-                                                       .FirstOrDefault(commisionRate => commisionRate.MaxUSDRange < commissionRateRequest.MaxUSDRange);
-        if (priviousCommissionRate != null && (priviousCommissionRate.CRate < commissionRateRequest.CRate!.Value)) // means first lesser USDRange has lesser CRate, we don't want that
-        {
-            return (false, "The 'CRate' Can't be More Than the CRate's of Lesser USDRanges", null);
-        }
+        var isValidCRate = await ValidateCRateRange(commissionRateRequest, allCommissionRates);
+        if (!isValidCRate.isValid)
+            return (false, isValidCRate.message, null);
         
         var commissionRate = commissionRateRequest.ToCommissionRate();
         var commissionRateReturned = await _commissionRateRepository.AddCommissionRateAsync(commissionRate);
@@ -66,7 +60,6 @@ public class CommissionRateService : ICommissionRateService
 
     public async Task<CommissionRateResponse?> GetCommissionRateByMaxRange(decimal? maxRange)
     {
-        // if 'maxRange' is null
         ArgumentNullException.ThrowIfNull(maxRange,"The CommissionRate'maxRange' parameter is Null");
         
         var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(maxRange.Value);
@@ -81,18 +74,12 @@ public class CommissionRateService : ICommissionRateService
 
     public async Task<(bool isValid, string? message, CommissionRateResponse? obj)> UpdateCRateByMaxRange(CommissionRateRequest? commissionRateRequest)
     { 
-        // 'commissionRateRequest' is Null //
         ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' object parameter is Null");
         
-        
         // Validation For Valid CRate (More USDRange has to have less CRate) //
-        var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
-        var priviousCommissionRate = allCommissionRates.OrderByDescending(commisionRate => commisionRate.MaxUSDRange)
-                                                       .FirstOrDefault(commisionRate => commisionRate.MaxUSDRange < commissionRateRequest.MaxUSDRange);
-        if (priviousCommissionRate != null && (priviousCommissionRate.CRate < commissionRateRequest.CRate!.Value)) // means first lesser USDRange has lesser CRate, we don't want that
-        {
-            return (false, "The 'CRate' Can't be More Than the CRate's of Lesser USDRanges", null);
-        }
+        var (isValid, message) = await ValidateCRateRange(commissionRateRequest);
+        if (!isValid)
+            return (false, message, null);
         
         var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(commissionRateRequest.MaxUSDRange!.Value);
         
@@ -108,7 +95,6 @@ public class CommissionRateService : ICommissionRateService
 
     public async Task<bool?> DeleteCommissionRateByMaxRange(decimal? maxRange)
     {
-        // if 'maxRange' is null
         ArgumentNullException.ThrowIfNull(maxRange,"The CommissionRate'maxRange' parameter is Null");
 
         var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(maxRange.Value);
@@ -120,5 +106,43 @@ public class CommissionRateService : ICommissionRateService
         await _commissionRateRepository.SaveChangesAsync();
 
         return result;
+    }
+
+    
+    // Private Methods //
+    
+    private async Task<(bool isValid, string? message)> ValidateCRateRange(CommissionRateRequest? commissionRateRequest, List<CommissionRate>? allCommissionRates = null)
+    {
+        ArgumentNullException.ThrowIfNull(commissionRateRequest,"The 'commissionRateRequest' parameter is Null");
+
+        if (allCommissionRates is null)
+            allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
+
+        var allCommissionRatesOrdered = allCommissionRates.OrderBy(commisionRate => commisionRate.MaxUSDRange).ToList();
+        var commissionRateIndex = ~(allCommissionRatesOrdered.Select(commissionRate => commissionRate.MaxUSDRange).ToList().BinarySearch(commissionRateRequest.MaxUSDRange!.Value));
+        var priviousCommissionRate =  allCommissionRatesOrdered.ElementAtOrDefault(commissionRateIndex - 1);
+        var nextCommissionRate =  allCommissionRatesOrdered.ElementAtOrDefault(commissionRateIndex);
+        
+        if ((priviousCommissionRate != null && (priviousCommissionRate.CRate < commissionRateRequest.CRate!.Value)) || // means last lesser USDRange has lesser CRate, we don't want that
+            (nextCommissionRate != null && (nextCommissionRate.CRate > commissionRateRequest.CRate!.Value))) // means first more USDRange has more CRate, we don't want that
+        {
+            return (false, "The 'CRate' Can't be More Than the CRate's of Lesser USDRanges\n and Lesser Than than CRate's of More USDRanges");
+        }
+
+        return (true, null);
+    }
+
+    private async Task<(bool isValid, string? message)> ValidateMaxUSDRangeDuplicate(decimal? maxUSDRange, List<CommissionRate>? allCommissionRates = null)
+    {
+        ArgumentNullException.ThrowIfNull(maxUSDRange,"The 'maxUSDRange' parameter is Null");
+        
+        if (allCommissionRates is null)
+            allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
+        
+        var allUSDRanges = allCommissionRates.Select(commisionRate => commisionRate.MaxUSDRange).ToHashSet();
+        if (allUSDRanges.Contains(maxUSDRange.Value)) // means there is already a same range, we don't want that 
+            return (false, "There is Already a Commission Rate Object With This 'MaxUSDRange'");
+        
+        return (true, null);
     }
 }

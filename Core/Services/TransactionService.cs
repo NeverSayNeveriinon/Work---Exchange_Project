@@ -31,7 +31,6 @@ public class TransactionService : ITransactionService
     
     public async Task<(bool isValid, string? message, TransactionResponse? obj)> AddTransferTransaction(TransactionTransferAddRequest? transactionAddRequest, ClaimsPrincipal userClaims)
     {
-        // 'transactionAddRequest' is Null //
         ArgumentNullException.ThrowIfNull(transactionAddRequest,"The 'transactionAddRequest' object parameter is Null");
         
         // 'FromAccountNumber' has to belong to the user itself //
@@ -102,27 +101,33 @@ public class TransactionService : ITransactionService
         return (true, null, transactionResponse);
     }
 
-    public async Task<(bool isValid, string? message, TransactionResponse? obj)> AddDepositTransaction(TransactionDepositAddRequest? transactionAddRequest, ClaimsPrincipal userClaims)
+    public async Task<(bool isValid, string? message, TransactionResponse? obj)> AddDepositTransaction(TransactionDepositAddRequest? transactionAddRequest,
+                                                                                                       ClaimsPrincipal userClaims, bool isForOpenAccount = false)
     {
-        // 'transactionAddRequest' is Null //
         ArgumentNullException.ThrowIfNull(transactionAddRequest,"The 'transactionAddRequest' object parameter is Null");
         
         var transaction = transactionAddRequest.ToTransaction();
         _transactionRepository.LoadReferences(transaction);
 
-        // 'AccountNumber' has to belong to the user itself //
-        var user = await _userManager.GetUserAsync(userClaims);
-        var userAccountsIdSet = user!.CurrencyAccounts!.Select(account => account.Number).ToHashSet();
-        if (!userAccountsIdSet.Contains(transactionAddRequest.AccountNumber))
-            return (false, "'AccountNumber' is Not One of Your Accounts Number", null);
+        if (!isForOpenAccount)
+        {
+            // 'AccountNumber' has to belong to the user itself //
+            var user = await _userManager.GetUserAsync(userClaims);
+            var userAccountsIdSet = user!.CurrencyAccounts!.Select(account => account.Number).ToHashSet();
+            if (!userAccountsIdSet.Contains(transactionAddRequest.AccountNumber))
+                return (false, "'AccountNumber' is Not One of Your Accounts Number", null);
+        }
         
         var (isValid, message) = await CheckMinimumUSDBalanceAsync(transactionAddRequest.Money.CurrencyType, transactionAddRequest.Money.Amount!.Value);
         if (!isValid)
             return (false, message, null);
         
+        
+        var (_ ,_ ,fromAccount) = _currencyAccountService.GetCurrencyAccountByNumberInternal(transaction.FromAccountNumber);
+        
         // Calculate Amount to be added to 'Balance' of 'Account'
         var moneyCurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), transactionAddRequest.Money.CurrencyType);
-        var valueToBeMultiplied = transaction.FromAccount?.Currency?.SecondExchangeValues?.FirstOrDefault(exValue=> exValue.FirstCurrency.CurrencyType == moneyCurrencyType)!.UnitOfFirstValue;
+        var valueToBeMultiplied = transaction?.FromAccount?.Currency?.SecondExchangeValues?.FirstOrDefault(exValue=> exValue.FirstCurrency.CurrencyType == moneyCurrencyType)!.UnitOfFirstValue;
         var amount = transactionAddRequest.Money.Amount * valueToBeMultiplied!.Value;
         
         // Updating the 'Balance' of 'Account'
@@ -137,9 +142,14 @@ public class TransactionService : ITransactionService
 
     private async Task<(bool isValid, string? message)> CheckMinimumUSDBalanceAsync(string currencyType, decimal finalAmount)
     {
-        var (isValid, valueToBeMultiplied) = await _exchangeValueService.GetUSDExchangeValueByCurrencyType(currencyType);
-        if (!isValid)
-            return (false, "Either The Source Currency Type doesn't exist or There is No Relevant Exchange Value to convert to USD");
+        decimal valueToBeMultiplied = 1;
+        if (currencyType != nameof(CurrencyTypeOptions.USD))
+        {
+            var (isValid, exchnageValueToBeMultiplied) = await _exchangeValueService.GetUSDExchangeValueByCurrencyType(currencyType);
+            if (!isValid)
+                return (false, "Either The Source Currency Type doesn't exist or There is No Relevant Exchange Value to convert to USD");
+            valueToBeMultiplied = exchnageValueToBeMultiplied!.Value;
+        }
         
         var finalUSDAmount = finalAmount * valueToBeMultiplied;
         if (finalUSDAmount < BalanceMinimumUSD)
@@ -152,10 +162,7 @@ public class TransactionService : ITransactionService
     
     public async Task<(bool isValid, string? message, TransactionResponse? obj)> UpdateIsConfirmedOfTransaction(Guid? transactionId, ClaimsPrincipal userClaims, bool? isConfirmed, TimeSpan TimeNow)
     {
-        // if 'transactionId' is null
         ArgumentNullException.ThrowIfNull(transactionId,"The 'transactionId' parameter is Null");
-        
-        // if 'isConfirmed' is null
         ArgumentNullException.ThrowIfNull(isConfirmed,"The 'isConfirmed' parameter is Null");
         
         var user = await _userManager.GetUserAsync(userClaims);
@@ -197,7 +204,6 @@ public class TransactionService : ITransactionService
 
     public async Task<(bool isValid, string? message, TransactionResponse? obj)> GetTransactionByID(Guid? Id, ClaimsPrincipal userClaims)
     {
-        // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Transaction'Id' parameter is Null");
 
         var user = await _userManager.GetUserAsync(userClaims);
@@ -216,10 +222,7 @@ public class TransactionService : ITransactionService
 
     // public async Task<TransactionResponse?> UpdateTransaction(TransactionUpdateRequest? transactionUpdateRequest, Guid? transactionID)
     // {
-    //     // if 'transaction ID' is null
     //     ArgumentNullException.ThrowIfNull(transactionID,"The Transaction'ID' parameter is Null");
-    //     
-    //     // if 'transactionUpdateRequest' is null
     //     ArgumentNullException.ThrowIfNull(transactionUpdateRequest,"The 'TransactionUpdateRequest' object parameter is Null");
     //     
     //     var transaction = await _transactionRepository.GetTransactionByIDAsync(transactionID.Value);
@@ -235,7 +238,6 @@ public class TransactionService : ITransactionService
 
     public async Task<(bool isValid, bool isFound, string? message)> DeleteTransaction(Guid? Id, ClaimsPrincipal userClaims)
     {
-        // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Transaction'ID' parameter is Null");
 
         var transaction = await _transactionRepository.GetTransactionByIDAsync(Id.Value);

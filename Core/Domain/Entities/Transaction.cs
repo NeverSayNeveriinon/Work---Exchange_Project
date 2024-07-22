@@ -23,6 +23,6 @@ public class Transaction
     [ForeignKey("ToAccount")]
     public string? ToAccountNumber { get; set; }
     
-    public CurrencyAccount? FromAccount { get; } = null!;
-    public CurrencyAccount? ToAccount { get; } = null!;
+    public virtual CurrencyAccount? FromAccount { get; set; } = null!;
+    public virtual CurrencyAccount? ToAccount { get; set; } = null!;
 }

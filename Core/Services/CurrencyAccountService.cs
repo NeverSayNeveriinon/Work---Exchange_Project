@@ -40,7 +40,7 @@ public class CurrencyAccountService : ICurrencyAccountService
             AccountNumber = currencyAccount.Number,
             Money = new MoneyRequest(){Amount = currencyAccountAddRequest.MoneyToOpenAccount.Amount!.Value, CurrencyType = currencyAccountAddRequest.MoneyToOpenAccount.CurrencyType}
         };
-        var (isValid, message, _) = await _transactionService.Value.AddDepositTransaction(transactionAddRequest, userClaims);
+        var (isValid, message, _) = await _transactionService.Value.AddDepositTransaction(transactionAddRequest, userClaims, isForOpenAccount:true);
         if (!isValid)
             return (false, message, null);
         
@@ -118,8 +118,8 @@ public class CurrencyAccountService : ICurrencyAccountService
         // if 'number' is null
         ArgumentNullException.ThrowIfNull(number,"The CurrencyAccount'Number' parameter is Null");
 
-        var currencyAccount =  _accountRepository.GetCurrencyAccounts()
-                                                 .FirstOrDefault(property => property.Number == number);
+        var currencyAccount = _accountRepository.GetCurrencyAccounts()
+                                                .FirstOrDefault(property => property.Number == number);
         
         // if 'Number' is invalid (doesn't exist)
         if (currencyAccount == null)

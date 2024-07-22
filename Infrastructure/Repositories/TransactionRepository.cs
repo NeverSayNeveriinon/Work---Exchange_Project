@@ -73,10 +73,10 @@ public class TransactionRepository : ITransactionRepository
     
     public void LoadReferences(Transaction transaction)
     {
-        _dbContext.Entry(transaction).Reference(c => c.FromAccount).Load();
-        _dbContext.Entry(transaction).Reference(c => c.ToAccount).Load();
+        _dbContext.Entry(transaction).Reference<CurrencyAccount>(c => c.FromAccount).Load();
+        _dbContext.Entry(transaction).Reference<CurrencyAccount>(c => c.ToAccount).Load();
     }
-    
+        
     // public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction)
     // {
     //     // _dbContext.Entry(transaction).Property(p => p.FromAccount).IsModified = true;

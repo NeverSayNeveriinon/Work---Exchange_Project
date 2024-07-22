@@ -89,7 +89,7 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
         
         modelBuilder.Entity<CommissionRate>()
             .Property(entity => entity.CRate)
-            .HasPrecision(6,3);
+            .HasPrecision(8,5);
         
         // modelBuilder.Entity<CommissionRate>()
         //     .Property(entity => entity.MaxUSDRange)

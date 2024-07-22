@@ -118,7 +118,7 @@ public class CurrencyAccountController : ControllerBase
     /// </remarks>
     /// <response code="204">The CurrencyAccount is successfully found and has been deleted from CurrencyAccounts List</response>
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
-    [HttpDelete]
+    [HttpDelete("{currencyAccountNumber}")]
     // Delete: api/CurrencyAccount/{currencyAccountNumber}
     public async Task<IActionResult> DeleteCurrencyAccount(string currencyAccountNumber)
     {

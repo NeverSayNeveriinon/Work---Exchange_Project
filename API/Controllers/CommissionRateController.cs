@@ -82,7 +82,7 @@ public class CommissionRateController : ControllerBase
     [HttpGet("{maxRange:decimal}")]
     // GET: api/CommissionRate/{commissionRateID}
     public async Task<ActionResult<CommissionRateResponse>> GetCommissionRateByMaxRange(decimal maxRange)
-    {
+        {
         var commissionRateResponse = await _commissionRateService.GetCommissionRateByMaxRange(maxRange);
             
         if (commissionRateResponse is null)

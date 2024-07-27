@@ -35,7 +35,8 @@ public class CommissionRateRepository : ICommissionRateRepository
         var commissionRatesList = await _dbContext.CommissionRates.ToListAsync();
         if (commissionRatesList.Count == 0) return null;
         
-        var cRateIndex = ~(commissionRatesList.Select(commissionRate => commissionRate.MaxUSDRange).Order().ToList().BinarySearch(amount));
+        var cRateIndex = commissionRatesList.Select(commissionRate => commissionRate.MaxUSDRange).Order().ToList().BinarySearch(amount);
+        cRateIndex = int.IsNegative(cRateIndex) ? ~cRateIndex : cRateIndex; 
         if (cRateIndex == commissionRatesList.Count) return null;
         
         var finalCRate = commissionRatesList.ElementAtOrDefault(cRateIndex)!.CRate;
@@ -57,15 +58,13 @@ public class CommissionRateRepository : ICommissionRateRepository
         return commissionRate;
     }
     
-    public bool DeleteCommissionRate(CommissionRate commissionRate)
+    public void DeleteCommissionRate(CommissionRate commissionRate)
     {
-        var entityEntry = _dbContext.CommissionRates.Remove(commissionRate);
-        
-        return entityEntry.State == EntityState.Deleted;
+        _dbContext.CommissionRates.Remove(commissionRate);
     }
     
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _dbContext.SaveChangesAsync();
+        return await _dbContext.SaveChangesAsync();
     }
 }

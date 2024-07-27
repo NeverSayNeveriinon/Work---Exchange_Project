@@ -4,7 +4,7 @@ namespace API.Helpers;
 
 public static class WebApplicationExtensions
 {
-    public static async void CreateDatabase<T>(this WebApplication app) where T : DbContext
+    public static async void EnsureCreatingDatabase<T>(this WebApplication app) where T : DbContext
     {
         using (var scope = app.Services.CreateScope())
         {

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 using API.Helpers;
 using ConnectingApps.SmartInject;
 using Core.Domain.ExternalServicesContracts;
@@ -32,17 +33,19 @@ public class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddControllers();
-        // builder.Services.AddControllers(options =>
+        builder.Services.AddControllers()
+                        .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+        // builder.Services.AddControllersWithViews(options =>
         // {
         //     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
         // });
 
         // Services IOC        
-        builder.Services.AddTransient<IJwtService, JwtService>();
+        builder.Services.AddTransient<ITokenService, TokenService>();
         builder.Services.AddTransient<INotificationService, EmailService>();
         
         builder.Services.AddScoped<IAccountService, AccountService>();
+        builder.Services.AddScoped<IAccountRepository, AccountRepository>();
         
         builder.Services.AddScoped<ICurrencyAccountRepository, CurrencyAccountRepository>();
         builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
@@ -117,7 +120,7 @@ public class Program
         // Generates OpenAPI specification
         builder.Services.AddSwaggerGen(options =>
         {
-            // options.IncludeXmlComments("wwwroot/ExchangeApp.xml"); // For Reading the 'XML' comments
+            options.IncludeXmlComments("wwwroot/ExchangeApp.xml"); // For Reading the 'XML' comments
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 In = ParameterLocation.Header,
@@ -170,7 +173,7 @@ public class Program
         
         var app = builder.Build();
         
-        app.CreateDatabase<AppDbContext>();
+        app.EnsureCreatingDatabase<AppDbContext>();
         
         // Middlewares //
             
@@ -181,7 +184,7 @@ public class Program
         app.UseSwagger(); // Creates endpoints for swagger.json
         app.UseSwaggerUI(); // Creates swagger UI for testing all endpoints (action methods)
         
-        // app.UseStaticFiles();
+        app.UseStaticFiles();
 
         app.UseRouting();
         app.UseAuthentication(); 

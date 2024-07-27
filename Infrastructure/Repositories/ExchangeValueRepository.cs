@@ -18,14 +18,18 @@ public class ExchangeValueRepository : IExchangeValueRepository
 
     public async Task<List<ExchangeValue>> GetAllExchangeValuesAsync()
     {
-        var exchangeValuesList = await _dbContext.ExchangeValues.AsNoTracking()
+        var exchangeValuesList = await _dbContext.ExchangeValues.Include(exVal => exVal.FirstCurrency)
+                                                                .Include(exVal => exVal.SecondCurrency)
+                                                                .AsNoTracking()
                                                                 .ToListAsync();
         return exchangeValuesList;
     }
 
     public async Task<ExchangeValue?> GetExchangeValueByIDAsync(int id)
     {
-        var exchangeValue = await _dbContext.ExchangeValues.AsNoTracking()
+        var exchangeValue = await _dbContext.ExchangeValues.Include(exVal => exVal.FirstCurrency)
+                                                           .Include(exVal => exVal.SecondCurrency)
+                                                           .AsNoTracking()
                                                            .FirstOrDefaultAsync(exchangeValueItem => exchangeValueItem.Id == id);
         return exchangeValue;
     }
@@ -38,11 +42,11 @@ public class ExchangeValueRepository : IExchangeValueRepository
         return exchangeValue;
     }
     
-    public async Task<decimal?> GetUSDExchangeValueByCurrencyTypeAsync(int? sourceCurrencyId, int? usdCurrencyId)
+    public async Task<decimal?> GetExchangeValueByCurrencyTypeAsync(int? sourceCurrencyId, int? destCurrencyId)
     {
         var exchangeValue = await _dbContext.ExchangeValues.AsNoTracking()
                                                            .FirstOrDefaultAsync(exchangeValueItem => exchangeValueItem.FirstCurrencyId == sourceCurrencyId && 
-                                                                                                     exchangeValueItem.SecondCurrencyId == usdCurrencyId);
+                                                                                                     exchangeValueItem.SecondCurrencyId == destCurrencyId);
 
         return exchangeValue?.UnitOfFirstValue;
     }
@@ -54,25 +58,29 @@ public class ExchangeValueRepository : IExchangeValueRepository
         return exchangeValueReturned.Entity;
     }
     
-    public ExchangeValue UpdateExchangeValue(ExchangeValue exchangeValue, ExchangeValue updatedExchangeValue)
+    public ExchangeValue UpdateExchangeValueByID(ExchangeValue exchangeValue, ExchangeValue updatedExchangeValue)
     {
         _dbContext.Entry(exchangeValue).Property(p => p.UnitOfFirstValue).IsModified = true;
-        _dbContext.Entry(exchangeValue).Property(p => p.UnitOfSecondValue).IsModified = true;
+        // _dbContext.Entry(exchangeValue).Property(p => p.UnitOfSecondValue).IsModified = true;
         exchangeValue.UnitOfFirstValue = updatedExchangeValue.UnitOfFirstValue;
-        exchangeValue.UnitOfSecondValue = updatedExchangeValue.UnitOfSecondValue;
+        // exchangeValue.UnitOfSecondValue = updatedExchangeValue.UnitOfSecondValue;
 
         return exchangeValue;
     }
     
-    public bool DeleteExchangeValue(ExchangeValue exchangeValue)
+    public void DeleteExchangeValueByID(ExchangeValue exchangeValue)
     {
-        var entityEntry = _dbContext.ExchangeValues.Remove(exchangeValue);
-        
-        return entityEntry.State == EntityState.Deleted;
+        // var entityEntry = _dbContext.ExchangeValues.Remove(exchangeValue);
+        _dbContext.Entry(exchangeValue).State = EntityState.Deleted;
     }
     
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _dbContext.SaveChangesAsync();
+        return await _dbContext.SaveChangesAsync();
+    }
+
+    public void DetachExchangeValue(ExchangeValue exchangeValue)
+    {
+        _dbContext.Entry(exchangeValue).State = EntityState.Detached;
     }
 }

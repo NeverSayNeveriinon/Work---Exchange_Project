@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
+using Core.DTO.CurrencyAccountDTO;
 using Core.DTO.CurrencyDTO;
 using Core.DTO.ExchangeValueDTO;
 using Core.Enums;
@@ -21,7 +22,6 @@ public class ExchangeValueService : IExchangeValueService
 
     public async Task<(bool isValid, string? message, ExchangeValueResponse? obj)> AddExchangeValue(ExchangeValueAddRequest? exchangeValueAddRequest)
     {
-        // 'exchangeValueRequest' is Null //
         ArgumentNullException.ThrowIfNull(exchangeValueAddRequest,"The 'ExchangeValueRequest' object parameter is Null");
         
         var firstCurrency = await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.FirstCurrencyType);
@@ -32,9 +32,12 @@ public class ExchangeValueService : IExchangeValueService
             return (false, "There is Already a Exchange Value Object With These First Currency type and Second Currency type", null);
             
         var exchangeValue = exchangeValueAddRequest.ToExchangeValue(firstCurrency!.Id,secondCurrency!.Id);
-        
+        var oppositeExchangeValue = exchangeValueAddRequest.ToOppositeExchangeValue(firstCurrency!.Id,secondCurrency!.Id);
+            
         var exchangeValueReturned = await _exchangeValueRepository.AddExchangeValueAsync(exchangeValue);
-        await _exchangeValueRepository.SaveChangesAsync();
+        var oppositeExchangeValueReturned = await _exchangeValueRepository.AddExchangeValueAsync(oppositeExchangeValue);
+        var numberOfRowsAffected = await _exchangeValueRepository.SaveChangesAsync();
+        if (!(numberOfRowsAffected >= 2)) return (false, "The Request Has Not Been Done Completely, Try Again", null);
 
         var exchangeValueResponse = exchangeValueReturned.ToExchangeValueResponse();
         return (true, null, exchangeValueResponse);
@@ -51,7 +54,6 @@ public class ExchangeValueService : IExchangeValueService
 
     public async Task<ExchangeValueResponse?> GetExchangeValueByID(int? Id)
     {
-        // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The ExchangeValue'Id' parameter is Null");
 
         var exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(Id.Value);
@@ -65,57 +67,68 @@ public class ExchangeValueService : IExchangeValueService
         return exchangeValueResponse;
     }
 
-    public async Task<(bool isValid, decimal? USDAmount)> GetUSDExchangeValueByCurrencyType(string? currencyType)
+    public async Task<(bool isValid, decimal? valueToBeMultiplied)> GetExchangeValueByCurrencyType(string? firstCurrencyType, string? secondCurrencyType)
     {
-        // if 'currencyType' is null
-        ArgumentNullException.ThrowIfNull(currencyType,"The 'currencyType' parameter is Null");
+        ArgumentNullException.ThrowIfNull(firstCurrencyType,"The 'firstCurrencyType' parameter is Null");
+        ArgumentNullException.ThrowIfNull(secondCurrencyType,"The 'secondCurrencyType' parameter is Null");
 
-        var sourceCurrencyResponse = await _currencyService.GetCurrencyByCurrencyType(currencyType);
-        var usdCurrencyResponse = await _currencyService.GetCurrencyByCurrencyType("USD");
+        if (firstCurrencyType == secondCurrencyType)
+            return (true, 1);
+        
+        var sourceCurrencyResponse = await _currencyService.GetCurrencyByCurrencyType(firstCurrencyType);
+        var destCurrencyResponse = await _currencyService.GetCurrencyByCurrencyType(secondCurrencyType);
 
-        // if 'currencyType' doesn't exist in 'currencies list' 
+        // if 'currencyType's doesn't exist in 'currencies list' 
         if (sourceCurrencyResponse == null)
             return (false, null);
+        if (destCurrencyResponse == null)
+            return (false, null);
 
-        var valueToBeMultiplied = await _exchangeValueRepository.GetUSDExchangeValueByCurrencyTypeAsync(sourceCurrencyResponse.Id, usdCurrencyResponse!.Id);
+        var valueToBeMultiplied = await _exchangeValueRepository.GetExchangeValueByCurrencyTypeAsync(sourceCurrencyResponse.Id, destCurrencyResponse!.Id);
         if (valueToBeMultiplied == null)
             return (false, null);
         
         return (true, valueToBeMultiplied);
     }
     
-    public async Task<ExchangeValueResponse?> UpdateExchangeValue(ExchangeValueUpdateRequest? exchangeValueUpdateRequest, int? exchangeValueID)
+    public async Task<(bool, string? message, ExchangeValueResponse? obj)> UpdateExchangeValueByID(ExchangeValueUpdateRequest? exchangeValueUpdateRequest, int? exchangeValueID)
     {
-        // if 'exchangeValue ID' is null
         ArgumentNullException.ThrowIfNull(exchangeValueID,"The ExchangeValue'ID' parameter is Null");
-        
-        // if 'exchangeValueRequest' is null
         ArgumentNullException.ThrowIfNull(exchangeValueUpdateRequest,"The 'ExchangeValueRequest' object parameter is Null");
         
         var exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(exchangeValueID.Value);
         
-        // if 'ID' is invalid (doesn't exist)
-        if (exchangeValue == null) return null;
+        // if 'id' doesn't exist in 'exchangeValues list' 
+        if (exchangeValue == null) return (false, null, null);
+        
+        var allExchangeValues = await _exchangeValueRepository.GetAllExchangeValuesAsync();
+        var oppositeExchangeValue = allExchangeValues.FirstOrDefault(exValue => exValue.SecondCurrencyId == exchangeValue.FirstCurrencyId && exValue.FirstCurrencyId == exchangeValue.SecondCurrencyId);
             
-        var updatedExchangeValue = _exchangeValueRepository.UpdateExchangeValue(exchangeValue, exchangeValueUpdateRequest.ToExchangeValue());
-        await _exchangeValueRepository.SaveChangesAsync();
+        var updatedExchangeValue = _exchangeValueRepository.UpdateExchangeValueByID(exchangeValue, exchangeValueUpdateRequest.ToExchangeValue());
+        var updatedOppositeExchangeValue = _exchangeValueRepository.UpdateExchangeValueByID(oppositeExchangeValue, exchangeValueUpdateRequest.ToOppositeExchangeValue());
+        var numberOfRowsAffected = await _exchangeValueRepository.SaveChangesAsync();
+        if (!(numberOfRowsAffected >= 2)) return (false, "The Request Has Not Been Done Completely, Try Again", null);
 
-        return updatedExchangeValue.ToExchangeValueResponse();
+        return (true, null, updatedExchangeValue.ToExchangeValueResponse());
     }
 
-    public async Task<bool?> DeleteExchangeValue(int? Id)
+    public async Task<(bool, string? message)> DeleteExchangeValueByID(int? Id)
     {
-        // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The ExchangeValue'ID' parameter is Null");
 
         var exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(Id.Value);
         
         // if 'ID' is invalid (doesn't exist)
-        if (exchangeValue == null) return null;
-    
-        bool result = _exchangeValueRepository.DeleteExchangeValue(exchangeValue);
-        await _exchangeValueRepository.SaveChangesAsync();
+        if (exchangeValue == null) return (false, null);
+        
+        var allExchangeValues = await _exchangeValueRepository.GetAllExchangeValuesAsync();
+        var oppositeExchangeValue = allExchangeValues.FirstOrDefault(exValue => exValue.SecondCurrencyId == exchangeValue.FirstCurrencyId && exValue.FirstCurrencyId == exchangeValue.SecondCurrencyId);
+        
+        _exchangeValueRepository.DeleteExchangeValueByID(exchangeValue);
+        _exchangeValueRepository.DeleteExchangeValueByID(oppositeExchangeValue!);
+        var numberOfRowsAffected = await _exchangeValueRepository.SaveChangesAsync();
+        if (!(numberOfRowsAffected >= 2)) return (false, "The Request Has Not Been Done Completely, Try Again");
 
-        return result;
+        return (true, null);
     }
 }

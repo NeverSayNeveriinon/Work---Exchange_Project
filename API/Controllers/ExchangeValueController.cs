@@ -10,7 +10,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = Constants.AdminRole)]
 public class ExchangeValueController : ControllerBase
 {
     private readonly IExchangeValueService _exchangeValueService;
@@ -65,12 +65,12 @@ public class ExchangeValueController : ControllerBase
         if (!isValid)
         {
             ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
-            return BadRequest(ModelState);
+            return new BadRequestObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext,ModelState));
         }
         
         var (isValidExchangeValue, message, exchangeValueResponse) = await _exchangeValueService.AddExchangeValue(exchangeValueAddRequest);
         if (!isValidExchangeValue)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return CreatedAtAction(nameof(GetExchangeValue), new {exchangeValueID = exchangeValueResponse!.Id}, new { exchangeValueResponse.Id });
     }
@@ -120,9 +120,11 @@ public class ExchangeValueController : ControllerBase
     // Put: api/ExchangeValue/{exchangeValueID}
     public async Task<IActionResult> UpdateExchangeValue(ExchangeValueUpdateRequest exchangeValueUpdateRequest, int exchangeValueID)
     {
-        var exchangeValueResponse = await _exchangeValueService.UpdateExchangeValue(exchangeValueUpdateRequest, exchangeValueID);
-        if (exchangeValueResponse is null)
+        var (isValid, message, exchangeValueResponse) = await _exchangeValueService.UpdateExchangeValueByID(exchangeValueUpdateRequest, exchangeValueID);
+        if (!isValid && message is null)
             return NotFound("!!An Exchange Value With This ID Has Not Been Found!!");
+        if (!isValid)
+            return BadRequest(message);
         
         return NoContent();
     }
@@ -144,10 +146,13 @@ public class ExchangeValueController : ControllerBase
     // Delete: api/ExchangeValue/{exchangeValueID}
     public async Task<IActionResult> DeleteExchangeValue(int exchangeValueID)
     {
-        bool? exchangeValueResponse = await _exchangeValueService.DeleteExchangeValue(exchangeValueID);
-        if (exchangeValueResponse is null)
+        var (isValid, message) = await _exchangeValueService.DeleteExchangeValueByID(exchangeValueID);
+        if (!isValid && message is null)
             return NotFound("!!An Exchange Value With This ID Has Not Been Found!!");
-
+        
+        if (!isValid)
+            return BadRequest(message);
+        
         return NoContent();
     }
 }

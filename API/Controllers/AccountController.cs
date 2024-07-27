@@ -2,6 +2,7 @@
 using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
 using Core.DTO.Auth;
+using Core.Helpers;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -42,16 +43,16 @@ public class AccountController : ControllerBase
     // Post: api/Account/register
     public async Task<IActionResult> Register(UserRegister userRegister)
     {
-        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole("Admin"))
+        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.AdminRole))
             return Unauthorized("You Have Already Logged-In");
         
-        if (userRegister.Role == "Admin" && !User.IsInRole("Admin"))
+        if (userRegister.Role == Constants.AdminRole && !User.IsInRole(Constants.AdminRole))
             return Problem("You Are Not Allowed to Create an 'Admin' account", statusCode:403);
         
         var (isValid, message) = await _accountService.Register(userRegister);
         
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok(message);
     }
@@ -64,13 +65,13 @@ public class AccountController : ControllerBase
     // Post: api/Account/login
     public async Task<IActionResult> Login(UserLogin userLogin)
     {
-        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole("Admin"))
+        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.AdminRole))
             return Unauthorized("You Have Already Logged-In");
         
         var (isValid, message, obj) = await _accountService.Login(userLogin);
 
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok(obj);
     }
@@ -87,15 +88,15 @@ public class AccountController : ControllerBase
             return Unauthorized("You Have Already Logged-In");
         
         if (!Guid.TryParse(userId.ToString(), out _))
-            return BadRequest("User id Is Not In a Correct Format");
+            return Problem("User id Is Not In a Correct Format", statusCode:400);
         
         if (string.IsNullOrEmpty(token))
-            return BadRequest("Token Can't Be Blank");
+            return Problem("Token Can't Be Blank", statusCode:400);
         
         var (isValid, message) = await _accountService.ConfirmEmail(userId, token);
 
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok("Email Has Successfully Confirmed");
     } 
@@ -113,7 +114,7 @@ public class AccountController : ControllerBase
         var (isValid, message) = await _accountService.SendConfirmationEmail(userName);
 
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok(message);
     }
@@ -127,7 +128,7 @@ public class AccountController : ControllerBase
         var (isValid, message) = await _accountService.AddDefinedAccount(definedAccountAddNumber, User.Identity!.Name!);
 
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok(message);
     }

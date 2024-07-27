@@ -1,4 +1,5 @@
 ﻿using Core.DTO.CurrencyDTO;
+using Core.Helpers;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = Constants.AdminRole)]
 public class CurrencyController : ControllerBase
 {
     private readonly ICurrencyService _currencyService;
@@ -56,10 +57,10 @@ public class CurrencyController : ControllerBase
     // Post: api/Currency
     public async Task<IActionResult> AddCurrency(CurrencyRequest currencyRequest)
     {
-        //todo: convert to well-structured
+        // todo: convert to well-structured Error Handling
         var (isValid, message, currencyResponse) = await _currencyService.AddCurrency(currencyRequest);
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return CreatedAtAction(nameof(GetCurrencyByID), new {currencyID = currencyResponse!.Id}, new { currencyResponse.Id });
     }
@@ -87,6 +88,29 @@ public class CurrencyController : ControllerBase
             return NotFound("!!A Currency With This ID Has Not Been Found!!");
         
         return Ok(currencyResponse);
+    }    
+    
+    /// <summary>
+    /// Get an Existing Currency Based On Given currencyType
+    /// </summary>
+    /// <returns>The Currency That Has Been Found</returns>
+    /// <remarks>       
+    /// Sample request:
+    /// 
+    ///     Get -> "api/Currency/..."
+    /// 
+    /// </remarks>
+    /// <response code="200">The Currency is successfully found and returned</response>
+    /// <response code="404">A Currency with Given currencyType has not been found</response>
+    [HttpGet("{currencyType}")]
+    // GET: api/Currency/{currencyType}
+    public async Task<ActionResult<CurrencyResponse>> GetCurrencyByCurrencyType(string currencyType)
+    {
+        var currencyResponse = await _currencyService.GetCurrencyByCurrencyType(currencyType);
+        if (currencyResponse is null)
+            return NotFound("!!A Currency With This currencyType Has Not Been Found!!");
+        
+        return Ok(currencyResponse);
     }
     
     
@@ -104,12 +128,15 @@ public class CurrencyController : ControllerBase
     /// <response code="404">A Currency with Given ID has not been found</response>
     [HttpDelete("{currencyID:int}")]
     // Delete: api/Currency/{currencyID}
-    public async Task<IActionResult> DeleteCurrency(int currencyID)
+    public async Task<IActionResult> DeleteCurrencyByID(int currencyID)
     {
-        bool? currencyResponse = await _currencyService.DeleteCurrency(currencyID);
-        if (currencyResponse is null)
+        var (isValid, message) = await _currencyService.DeleteCurrencyByID(currencyID);
+        if (!isValid && message is null)
             return NotFound("!!A Currency With This ID Has Not Been Found!!");
-
+        
+        if (!isValid)
+            return BadRequest(message);
+        
         return NoContent();
     }
 }

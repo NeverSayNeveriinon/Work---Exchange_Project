@@ -1,4 +1,6 @@
-﻿using Core.DTO.TransactionDTO;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.DTO.TransactionDTO;
+using Core.Enums;
 using Core.Helpers;
 using Core.ServiceContracts;
 using IdempotentAPI.Filters;
@@ -59,17 +61,19 @@ public class TransactionController : ControllerBase
     [Idempotent(ExpireHours = 1)]
     [HttpPost("Transfer")]
     // Post: api/Transaction/Transfer/{transactionAddRequest}
-    public async Task<IActionResult> AddTransferTransaction(TransactionTransferAddRequest transactionAddRequest, [FromHeader]string? IdempotencyKey)
+    public async Task<IActionResult> AddTransferTransaction(TransactionTransferAddRequest transactionAddRequest, [Required][FromHeader]string? IdempotencyKey)
     {
         if (string.IsNullOrEmpty(IdempotencyKey))
-            return BadRequest("You Must Set 'IdempotencyKey' in Header");
+            return Problem("You Must Set 'IdempotencyKey' in Header", statusCode:400);
         
-        var (isValid, message, _) = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
+        var (isValid, message, transactionResponse) = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
-        // return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
-        return Ok("Please Confirm The Transaction");
+        return Ok(transactionResponse);
+        // return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+        // return Ok("Please Confirm The Transaction");
+        // return RedirectToRoute(nameof(ConfirmTransaction), new { transactionId = transactionResponse.Id, isConfirmed = true });
     }
     
     /// <summary>
@@ -84,41 +88,60 @@ public class TransactionController : ControllerBase
     ///     }
     /// 
     /// </remarks>
-    /// <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm</response>
+    /// <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm/Cancel</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [Idempotent(ExpireHours = 1)]
     [HttpPost("Balance-Increase")]
     // Post: api/Transaction/Balance-Increase/{transactionAddRequest}
-    public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest, [FromHeader]string? IdempotencyKey)
+    public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest, [Required][FromHeader]string? IdempotencyKey)
     {
         if (string.IsNullOrEmpty(IdempotencyKey))
-            return BadRequest("You Must Set 'IdempotencyKey' in Header");
+            return Problem("You Must Set 'IdempotencyKey' in Header", statusCode:400);
         
         bool isValid = await _validator.ExistsInCurrentCurrencies(transactionAddRequest.Money.CurrencyType);
         if (!isValid)
         {
             ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
-            return BadRequest(ModelState);
+            return new BadRequestObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext,ModelState));
         }
         
-        var (isValidTransaction, message, _) = await _transactionService.AddDepositTransaction(transactionAddRequest, User);
+        var (isValidTransaction, message, transactionResponse) = await _transactionService.AddDepositTransaction(transactionAddRequest, User);
         if (!isValidTransaction)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
-        // return CreatedAtAction(nameof(GetTransaction), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
-        return Ok("Please Confirm The Transaction");
+        return Ok(transactionResponse);
+        // return Ok("Please Confirm The Transaction");
+        // return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
+        // return RedirectToAction(nameof(ConfirmTransaction), new { transactionId = transactionResponse.Id, isConfirmed = true });
     } 
     
-    [HttpPatch("Confirm/{transactionId:guid}")]
-    // Post: api/Transaction/Confirm/{transactionId}
-    public async Task<IActionResult> ConfirmTransaction(Guid transactionId, bool isConfirmed)
+    
+    /// <summary>
+    /// Confirm/Cancel a Pending Transaction Based On Given ID
+    /// </summary>
+    /// <returns>Redirect to 'GetTransactionByID' action to return Transaction That Has Been Updated</returns>
+    /// <remarks>       
+    /// Sample request:
+    /// 
+    ///     Patch -> "api/Transaction"
+    ///     {
+    ///       "transactionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+    ///       "transactionStatus": "Confirmed|Cancelled"
+    ///     }
+    /// 
+    /// </remarks>
+    /// <response code="201">The Transaction is successfully found and Updated</response>
+    /// <response code="404">A Transaction with Given ID has not been found</response>
+    [HttpPatch("Confirm")]
+    // Post: api/Transaction/Confirm
+    public async Task<IActionResult> ConfirmTransaction(ConfirmTransactionRequest confirmTransactionRequest)
     {
-        var (isValid, message, transactionResponse) = await _transactionService.UpdateIsConfirmedOfTransaction(transactionId, User, isConfirmed, DateTime.Now.TimeOfDay);
+        var (isValid, message, transactionResponse) = await _transactionService.UpdateTransactionStatusOfTransaction(confirmTransactionRequest, User, DateTime.Now);
         if (!isValid && message is null)
             return NotFound("!!A Transaction With This ID Has Not Been Found!!");
 
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse!.Id}, new { transactionResponse.Id });
     }
@@ -146,64 +169,35 @@ public class TransactionController : ControllerBase
             return NotFound("!!A Transaction With This ID Has Not Been Found!!");
         
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok(transactionResponse);
     }
     
-    
+    //
     // /// <summary>
-    // /// Update an Existing Transaction Based on Given ID and New Transaction Object
+    // /// Delete an Existing Transaction Based on Given ID
     // /// </summary>
     // /// <returns>Nothing</returns>
     // /// <remarks>       
     // /// Sample request:
     // /// 
-    // ///     Put -> "api/Transaction/..."
-    // ///     {
-    // ///     }
+    // ///     Delete -> "api/Transaction/..."
     // /// 
     // /// </remarks>
-    // /// <response code="204">The Transaction is successfully found and has been updated with New Transaction</response>
+    // /// <response code="204">The Transaction is successfully found and has been deleted from Transactions List</response>
     // /// <response code="404">A Transaction with Given ID has not been found</response>
-    // // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
-    // [HttpPut("{transactionID:guid}")]
-    // // Put: api/Transaction/{transactionID}
-    // public async Task<IActionResult> PutTransaction(TransactionUpdateRequest transactionUpdateRequest, Guid transactionID)
+    // [HttpDelete("{transactionID:guid}")]
+    // // Delete: api/Transaction/{transactionID}
+    // public async Task<IActionResult> DeleteTransactionById(Guid transactionID)
     // {
-    //     TransactionResponse? existingObject = await _transactionService.UpdateTransaction(transactionUpdateRequest, transactionID);
-    //     if (existingObject is null)
-    //     {
-    //         return NotFound("notfound:");
-    //     }
+    //     var (isValid, isFound, message) = await _transactionService.DeleteTransactionById(transactionID, User);
+    //
+    //     if (!isValid && !isFound)
+    //         return NotFound("!!A Transaction With This ID Has Not Been Found!!");
+    //     if (!isValid)
+    //         return Problem(message, statusCode:400);
     //     
     //     return NoContent();
     // }
-    
-    
-    /// <summary>
-    /// Delete an Existing Transaction Based on Given ID
-    /// </summary>
-    /// <returns>Nothing</returns>
-    /// <remarks>       
-    /// Sample request:
-    /// 
-    ///     Delete -> "api/Transaction/..."
-    /// 
-    /// </remarks>
-    /// <response code="204">The Transaction is successfully found and has been deleted from Transactions List</response>
-    /// <response code="404">A Transaction with Given ID has not been found</response>
-    [HttpDelete("{transactionID:guid}")]
-    // Delete: api/Transaction/{transactionID}
-    public async Task<IActionResult> DeleteTransaction(Guid transactionID)
-    {
-        var (isValid, isFound, message) = await _transactionService.DeleteTransaction(transactionID, User);
-
-        if (!isValid && !isFound)
-            return NotFound("!!A Transaction With This ID Has Not Been Found!!");
-        if (!isValid)
-            return BadRequest(message);
-        
-        return NoContent();
-    }
 }

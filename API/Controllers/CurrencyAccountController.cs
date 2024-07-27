@@ -67,14 +67,15 @@ public class CurrencyAccountController : ControllerBase
         if (!isValid)
         {
             ModelState.AddModelError("CurrencyType", "The CurrencyType is not in Current Currencies");
-            return BadRequest(ModelState);
+            return new BadRequestObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext,ModelState));
         }
         
         var (isValidCurrencyAccount, message, currencyAccountResponse) = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
         if (!isValidCurrencyAccount)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
-        return CreatedAtAction(nameof(GetCurrencyAccountByNumber), new {currencyAccountNumber = currencyAccountResponse!.Number}, new { currencyAccountResponse.Number });
+        return CreatedAtAction(nameof(GetCurrencyAccountByNumber), new {currencyAccountNumber = currencyAccountResponse!.Number}, 
+                                                                   new { currencyAccountResponse.Number , currencyAccountResponse.TransactionId});
     }    
     
     
@@ -100,7 +101,7 @@ public class CurrencyAccountController : ControllerBase
             return NotFound("!!A Currency Account With This Number Has Not Been Found!!");
         
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return Ok(currencyAccountResponse);
     }
@@ -118,16 +119,16 @@ public class CurrencyAccountController : ControllerBase
     /// </remarks>
     /// <response code="204">The CurrencyAccount is successfully found and has been deleted from CurrencyAccounts List</response>
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
-    [HttpDelete]
+    [HttpDelete("{currencyAccountNumber}")]
     // Delete: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<IActionResult> DeleteCurrencyAccount(string currencyAccountNumber)
+    public async Task<IActionResult> DeleteCurrencyAccountByNumber(string currencyAccountNumber)
     {
-        var (isValid, isFound, message) = await _currencyAccountService.DeleteCurrencyAccount(currencyAccountNumber, User);
+        var (isValid, isFound, message) = await _currencyAccountService.DeleteCurrencyAccountByNumber(currencyAccountNumber, User);
         
         if (!isValid && !isFound)
             return NotFound("!!A Currency Account With This Number Has Not Been Found!!");
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return NoContent();
     }

@@ -1,4 +1,5 @@
 ﻿using Core.DTO.CommissionRateDTO;
+using Core.Helpers;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +9,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = Constants.AdminRole)]
 public class CommissionRateController : ControllerBase
 {
     private readonly ICommissionRateService _commissionRateService;
@@ -60,7 +61,7 @@ public class CommissionRateController : ControllerBase
         var (isValid, message, commissionRateResponse) = await _commissionRateService.AddCommissionRate(commissionRateRequest);
         
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
 
         return CreatedAtAction(nameof(GetCommissionRateByMaxRange), new { maxRange = commissionRateResponse.MaxUSDRange }, 
                                                                     new { commissionRateResponse.Id , commissionRateResponse.MaxUSDRange });
@@ -82,7 +83,7 @@ public class CommissionRateController : ControllerBase
     [HttpGet("{maxRange:decimal}")]
     // GET: api/CommissionRate/{commissionRateID}
     public async Task<ActionResult<CommissionRateResponse>> GetCommissionRateByMaxRange(decimal maxRange)
-    {
+        {
         var commissionRateResponse = await _commissionRateService.GetCommissionRateByMaxRange(maxRange);
             
         if (commissionRateResponse is null)
@@ -115,7 +116,7 @@ public class CommissionRateController : ControllerBase
             return NotFound("!!A Commission Rate With This MaxUSDRange Has Not Been Found!!");
         
         if (!isValid)
-            return BadRequest(message);
+            return Problem(message, statusCode:400);
         
         return NoContent();
     }
@@ -136,11 +137,14 @@ public class CommissionRateController : ControllerBase
     // Delete: api/CommissionRate/{commissionRateID}
     public async Task<IActionResult> DeleteCommissionRateByMaxRange(decimal maxRange)
     {
-        bool? commissionRateResponse = await _commissionRateService.DeleteCommissionRateByMaxRange(maxRange);
+        var (isValid, message) = await _commissionRateService.DeleteCommissionRateByMaxRange(maxRange);
         
-        if (commissionRateResponse is null)
+        if (!isValid && message is null)
             return NotFound("!!A Commission Rate With This maxRange Has Not Been Found!!");
 
+        if (!isValid)
+            return Problem(message, statusCode:400);
+        
         return NoContent();
     }
 }

@@ -10,11 +10,11 @@ using JwtRegisteredClaimNames = Microsoft.IdentityModel.JsonWebTokens.JwtRegiste
 
 namespace Core.Services;
 
-public class JwtService : IJwtService
+public class TokenService : ITokenService
 {
     private readonly IConfiguration _configuration;
 
-    public JwtService(IConfiguration configuration)
+    public TokenService(IConfiguration configuration)
     {
         _configuration = configuration;
     }

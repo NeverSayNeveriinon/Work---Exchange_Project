@@ -4,7 +4,7 @@ using Core.DTO.Auth;
 
 namespace Core.ServiceContracts;
 
-public interface IJwtService
+public interface ITokenService
 {
     public AuthenticationResponse CreateJwtToken(UserProfile user, List<Claim> claims);
 }

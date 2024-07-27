@@ -2,12 +2,10 @@
 using Core.Domain.Entities;
 using Core.Domain.ExternalServicesContracts;
 using Core.Domain.IdentityEntities;
+using Core.Domain.RepositoryContracts;
 using Core.DTO.Auth;
 using Core.ServiceContracts;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Core.Services;
@@ -17,18 +15,20 @@ public class AccountService : IAccountService
     private readonly UserManager<UserProfile> _userManager;
     private readonly SignInManager<UserProfile> _signInManager;
     private readonly ICurrencyAccountService _currencyAccountService;
+    private readonly IAccountRepository _accountRepository;
     
-    private readonly IJwtService _jwtService;
+    private readonly ITokenService _tokenService;
     private readonly INotificationService _notifyService;
     
-    public AccountService(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, IJwtService jwtService,
-                          INotificationService notifyService, ICurrencyAccountService currencyAccountService)
+    public AccountService(UserManager<UserProfile> userManager, SignInManager<UserProfile> signInManager, ITokenService tokenService,
+                          INotificationService notifyService, ICurrencyAccountService currencyAccountService, IAccountRepository accountRepository)
     {
         _userManager = userManager;
         _currencyAccountService = currencyAccountService;
+        _accountRepository = accountRepository;
         _signInManager = signInManager;
         
-        _jwtService = jwtService;
+        _tokenService = tokenService;
         _notifyService = notifyService;
     }
     
@@ -106,7 +106,7 @@ public class AccountService : IAccountService
             // Sign in
             await _signInManager.SignInAsync(user, isPersistent: false);
 
-            var authenticationResponse = _jwtService.CreateJwtToken(user,userClaims.ToList());
+            var authenticationResponse = _tokenService.CreateJwtToken(user,userClaims.ToList());
             return (true, null, authenticationResponse);
         }
 
@@ -124,6 +124,7 @@ public class AccountService : IAccountService
     
     public async Task<(bool isValid, string? Message)> ConfirmEmail(Guid? userId, string? token)
     {
+        // ArgumentNullException.ThrowIfNull(userId,$"The '{nameof(userId)}' object parameter is Null");
         ArgumentNullException.ThrowIfNull(userId,"The 'userId' object parameter is Null");
         ArgumentNullException.ThrowIfNull(token,"The 'token' object parameter is Null");
         
@@ -152,10 +153,11 @@ public class AccountService : IAccountService
         if (user == null)
             return (false, "Try to Log-In Again, if it doesn't worked it seems you haven't signed up!!");
 
-        var (isValid, _, _) = _currencyAccountService.GetCurrencyAccountByNumberInternal(definedAccountAddNumber);
+        var (isValid, _, _) = await _currencyAccountService.GetCurrencyAccountByNumberInternal(definedAccountAddNumber);
         if (!isValid)
             return (false, "The DefinedAccount Number is not in Currency Accounts");
 
+        _accountRepository.LoadReferences(user);        
         if (user.DefinedCurrencyAccounts!.Any(acc => acc.Number == definedAccountAddNumber))
             return (false, "This DefinedAccount Number is Already Added");
         

@@ -9,8 +9,10 @@ public class ExchangeValueResponse
     public int FirstCurrencyId { get; set; }
     public int SecondCurrencyId { get; set; }
     
+    public string? FirstCurrencyType { get; set; }
+    public string? SecondCurrencyType { get; set; }
+    
     public decimal UnitOfFirstValue { get; set; }
-    public decimal UnitOfSecondValue { get; set; }
 }
 
 public static partial class ExchangeValueExtensions
@@ -21,9 +23,10 @@ public static partial class ExchangeValueExtensions
         {
             Id = exchangeValue.Id,
             UnitOfFirstValue = exchangeValue.UnitOfFirstValue,
-            UnitOfSecondValue = exchangeValue.UnitOfSecondValue,
             FirstCurrencyId = exchangeValue.FirstCurrencyId,
-            SecondCurrencyId = exchangeValue.SecondCurrencyId           
+            SecondCurrencyId = exchangeValue.SecondCurrencyId,
+            FirstCurrencyType = exchangeValue.FirstCurrency?.CurrencyType,
+            SecondCurrencyType = exchangeValue.SecondCurrency?.CurrencyType,
         };
 
         return response;

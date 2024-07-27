@@ -16,7 +16,7 @@ public static partial class CurrencyExtensions
         CurrencyResponse response = new CurrencyResponse()
         {
             Id = currency.Id,
-            CurrencyType = Enum.GetName(typeof (CurrencyTypeOptions), currency.CurrencyType)!
+            CurrencyType = currency.CurrencyType
         };
 
         return response;

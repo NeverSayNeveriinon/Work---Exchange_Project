@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
@@ -8,6 +9,7 @@ namespace Core.DTO.CurrencyAccountDTO;
 public class CurrencyAccountUpdateRequest
 {
     [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
+    [RegularExpression("^[A-Z]{3}$")]
     public string CurrencyType { get; set; }
 }
 

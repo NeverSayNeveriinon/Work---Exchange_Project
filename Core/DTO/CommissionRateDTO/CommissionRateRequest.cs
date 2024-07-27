@@ -1,15 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Domain.Entities;
+using Core.Helpers;
 
 namespace Core.DTO.CommissionRateDTO;
 
 public class CommissionRateRequest
 {
     [Required(ErrorMessage = "The 'MaxUSDRange' Can't Be Blank!!!")]
+    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
     public decimal? MaxUSDRange { get; set; }
-    
+    // [StringLength()]
     [Required(ErrorMessage = "The 'Commission Rate' Can't Be Blank!!!")]
-    [Range(0,100)]
+    [DecimalRange("0","1", ErrorMessage = "The 'CRate' Must Be Between 0 and 1")]
     public decimal? CRate { get; set; }
 }
 

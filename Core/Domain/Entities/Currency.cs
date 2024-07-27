@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Core.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +11,8 @@ public class Currency
     [Key]
     public int Id { get; set; }
     
-    public CurrencyTypeOptions CurrencyType  { get; set; }
+    [Column(TypeName="varchar(3)")]
+    public string CurrencyType  { get; set; }
     
     
     // Relations //

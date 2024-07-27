@@ -9,6 +9,7 @@ namespace Core.DTO.CurrencyAccountDTO;
 public class CurrencyAccountAddRequest
 {
     [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
+    [RegularExpression("^[A-Z]{3}$")]
     public string CurrencyType { get; set; }
     
     public MoneyOpenAccountRequest MoneyToOpenAccount { get; set; }

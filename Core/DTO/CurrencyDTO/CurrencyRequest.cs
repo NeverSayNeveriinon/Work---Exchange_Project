@@ -7,6 +7,7 @@ namespace Core.DTO.CurrencyDTO;
 public class CurrencyRequest
 {
     [Required(ErrorMessage = "The 'CurrencyType' Can't Be Blank!!!")]
+    [RegularExpression("^[A-Z]{3}$")]
     public string CurrencyType { get; set; } 
 }
 
@@ -17,7 +18,7 @@ public static partial class CurrencyExtensions
         Currency currency = new Currency()
         {
             Id = 0,
-            CurrencyType = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyRequest.CurrencyType)
+            CurrencyType = currencyRequest.CurrencyType
         };
         return currency;
     }

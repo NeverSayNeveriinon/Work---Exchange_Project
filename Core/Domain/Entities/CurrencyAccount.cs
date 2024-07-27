@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Core.Domain.IdentityEntities;
+using Core.Helpers;
 
 namespace Core.Domain.Entities;
 
@@ -8,10 +9,15 @@ public class CurrencyAccount
 {
     [Key]
     [Length(10,10)]  
+    [Column(TypeName="varchar(10)")]
     public string Number { get; set; }
     
-    [Column(TypeName="money")]
+    [Column(TypeName="decimal(20,9)")]
+    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
     public decimal Balance { get; set; }
+    
+    [Column(TypeName="decimal(20,9)")]
+    public decimal StashBalance { get; set; }
 
     public DateTime DateTimeOfOpen { get; set; }
     

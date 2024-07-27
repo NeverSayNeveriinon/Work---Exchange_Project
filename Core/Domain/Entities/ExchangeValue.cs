@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Core.Helpers;
 using Microsoft.EntityFrameworkCore;
 
 namespace Core.Domain.Entities;
@@ -10,11 +11,9 @@ public class ExchangeValue
     [Key]
     public int Id { get; set; }
     
-    [Column(TypeName="money")]
+    [Column(TypeName="decimal(20,9)")]
+    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
     public decimal UnitOfFirstValue { get; set; }
-    [Column(TypeName="money")]
-    public decimal UnitOfSecondValue { get; set; }
-    
     
     [ForeignKey("FirstCurrency")]
     public int FirstCurrencyId { get; set; }

@@ -10,6 +10,7 @@ public class TransactionDepositAddRequest
     public MoneyRequest Money { get; set; }
     
     [Required(ErrorMessage = "The 'AccountNumber' Can't Be Blank!!!")]
+    [Length(10,10, ErrorMessage = "The 'AccountNumber' is Not In a Correct Format")]  
     public string AccountNumber { get; set; }
 }
 
@@ -20,12 +21,13 @@ public static partial class TransactionExtensions
         Transaction transaction = new Transaction()
         {
             Id = Guid.NewGuid(),
-            Amount = 0,
+            Amount = transactionAddRequest.Money.Amount.GetValueOrDefault(),
             FromAccountNumber = transactionAddRequest.AccountNumber,
             ToAccountNumber = null,
             DateTime = DateTime.Now,
             TransactionType = TransactionTypeOptions.Deposit,
-            IsConfirmed = false
+            CRate = 0,
+            TransactionStatus = TransactionStatusOptions.Pending
         };
 
         return transaction;

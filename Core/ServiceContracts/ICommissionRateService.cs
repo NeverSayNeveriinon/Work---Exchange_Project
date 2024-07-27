@@ -10,5 +10,5 @@ public interface ICommissionRateService
     public Task<CommissionRateResponse?> GetCommissionRateByMaxRange(decimal? maxRange);
     public Task<decimal?> GetUSDAmountCRate(Money money);
     public Task<(bool isValid, string? message, CommissionRateResponse? obj)> UpdateCRateByMaxRange(CommissionRateRequest? commissionRateRequest);
-    public Task<bool?> DeleteCommissionRateByMaxRange(decimal? maxRange);
+    public Task<(bool, string? message)> DeleteCommissionRateByMaxRange(decimal? maxRange);
 }

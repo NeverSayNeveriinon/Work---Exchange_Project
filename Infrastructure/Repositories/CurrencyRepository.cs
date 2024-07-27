@@ -10,12 +10,11 @@ public class CurrencyRepository : ICurrencyRepository
 {
     private readonly AppDbContext _dbContext;
 
-    
+
     public CurrencyRepository(AppDbContext dbContext)
     {
         _dbContext = dbContext;
     }
-   
 
     public async Task<List<Currency>> GetAllCurrenciesAsync()
     {
@@ -33,7 +32,7 @@ public class CurrencyRepository : ICurrencyRepository
         return currency;
     }
     
-    public async Task<Currency?> GetCurrencyByCurrencyTypeAsync(CurrencyTypeOptions currencyType)
+    public async Task<Currency?> GetCurrencyByCurrencyTypeAsync(string currencyType)
     {
         var currency = await _dbContext.Currencies.AsNoTracking()
                                                   .FirstOrDefaultAsync(currencyItem => currencyItem.CurrencyType == currencyType);
@@ -50,15 +49,13 @@ public class CurrencyRepository : ICurrencyRepository
     }
     
     
-    public bool DeleteCurrency(Currency currency)
+    public void DeleteCurrency(Currency currency)
     {
-        var entityEntry = _dbContext.Currencies.Remove(currency);
-        
-        return entityEntry.State == EntityState.Deleted;
+        _dbContext.Currencies.Remove(currency);
     }
     
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _dbContext.SaveChangesAsync();
+        return await _dbContext.SaveChangesAsync();
     }
 }

@@ -17,7 +17,6 @@ public class CurrencyService : ICurrencyService
 
     public async Task<(bool isValid, string? message, CurrencyResponse? obj)> AddCurrency(CurrencyRequest? currencyRequest)
     {
-        // 'currencyRequest' is Null //
         ArgumentNullException.ThrowIfNull(currencyRequest,"The 'CurrencyRequest' object parameter is Null");
         
         var currency = currencyRequest.ToCurrency();
@@ -26,7 +25,8 @@ public class CurrencyService : ICurrencyService
             return (false, "There is Already a Currency Object With This 'Currency Type'", null);
         
         var currencyReturned = await _currencyRepository.AddCurrencyAsync(currency);
-        await _currencyRepository.SaveChangesAsync();
+        var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
+        if (!(numberOfRowsAffected > 0)) return (false, "The Request Has Not Been Done Completely, Try Again", null);
 
         var currencyResponse = currencyReturned.ToCurrencyResponse();
         return (true, null, currencyResponse);
@@ -42,7 +42,6 @@ public class CurrencyService : ICurrencyService
 
     public async Task<CurrencyResponse?> GetCurrencyByID(int? Id)
     {
-        // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Currency'Id' parameter is Null");
 
         var currency = await _currencyRepository.GetCurrencyByIDAsync(Id.Value);
@@ -56,11 +55,9 @@ public class CurrencyService : ICurrencyService
     
     public async Task<CurrencyResponse?> GetCurrencyByCurrencyType(string? currencyType)
     {
-        // if 'currencyType' is null
         ArgumentNullException.ThrowIfNull(currencyType,"The 'currencyType' parameter is Null");
-
-        var currencyTypeOption = (CurrencyTypeOptions)Enum.Parse(typeof(CurrencyTypeOptions), currencyType);
-        var currency = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currencyTypeOption);
+        
+        var currency = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currencyType);
 
         // if 'currencyType' doesn't exist in 'currencies list' 
         if (currency == null) return null;
@@ -69,19 +66,19 @@ public class CurrencyService : ICurrencyService
         return currencyResponse;
     }   
     
-    public async Task<bool?> DeleteCurrency(int? Id)
+    public async Task<(bool, string? message)> DeleteCurrencyByID(int? Id)
     {
-        // if 'id' is null
         ArgumentNullException.ThrowIfNull(Id,"The Currency'ID' parameter is Null");
 
         var currency = await _currencyRepository.GetCurrencyByIDAsync(Id.Value);
         
         // if 'Id' doesn't exist in 'currencies list' 
-        if (currency == null) return null;
+        if (currency == null) return (false, null);
     
-        bool result = _currencyRepository.DeleteCurrency(currency);
-        await _currencyRepository.SaveChangesAsync();
+        _currencyRepository.DeleteCurrency(currency);
+        var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
+        if (!(numberOfRowsAffected > 0)) return (false, "The Request Has Not Been Done Completely, Try Again");
 
-        return result;
+        return (true, null);
     }
 }

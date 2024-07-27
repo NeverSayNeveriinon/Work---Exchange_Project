@@ -8,5 +8,5 @@ public interface ICurrencyService
     public Task<List<CurrencyResponse>> GetAllCurrencies();
     public Task<CurrencyResponse?> GetCurrencyByID(int? ID);
     public Task<CurrencyResponse?> GetCurrencyByCurrencyType(string? currencyType);
-    public Task<bool?> DeleteCurrency(int? ID);
+    public Task<(bool, string? message)> DeleteCurrencyByID(int? ID);
 }

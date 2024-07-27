@@ -9,7 +9,7 @@ public interface ICommissionRateRepository
     public Task<decimal?> GetCRateByUSDAmountAsync(decimal amount);
     public Task<CommissionRate> AddCommissionRateAsync(CommissionRate commissionRate);
     public CommissionRate UpdateCRate(CommissionRate commissionRate, decimal commissionCRate);
-    public bool DeleteCommissionRate(CommissionRate commissionRate);
-    public Task SaveChangesAsync();
+    public void DeleteCommissionRate(CommissionRate commissionRate);
+    public Task<int> SaveChangesAsync();
     
 }

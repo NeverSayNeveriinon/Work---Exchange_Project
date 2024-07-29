@@ -35,11 +35,12 @@ public class CommissionRateRepository : ICommissionRateRepository
         var commissionRatesList = await _dbContext.CommissionRates.ToListAsync();
         if (commissionRatesList.Count == 0) return null;
         
-        var cRateIndex = commissionRatesList.Select(commissionRate => commissionRate.MaxUSDRange).Order().ToList().BinarySearch(amount);
+        var commissionRatesOrderedList = commissionRatesList.OrderBy(commissionRate => commissionRate.MaxUSDRange).ToList();
+        var cRateIndex = commissionRatesOrderedList.Select(commissionRate => commissionRate.MaxUSDRange).ToList().BinarySearch(amount);
         cRateIndex = int.IsNegative(cRateIndex) ? ~cRateIndex : cRateIndex; 
         if (cRateIndex == commissionRatesList.Count) return null;
         
-        var finalCRate = commissionRatesList.ElementAtOrDefault(cRateIndex)!.CRate;
+        var finalCRate = commissionRatesOrderedList.ElementAtOrDefault(cRateIndex)!.CRate;
         return finalCRate;
     }
     

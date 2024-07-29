@@ -3,6 +3,6 @@
 namespace Core.Domain.RepositoryContracts;
 
 public interface IAccountRepository
-{
-    public void LoadReferences(UserProfile userProfile);
+{ 
+    void LoadReferences(UserProfile userProfile);
 }

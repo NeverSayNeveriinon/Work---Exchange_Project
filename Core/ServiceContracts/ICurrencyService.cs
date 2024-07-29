@@ -4,9 +4,9 @@ namespace Core.ServiceContracts;
 
 public interface ICurrencyService
 {
-    public Task<(bool isValid, string? message, CurrencyResponse? obj)> AddCurrency(CurrencyRequest? currencyRequest);
-    public Task<List<CurrencyResponse>> GetAllCurrencies();
-    public Task<CurrencyResponse?> GetCurrencyByID(int? ID);
-    public Task<CurrencyResponse?> GetCurrencyByCurrencyType(string? currencyType);
-    public Task<(bool, string? message)> DeleteCurrencyByID(int? ID);
+    Task<(bool isValid, string? message, CurrencyResponse? obj)> AddCurrency(CurrencyRequest currencyRequest);
+    Task<List<CurrencyResponse>> GetAllCurrencies();
+    Task<CurrencyResponse?> GetCurrencyByID(int id);
+    Task<CurrencyResponse?> GetCurrencyByCurrencyType(string currencyType);
+    Task<(bool, string? message)> DeleteCurrencyByID(int id);
 }

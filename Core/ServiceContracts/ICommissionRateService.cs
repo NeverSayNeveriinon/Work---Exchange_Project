@@ -5,10 +5,10 @@ namespace Core.ServiceContracts;
 
 public interface ICommissionRateService
 {
-    public Task<(bool isValid, string? message, CommissionRateResponse? obj)> AddCommissionRate(CommissionRateRequest? commissionRateRequest);
-    public Task<List<CommissionRateResponse>> GetAllCommissionRates();
-    public Task<CommissionRateResponse?> GetCommissionRateByMaxRange(decimal? maxRange);
-    public Task<decimal?> GetUSDAmountCRate(Money money);
-    public Task<(bool isValid, string? message, CommissionRateResponse? obj)> UpdateCRateByMaxRange(CommissionRateRequest? commissionRateRequest);
-    public Task<(bool, string? message)> DeleteCommissionRateByMaxRange(decimal? maxRange);
+    Task<(bool isValid, string? message, CommissionRateResponse? obj)> AddCommissionRate(CommissionRateRequest commissionRateRequest);
+    Task<List<CommissionRateResponse>> GetAllCommissionRates();
+    Task<CommissionRateResponse?> GetCommissionRateByMaxRange(decimal maxRange);
+    Task<decimal?> GetUSDAmountCRate(Money money);
+    Task<(bool isValid, string? message, CommissionRateResponse? obj)> UpdateCRateByMaxRange(CommissionRateRequest commissionRateRequest);
+    Task<(bool, string? message)> DeleteCommissionRateByMaxRange(decimal maxRange);
 }

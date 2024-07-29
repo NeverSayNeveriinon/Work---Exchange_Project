@@ -28,6 +28,9 @@ public class TokenService : ITokenService
     /// <returns>AuthenticationResponse that includes token</returns>
     public AuthenticationResponse CreateJwtToken(UserProfile user, List<Claim> claims)
     {
+        ArgumentNullException.ThrowIfNull(user,$"The '{nameof(user)}' parameter is Null");
+        ArgumentNullException.ThrowIfNull(claims,$"The '{nameof(claims)}' parameter is Null");
+
         var jwt_EXPIRATION_MINUTES = _configuration["Jwt:EXPIRATION_MINUTES"];
         var jwt_key = _configuration["Jwt:Key"];
         var jwt_Issuer = _configuration["Jwt:Issuer"];
@@ -35,6 +38,7 @@ public class TokenService : ITokenService
         
         if ( new List<string?>(){jwt_EXPIRATION_MINUTES,jwt_key,jwt_Issuer,jwt_Audience}.Exists(string.IsNullOrEmpty) )
             throw new InvalidOperationException("Check Jwt Settings (EXPIRATION_MINUTES,Key,Issuer,Audience) In Your Configuration");
+        
         
         var expiration = DateTime.Now.AddMinutes(Convert.ToDouble(jwt_EXPIRATION_MINUTES));
  

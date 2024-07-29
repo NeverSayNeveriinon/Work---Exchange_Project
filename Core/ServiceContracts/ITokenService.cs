@@ -5,6 +5,6 @@ using Core.DTO.Auth;
 namespace Core.ServiceContracts;
 
 public interface ITokenService
-{
-    public AuthenticationResponse CreateJwtToken(UserProfile user, List<Claim> claims);
+{ 
+    AuthenticationResponse CreateJwtToken(UserProfile user, List<Claim> claims);
 }

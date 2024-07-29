@@ -42,12 +42,11 @@ public class ExchangeValueRepository : IExchangeValueRepository
         return exchangeValue;
     }
     
-    public async Task<decimal?> GetExchangeValueByCurrencyTypeAsync(int? sourceCurrencyId, int? destCurrencyId)
+    public async Task<decimal?> GetUnitValueByCurrencyTypeAsync(int? sourceCurrencyId, int? destCurrencyId)
     {
         var exchangeValue = await _dbContext.ExchangeValues.AsNoTracking()
                                                            .FirstOrDefaultAsync(exchangeValueItem => exchangeValueItem.FirstCurrencyId == sourceCurrencyId && 
                                                                                                      exchangeValueItem.SecondCurrencyId == destCurrencyId);
-
         return exchangeValue?.UnitOfFirstValue;
     }
      
@@ -61,9 +60,7 @@ public class ExchangeValueRepository : IExchangeValueRepository
     public ExchangeValue UpdateExchangeValueByID(ExchangeValue exchangeValue, ExchangeValue updatedExchangeValue)
     {
         _dbContext.Entry(exchangeValue).Property(p => p.UnitOfFirstValue).IsModified = true;
-        // _dbContext.Entry(exchangeValue).Property(p => p.UnitOfSecondValue).IsModified = true;
         exchangeValue.UnitOfFirstValue = updatedExchangeValue.UnitOfFirstValue;
-        // exchangeValue.UnitOfSecondValue = updatedExchangeValue.UnitOfSecondValue;
 
         return exchangeValue;
     }

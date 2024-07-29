@@ -91,8 +91,8 @@ public class TransactionController : ControllerBase
     /// <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm/Cancel</response>
     /// <response code="400">There is sth wrong in Validation of properties</response>
     [Idempotent(ExpireHours = 1)]
-    [HttpPost("Balance-Increase")]
-    // Post: api/Transaction/Balance-Increase/{transactionAddRequest}
+    [HttpPost("Balance-Deposit")]
+    // Post: api/Transaction/Balance-Deposit/{transactionAddRequest}
     public async Task<IActionResult> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest, [Required][FromHeader]string? IdempotencyKey)
     {
         if (string.IsNullOrEmpty(IdempotencyKey))
@@ -132,14 +132,13 @@ public class TransactionController : ControllerBase
     /// </remarks>
     /// <response code="201">The Transaction is successfully found and Updated</response>
     /// <response code="404">A Transaction with Given ID has not been found</response>
-    [HttpPatch("Confirm")]
-    // Post: api/Transaction/Confirm
-    public async Task<IActionResult> ConfirmTransaction(ConfirmTransactionRequest confirmTransactionRequest)
+    [HttpPatch("ChangeStatus")]
+    // Post: api/Transaction/ChangeStatus
+    public async Task<IActionResult> ChangeTransactionStatus(ConfirmTransactionRequest confirmTransactionRequest)
     {
         var (isValid, message, transactionResponse) = await _transactionService.UpdateTransactionStatusOfTransaction(confirmTransactionRequest, User, DateTime.Now);
         if (!isValid && message is null)
             return NotFound("!!A Transaction With This ID Has Not Been Found!!");
-
         if (!isValid)
             return Problem(message, statusCode:400);
         
@@ -164,17 +163,15 @@ public class TransactionController : ControllerBase
     public async Task<ActionResult<TransactionResponse>> GetTransactionByID(Guid transactionID)
     {
         var (isValid, message, transactionResponse) = await _transactionService.GetTransactionByID(transactionID, User);
-
         if (!isValid && message is null)
             return NotFound("!!A Transaction With This ID Has Not Been Found!!");
-        
         if (!isValid)
             return Problem(message, statusCode:400);
         
         return Ok(transactionResponse);
     }
     
-    //
+    
     // /// <summary>
     // /// Delete an Existing Transaction Based on Given ID
     // /// </summary>

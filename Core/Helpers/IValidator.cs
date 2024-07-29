@@ -2,5 +2,5 @@
 
 public interface IValidator
 {
-    public Task<bool> ExistsInCurrentCurrencies(string currencyType);
+    Task<bool> ExistsInCurrentCurrencies(string currencyType);
 }

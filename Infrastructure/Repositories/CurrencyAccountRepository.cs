@@ -20,9 +20,9 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
     public async Task<List<CurrencyAccount>> GetAllCurrencyAccountsAsync()
     {
         var accounts = _dbContext.CurrencyAccounts.Include(property => property.Owner)
-                                                    .Include(property => property.Currency)
-                                                    .ThenInclude(property => property.FirstExchangeValues)
-                                                    .ThenInclude(property => property.SecondCurrency);
+                                                  .Include(property => property.Currency)
+                                                  .ThenInclude(property => property.FirstExchangeValues)
+                                                  .ThenInclude(property => property.SecondCurrency);
         var accountsList = await accounts.ToListAsync();
         return accountsList;
     }
@@ -40,22 +40,21 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
     public async Task<List<CurrencyAccount>> GetAllCurrencyAccountsByUserAsync(Guid ownerID)
     {
         var accounts = _dbContext.CurrencyAccounts.Include(property => property.Owner)
-            .Include(property => property.Currency)
-            .Where(property => property.OwnerID == ownerID);
+                                                  .Include(property => property.Currency)
+                                                  .Where(property => property.OwnerID == ownerID);
         var accountsList = await accounts.ToListAsync();
         return accountsList;
     }
 
     public async Task<CurrencyAccount?> GetCurrencyAccountByNumberAsync(string number)
     {
-        var account = await _dbContext.CurrencyAccounts
-                                              .Include(property => property.Owner)
-                                              .Include(property => property.Currency)
-                                              .ThenInclude(property => property.FirstExchangeValues)
-                                              .Include(property => property.Currency)
-                                              .ThenInclude(property => property.SecondExchangeValues)
-                                              .ThenInclude(property => property.FirstCurrency)
-                                              .FirstOrDefaultAsync(accountItem => accountItem.Number == number);
+        var account = await _dbContext.CurrencyAccounts.Include(property => property.Owner)
+                                                       .Include(property => property.Currency)
+                                                       .ThenInclude(property => property.FirstExchangeValues)
+                                                       .Include(property => property.Currency)
+                                                       .ThenInclude(property => property.SecondExchangeValues)
+                                                       .ThenInclude(property => property.FirstCurrency)
+                                                       .FirstOrDefaultAsync(accountItem => accountItem.Number == number);
         return account;
     }
 
@@ -73,7 +72,6 @@ public class CurrencyAccountRepository : ICurrencyAccountRepository
             _dbContext.Entry(account).Property(p => p.StashBalance).IsModified = true;
             
         account.StashBalance = calculationFunc(account.StashBalance, moneyAmount);
-        
         return account;
     }
 

@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
+using Core.Enums;
 using Infrastructure.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,15 +17,19 @@ public class TransactionRepository : ITransactionRepository
     }
    
 
-    public async Task<List<Transaction>> GetAllTransactionsAsync()
+    public async Task<List<Transaction>> GetAllTransactionsAsync(bool ignoreQueryFilter = false)
     {
-        var transactions = _dbContext.Transactions.Include(property => property.FromAccount)
-                                                  .ThenInclude(Property => Property.Currency)
-                                                  .ThenInclude(Property => Property.FirstExchangeValues)
-                                                  .Include(property => property.ToAccount)
-                                                  .ThenInclude(property => property.Currency)
-                                                  .AsNoTracking();
+        IQueryable<Transaction> transactionsQueryable = _dbContext.Transactions.AsQueryable();
+        if (ignoreQueryFilter)
+            transactionsQueryable = transactionsQueryable.IgnoreQueryFilters();
         
+        var transactions = transactionsQueryable.Include(property => property.FromAccount)
+                                                .ThenInclude(Property => Property.Currency)
+                                                .ThenInclude(Property => Property.FirstExchangeValues)
+                                                .Include(property => property.ToAccount)
+                                                .ThenInclude(property => property.Currency)
+                                                .AsNoTracking();
+      
         var transactionsList = await transactions.ToListAsync();
         return transactionsList;
     }
@@ -44,15 +49,19 @@ public class TransactionRepository : ITransactionRepository
         return transactionsList;
     }
 
-    public async Task<Transaction?> GetTransactionByIDAsync(Guid id)
+    public async Task<Transaction?> GetTransactionByIDAsync(Guid id, bool ignoreQueryFilter = false)
     {
-        var transaction = await _dbContext.Transactions.Include(property => property.FromAccount)
-                                                                .ThenInclude(Property => Property.Currency)
-                                                                .ThenInclude(Property => Property.FirstExchangeValues)
-                                                                .Include(property => property.ToAccount)
-                                                                .ThenInclude(property => property.Currency)
-                                                                .AsNoTracking()
-                                                                .FirstOrDefaultAsync(transactionItem => transactionItem.Id == id);
+        IQueryable<Transaction> transactionsQueryable = _dbContext.Transactions.AsQueryable();
+        if (ignoreQueryFilter)
+            transactionsQueryable = transactionsQueryable.IgnoreQueryFilters();
+        
+        var transaction = await transactionsQueryable.Include(property => property.FromAccount)
+                                                     .ThenInclude(Property => Property.Currency)
+                                                     .ThenInclude(Property => Property.FirstExchangeValues)
+                                                     .Include(property => property.ToAccount)
+                                                     .ThenInclude(property => property.Currency)
+                                                     .AsNoTracking()
+                                                     .FirstOrDefaultAsync(transactionItem => transactionItem.Id == id);
 
         return transaction;
     }
@@ -71,12 +80,12 @@ public class TransactionRepository : ITransactionRepository
         return transactionReturned.Entity;
     }
     
-    public void LoadReferences(Transaction transaction)
+    public void LoadAccountReferences(Transaction transaction)
     {
-        _dbContext.Entry(transaction).Reference(c => c.FromAccount).Load();
-        _dbContext.Entry(transaction).Reference(c => c.ToAccount).Load();
+        _dbContext.Entry(transaction).Reference<CurrencyAccount>(c => c.FromAccount).Load();
+        _dbContext.Entry(transaction).Reference<CurrencyAccount>(c => c.ToAccount).Load();
     }
-    
+        
     // public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction)
     // {
     //     // _dbContext.Entry(transaction).Property(p => p.FromAccount).IsModified = true;
@@ -85,24 +94,22 @@ public class TransactionRepository : ITransactionRepository
     //     return transaction;
     // }  
     
-    public Transaction UpdateIsConfirmedOfTransaction(Transaction transaction, bool isConfirmed)
+    public Transaction UpdateTransactionStatusOfTransaction(Transaction transaction, TransactionStatusOptions transactionStatus)
     {
-        _dbContext.Entry(transaction).Property(p => p.IsConfirmed).IsModified = true;
-        transaction.IsConfirmed = isConfirmed;
+        _dbContext.Entry(transaction).Property(p => p.TransactionStatus).IsModified = true;
+        transaction.TransactionStatus = transactionStatus;
         
         return transaction;
     }
     
     
-    public bool DeleteTransaction(Transaction transaction)
+    public void DeleteTransaction(Transaction transaction)
     {
-        var entityEntry = _dbContext.Transactions.Remove(transaction);
-        
-        return entityEntry.State == EntityState.Deleted;
+        _dbContext.Transactions.Remove(transaction);
     }
     
-    public async Task SaveChangesAsync()
+    public async Task<int> SaveChangesAsync()
     {
-        await _dbContext.SaveChangesAsync();
+        return await _dbContext.SaveChangesAsync();
     }
 }

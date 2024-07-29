@@ -31,11 +31,10 @@ namespace Infrastructure.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("CRate")
-                        .HasPrecision(6, 3)
-                        .HasColumnType("decimal");
+                        .HasColumnType("decimal(6,5)");
 
                     b.Property<decimal>("MaxUSDRange")
-                        .HasColumnType("money");
+                        .HasColumnType("decimal(20,9)");
 
                     b.HasKey("Id");
 
@@ -53,8 +52,9 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CurrencyType")
-                        .HasColumnType("int");
+                    b.Property<string>("CurrencyType")
+                        .IsRequired()
+                        .HasColumnType("varchar(3)");
 
                     b.HasKey("Id");
 
@@ -62,15 +62,22 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Currencies");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CurrencyType = "USD"
+                        });
                 });
 
             modelBuilder.Entity("Core.Domain.Entities.CurrencyAccount", b =>
                 {
                     b.Property<string>("Number")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(10)");
 
                     b.Property<decimal>("Balance")
-                        .HasColumnType("money");
+                        .HasColumnType("decimal(20,9)");
 
                     b.Property<int>("CurrencyID")
                         .HasColumnType("int");
@@ -80,6 +87,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("OwnerID")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("StashBalance")
+                        .HasColumnType("decimal(20,9)");
 
                     b.HasKey("Number");
 
@@ -97,7 +107,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("CurrencyAccountNumber")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(10)");
 
                     b.Property<Guid>("UserProfileId")
                         .HasColumnType("uniqueidentifier");
@@ -106,7 +116,9 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CurrencyAccountNumber");
 
-                    b.HasIndex("UserProfileId");
+                    b.HasIndex("UserProfileId", "CurrencyAccountNumber")
+                        .IsUnique()
+                        .HasFilter("[CurrencyAccountNumber] IS NOT NULL");
 
                     b.ToTable("DefinedAccount");
                 });
@@ -126,10 +138,7 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("UnitOfFirstValue")
-                        .HasColumnType("money");
-
-                    b.Property<decimal>("UnitOfSecondValue")
-                        .HasColumnType("money");
+                        .HasColumnType("decimal(20,9)");
 
                     b.HasKey("Id");
 
@@ -148,23 +157,29 @@ namespace Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("money");
+                        .HasColumnType("decimal(20,9)");
 
                     b.Property<decimal>("CRate")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(6,5)");
 
                     b.Property<DateTime>("DateTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("FromAccountChangeAmount")
+                        .HasColumnType("decimal(20,9)");
+
                     b.Property<string>("FromAccountNumber")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(10)");
 
-                    b.Property<bool>("IsConfirmed")
-                        .HasColumnType("bit");
+                    b.Property<decimal>("ToAccountChangeAmount")
+                        .HasColumnType("decimal(20,9)");
 
                     b.Property<string>("ToAccountNumber")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<int>("TransactionStatus")
+                        .HasColumnType("int");
 
                     b.Property<int>("TransactionType")
                         .HasColumnType("int");
@@ -252,7 +267,7 @@ namespace Infrastructure.Migrations
                             LockoutEnabled = false,
                             NormalizedEmail = "ADMIN@GMAIL.COM",
                             NormalizedUserName = "ADMIN@GMAIL.COM",
-                            PasswordHash = "AQAAAAIAAYagAAAAEEFvwG3CLR9Y0mH8v8nold6LNEibdnE6bIJ/8B5KsXJquN/xDxdQSdJ2yJy7jv8+lg==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECyLUkb353SUfpJ3oXCMvASNdSKCsj6TOhrwZK1YdE0vrTGdwYwTcnvO4b2IRPwiKQ==",
                             PersonName = "Admin Admini",
                             SecurityStamp = "a05f9e4a-a0cb-483c-b242-285e0e8fa27d",
                             TwoFactorEnabled = false,

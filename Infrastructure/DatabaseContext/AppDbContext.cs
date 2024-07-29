@@ -1,6 +1,8 @@
 ﻿using System.Security.Claims;
 using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
+using Core.Enums;
+using Core.Helpers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -25,13 +27,13 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        
         #region Role_Seed
             var adminRole = new UserRole()
             {
                 Id = Guid.Parse("0D8EA822-1454-4853-9753-78FCDBD429D3"),
-                Name = "Admin",
-                NormalizedName = "Admin".ToUpper(),
+                Name = Constants.AdminRole,
+                NormalizedName = Constants.AdminRole.ToUpper(),
                 ConcurrencyStamp = Guid.Parse("878EEDAF-E795-411E-A0FC-847D0D4193DC").ToString()
             };
             var userRole = new UserRole()
@@ -64,10 +66,20 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             modelBuilder.Entity<UserProfile>().HasData(adminProfile);
             modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid>{RoleId = adminRole.Id, UserId = adminProfile.Id});
             modelBuilder.Entity<IdentityUserClaim<Guid>>().HasData(new IdentityUserClaim<Guid>
-            { ClaimType = ClaimTypes.Role, ClaimValue = "Admin", UserId = adminProfile.Id, Id = 1});
+            { ClaimType = ClaimTypes.Role, ClaimValue = Constants.AdminRole, UserId = adminProfile.Id, Id = 1});
+        #endregion
+
+        #region Currency_Seed
+        
+        var USDCurrency = new Currency()
+        {
+            Id = 1,
+            CurrencyType = "USD"
+        };
+        modelBuilder.Entity<Currency>().HasData(USDCurrency);
+        
         #endregion
         
-
         // modelBuilder.Entity<Currency>()
         //     .Property(entity => entity.ExchangeValues)
         //     .HasConversion(
@@ -81,16 +93,35 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
         //         v1 => JsonConvert.DeserializeObject<List<string>>(v1)!);
 
         modelBuilder.Entity<UserProfile>()
-            .Ignore(entity => entity.PhoneNumber)
-            .Ignore(entity => entity.PhoneNumberConfirmed);
-        
+                    .Ignore(entity => entity.PhoneNumber)
+                    .Ignore(entity => entity.PhoneNumberConfirmed);
+
         modelBuilder.Entity<Transaction>()
-                    .HasQueryFilter(entity => entity.IsConfirmed);
+                    .HasQueryFilter(entity => entity.TransactionStatus == TransactionStatusOptions.Pending ||
+                                              entity.TransactionStatus == TransactionStatusOptions.Confirmed);
         
-        modelBuilder.Entity<CommissionRate>()
-            .Property(entity => entity.CRate)
-            .HasPrecision(6,3);
-        
+        // modelBuilder.Entity<CommissionRate>()
+        //             .Property(entity => entity.CRate)
+        //             .HasPrecision(6,5); 
+        //
+        // modelBuilder.Entity<Transaction>()
+        //             .Property(entity => entity.CRate)
+        //             .HasPrecision(6,5);   
+        //
+        // modelBuilder.Entity<ExchangeValue>()
+        //             .Property(entity => entity.UnitOfFirstValue)
+        //             .HasPrecision(20,9);
+
+
+        // modelBuilder.Entity<UserProfile>()
+        //             .Navigation(entity => entity.DefinedCurrencyAccounts)
+        //             .AutoInclude();
+        //     
+        // modelBuilder.Entity<UserProfile>()
+        //             .Navigation(entity => entity.CurrencyAccounts)
+        //             .AutoInclude();
+            
+
         // modelBuilder.Entity<CommissionRate>()
         //     .Property(entity => entity.MaxUSDRange)
         //     .HasPrecision(20,3);
@@ -101,50 +132,50 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
         
         // CurrencyAccount 'N'====......----'1' UserProfile
         modelBuilder.Entity<CurrencyAccount>()
-            .HasOne(e => e.Owner)
-            .WithMany(e => e.CurrencyAccounts)
-            .HasForeignKey(e => e.OwnerID).IsRequired().OnDelete(DeleteBehavior.Cascade);    
+                    .HasOne(e => e.Owner)
+                    .WithMany(e => e.CurrencyAccounts)
+                    .HasForeignKey(e => e.OwnerID).IsRequired().OnDelete(DeleteBehavior.Cascade);    
         
         // CurrencyAccount 'N'====......----'1' Currency
         modelBuilder.Entity<CurrencyAccount>()
-            .HasOne(e => e.Currency)
-            .WithMany(e => e.CurrencyAccounts)
-            .HasForeignKey(e => e.CurrencyID).IsRequired().OnDelete(DeleteBehavior.Cascade);
+                    .HasOne(e => e.Currency)
+                    .WithMany(e => e.CurrencyAccounts)
+                    .HasForeignKey(e => e.CurrencyID).IsRequired().OnDelete(DeleteBehavior.Cascade);
         
         // CurrencyAccount(as FromCurrencyAccount) 'N'----......----'N' CurrencyAccount(as ToCurrencyAccount)
         modelBuilder.Entity<CurrencyAccount>()
-            .HasMany(e => e.ToCurrencyAccounts)
-            .WithMany(e => e.FromCurrencyAccounts)
-            .UsingEntity<Transaction>(
-                l => l.HasOne<CurrencyAccount>(e => e.ToAccount)
-                    .WithMany(e => e.ToTransactions)
-                    .HasForeignKey(e => e.ToAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
-                r => r.HasOne<CurrencyAccount>(e => e.FromAccount)
-                    .WithMany(e => e.FromTransactions)
-                    .HasForeignKey(e => e.FromAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
+                    .HasMany(e => e.ToCurrencyAccounts)
+                    .WithMany(e => e.FromCurrencyAccounts)
+                    .UsingEntity<Transaction>(
+                        l => l.HasOne<CurrencyAccount>(e => e.ToAccount)
+                            .WithMany(e => e.ToTransactions)
+                            .HasForeignKey(e => e.ToAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
+                        r => r.HasOne<CurrencyAccount>(e => e.FromAccount)
+                            .WithMany(e => e.FromTransactions)
+                            .HasForeignKey(e => e.FromAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
         
         // CurrencyAccount(as FirstCurrency) 'N'----......----'N' Currency(as SecondCurrency)
         modelBuilder.Entity<Currency>()
-            .HasMany(e => e.SecondCurrencies)
-            .WithMany(e => e.FirstCurrencies)
-            .UsingEntity<ExchangeValue>(
-                l => l.HasOne<Currency>(e => e.SecondCurrency)
-                    .WithMany(e => e.SecondExchangeValues)
-                    .HasForeignKey(e => e.SecondCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
-                r => r.HasOne<Currency>(e => e.FirstCurrency)
-                    .WithMany(e => e.FirstExchangeValues)
-                    .HasForeignKey(e => e.FirstCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.Cascade)); 
+                    .HasMany(e => e.SecondCurrencies)
+                    .WithMany(e => e.FirstCurrencies)
+                    .UsingEntity<ExchangeValue>(
+                        l => l.HasOne<Currency>(e => e.SecondCurrency)
+                            .WithMany(e => e.SecondExchangeValues)
+                            .HasForeignKey(e => e.SecondCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
+                        r => r.HasOne<Currency>(e => e.FirstCurrency)
+                            .WithMany(e => e.FirstExchangeValues)
+                            .HasForeignKey(e => e.FirstCurrencyId).IsRequired(false).OnDelete(DeleteBehavior.Cascade)); 
         
         // CurrencyAccount 'N'----......----'N' UserProfile
         modelBuilder.Entity<CurrencyAccount>()
-            .HasMany(e => e.DefinedUserProfiles)
-            .WithMany(e => e.DefinedCurrencyAccounts)
-            .UsingEntity<DefinedAccount>(
-                l => l.HasOne<UserProfile>(e => e.UserProfile)
-                    .WithMany(e => e.DefinedAccountsJoin)
-                    .HasForeignKey(e => e.UserProfileId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
-                r => r.HasOne<CurrencyAccount>(e => e.CurrencyAccount)
-                    .WithMany(e => e.DefinedAccountsJoin)
-                    .HasForeignKey(e => e.CurrencyAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
+                    .HasMany(e => e.DefinedUserProfiles)
+                    .WithMany(e => e.DefinedCurrencyAccounts)
+                    .UsingEntity<DefinedAccount>(
+                        l => l.HasOne<UserProfile>(e => e.UserProfile)
+                            .WithMany(e => e.DefinedAccountsJoin)
+                            .HasForeignKey(e => e.UserProfileId).IsRequired(false).OnDelete(DeleteBehavior.ClientCascade),
+                        r => r.HasOne<CurrencyAccount>(e => e.CurrencyAccount)
+                            .WithMany(e => e.DefinedAccountsJoin)
+                            .HasForeignKey(e => e.CurrencyAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
     }
 }

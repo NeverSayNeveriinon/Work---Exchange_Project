@@ -33,9 +33,9 @@ public class AccountService : IAccountService
     }
     
     
-    public async Task<(bool isValid, string Message)> Register(UserRegister? userRegister)
+    public async Task<(bool isValid, string Message)> Register(UserRegister userRegister)
     {
-        ArgumentNullException.ThrowIfNull(userRegister,"The 'userRegister' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(userRegister,$"The '{nameof(userRegister)}' object parameter is Null");
 
         var userReturned = await _userManager.FindByEmailAsync(userRegister.Email);
         if (userReturned != null) // if userReturned has sth, means a user with this email is already in db
@@ -65,20 +65,14 @@ public class AccountService : IAccountService
             return (true, "Please Check Your Email");
         }
         
-        // if (!await _roleManager.RoleExistsAsync(userRegister.Role))
-        // {
-        //     UserRole userRole = new UserRole() { Name = userRegister.Role };
-        //     await _roleManager.CreateAsync(userRole);
-        //     await _roleManager.AddClaimAsync(userRole,new Claim(ClaimTypes.Role, userRole.Name));
-        // }
         var errorMessage = string.Join(" | ", result.Errors.Select(e => e.Description)); // error1 | error2
         return (false , errorMessage);
     }
 
 
-    public async Task<(bool isValid, string? Message, AuthenticationResponse? obj)> Login(UserLogin? userLogin)
+    public async Task<(bool isValid, string? Message, AuthenticationResponse? obj)> Login(UserLogin userLogin)
     {
-        ArgumentNullException.ThrowIfNull(userLogin,"The 'userLogin' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(userLogin,$"The '{nameof(userLogin)}' object parameter is Null");
 
         var user = await _userManager.FindByEmailAsync(userLogin.Email);
         if (user == null || !await _userManager.CheckPasswordAsync(user, userLogin.Password))
@@ -97,16 +91,11 @@ public class AccountService : IAccountService
         if (result.Succeeded)
         {
             var userClaims = await _userManager.GetClaimsAsync(user);
-            // var authClaims = new List<Claim>();
-            // foreach (var userRole in userRoles)
-            // {
-            //     authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-            // }
             
             // Sign in
             await _signInManager.SignInAsync(user, isPersistent: false);
 
-            var authenticationResponse = _tokenService.CreateJwtToken(user,userClaims.ToList());
+            var authenticationResponse = _tokenService.CreateJwtToken(user,  userClaims.ToList());
             return (true, null, authenticationResponse);
         }
 
@@ -122,13 +111,12 @@ public class AccountService : IAccountService
     // }
     
     
-    public async Task<(bool isValid, string? Message)> ConfirmEmail(Guid? userId, string? token)
+    public async Task<(bool isValid, string? Message)> ConfirmEmail(Guid userId, string token)
     {
-        // ArgumentNullException.ThrowIfNull(userId,$"The '{nameof(userId)}' object parameter is Null");
-        ArgumentNullException.ThrowIfNull(userId,"The 'userId' object parameter is Null");
-        ArgumentNullException.ThrowIfNull(token,"The 'token' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(userId,$"The '{nameof(userId)}' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(token,$"The '{nameof(token)}' object parameter is Null");
         
-        var user = await _userManager.FindByIdAsync(userId.Value.ToString());
+        var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
             return (false, "User Not Found");
         
@@ -146,8 +134,8 @@ public class AccountService : IAccountService
     
     public async Task<(bool isValid, string? Message)> AddDefinedAccount(string definedAccountAddNumber, string userName)
     {
-        ArgumentNullException.ThrowIfNull(definedAccountAddNumber,"The 'definedAccountAddNumber' parameter is Null");
-        ArgumentNullException.ThrowIfNull(userName,"The 'userName' parameter is Null");
+        ArgumentNullException.ThrowIfNull(definedAccountAddNumber,$"The '{nameof(definedAccountAddNumber)}' parameter is Null");
+        ArgumentNullException.ThrowIfNull(userName,$"The '{nameof(userName)}' parameter is Null");
         
         var user = await _userManager.FindByNameAsync(userName);
         if (user == null)
@@ -176,9 +164,9 @@ public class AccountService : IAccountService
     }
     
     
-    public async Task<(bool isValid, string message)> SendConfirmationEmailInternal(UserProfile? user)
+    public async Task<(bool isValid, string message)> SendConfirmationEmailInternal(UserProfile user)
     {
-        ArgumentNullException.ThrowIfNull(user,"The 'user' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(user,$"The '{nameof(user)}' object parameter is Null");
 
         if (user.EmailConfirmed)
             return (true, "Your Email Is Already Confirmed");
@@ -192,7 +180,7 @@ public class AccountService : IAccountService
     }    
     public async Task<(bool isValid, string message)> SendConfirmationEmail(string userName)
     {
-        ArgumentNullException.ThrowIfNull(userName,"The 'userName' parameter is Null");
+        ArgumentNullException.ThrowIfNull(userName, $"The '{nameof(userName)}' parameter is Null");
 
         var user = await _userManager.FindByEmailAsync(userName);
         if (user == null)

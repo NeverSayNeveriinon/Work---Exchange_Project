@@ -1,0 +1,360 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>API</name>
+    </assembly>
+    <members>
+        <member name="M:API.Controllers.CommissionRateController.GetAllCommissionRates">
+            <summary>
+            Get All Existing CommissionRates
+            </summary>
+            <returns>The CommissionRates List</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/CommissionRate"
+            
+            </remarks>
+            <response code="200">The CommissionRates List is successfully returned</response>
+        </member>
+        <member name="M:API.Controllers.CommissionRateController.AddCommissionRate(Core.DTO.CommissionRateDTO.CommissionRateRequest)">
+            <summary>
+            Add a New CommissionRate to CommissionRates List
+            </summary>
+            <returns>Redirect to 'GetCommissionRate' action to return CommissionRate That Has Been Added</returns>
+            <remarks>       
+            Sample request:
+            
+                POST -> "api/CommissionRate"
+                {
+                }
+            
+            </remarks>
+            <response code="201">The New CommissionRate is successfully added to CommissionRates List</response>
+            <response code="400">There is sth wrong in Validation of properties</response>
+        </member>
+        <member name="M:API.Controllers.CommissionRateController.GetCommissionRateByMaxRange(System.Decimal)">
+            <summary>
+            Get an Existing CommissionRate Based On Given maxRange
+            </summary>
+            <returns>The CommissionRate That Has Been Found</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/CommissionRate/..."
+            
+            </remarks>
+            <response code="200">The CommissionRate is successfully found and returned</response>
+            <response code="404">A CommissionRate with Given maxRange has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CommissionRateController.UpdateCRateByMaxRange(Core.DTO.CommissionRateDTO.CommissionRateRequest)">
+            <summary>
+            Update an Existing CommissionRate Based on Given MaxUSDRange
+            </summary>
+            <returns>Nothing</returns>
+            <remarks>       
+            Sample request:
+            
+                Patch -> "api/CommissionRate"
+                {
+                }
+            
+            </remarks>
+            <response code="204">The CommissionRate is successfully found and has been updated with New CRate</response>
+            <response code="404">A CommissionRate with Given MaxUSDRange has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CommissionRateController.DeleteCommissionRateByMaxRange(System.Decimal)">
+            <summary>
+            Delete an Existing CommissionRate Based on Given maxRange
+            </summary>
+            <returns>Nothing</returns>
+            <remarks>       
+            Sample request:
+            
+                Delete -> "api/CommissionRate/..."
+            
+            </remarks>
+            <response code="204">The CommissionRate is successfully found and has been deleted from CommissionRates List</response>
+            <response code="404">A CommissionRate with Given maxRange has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyAccountController.GetAllCurrencyAccounts">
+            <summary>
+            Get All Existing CurrencyAccounts
+            </summary>
+            <returns>The CurrencyAccounts List</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/CurrencyAccount"
+            
+            </remarks>
+            <response code="200">The CurrencyAccounts List is successfully returned</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyAccountController.AddCurrencyAccount(Core.DTO.CurrencyAccountDTO.CurrencyAccountAddRequest)">
+            <summary>
+            Add a New CurrencyAccount to CurrencyAccounts List
+            </summary>
+            <returns>Redirect to 'GetCurrencyAccount' action to return CurrencyAccount That Has Been Added</returns>
+            <remarks>       
+            Sample request:
+            
+                POST -> "api/CurrencyAccount"
+                {
+                    CurrencyType = "USD"
+                }
+            
+            </remarks>
+            <response code="201">The New CurrencyAccount is successfully added to CurrencyAccounts List</response>
+            <response code="400">There is sth wrong in Validation of properties</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyAccountController.GetCurrencyAccountByNumber(System.String)">
+            <summary>
+            Get an Existing CurrencyAccount Based On Given Number
+            </summary>
+            <returns>The CurrencyAccount That Has Been Found</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/CurrencyAccount/..."
+            
+            </remarks>
+            <response code="200">The CurrencyAccount is successfully found and returned</response>
+            <response code="404">A CurrencyAccount with Given Number has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyAccountController.DeleteCurrencyAccountByNumber(System.String)">
+            <summary>
+            Delete an Existing CurrencyAccount Based on Given Number
+            </summary>
+            <returns>Nothing</returns>
+            <remarks>       
+            Sample request:
+            
+                Delete -> "api/CurrencyAccount/..."
+            
+            </remarks>
+            <response code="204">The CurrencyAccount is successfully found and has been deleted from CurrencyAccounts List</response>
+            <response code="404">A CurrencyAccount with Given Number has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyController.GetAllCurrencies">
+            <summary>
+            Get All Existing Currencies
+            </summary>
+            <returns>The Currencies List</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/Currency"
+            
+            </remarks>
+            <response code="200">The Currencies List is successfully returned</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyController.AddCurrency(Core.DTO.CurrencyDTO.CurrencyRequest)">
+            <summary>
+            Add a New Currency to Currencies List
+            </summary>
+            <returns>Redirect to 'GetCurrency' action to return Currency That Has Been Added</returns>
+            <remarks>       
+            Sample request:
+            
+                POST -> "api/Currency"
+                {
+                }
+            
+            </remarks>
+            <response code="201">The New Currency is successfully added to Currencies List</response>
+            <response code="400">There is sth wrong in Validation of properties</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyController.GetCurrencyByID(System.Int32)">
+            <summary>
+            Get an Existing Currency Based On Given ID
+            </summary>
+            <returns>The Currency That Has Been Found</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/Currency/..."
+            
+            </remarks>
+            <response code="200">The Currency is successfully found and returned</response>
+            <response code="404">A Currency with Given ID has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyController.GetCurrencyByCurrencyType(System.String)">
+            <summary>
+            Get an Existing Currency Based On Given currencyType
+            </summary>
+            <returns>The Currency That Has Been Found</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/Currency/..."
+            
+            </remarks>
+            <response code="200">The Currency is successfully found and returned</response>
+            <response code="404">A Currency with Given currencyType has not been found</response>
+        </member>
+        <member name="M:API.Controllers.CurrencyController.DeleteCurrencyByID(System.Int32)">
+            <summary>
+            Delete an Existing Currency Based on Given ID
+            </summary>
+            <returns>Nothing</returns>
+            <remarks>       
+            Sample request:
+            
+                Delete -> "api/Currency/..."
+            
+            </remarks>
+            <response code="204">The Currency is successfully found and has been deleted from Currencies List</response>
+            <response code="404">A Currency with Given ID has not been found</response>
+        </member>
+        <member name="M:API.Controllers.ExchangeValueController.GetAllExchangeValues">
+            <summary>
+            Get All Existing ExchangeValues
+            </summary>
+            <returns>The ExchangeValues List</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/ExchangeValue"
+            
+            </remarks>
+            <response code="200">The ExchangeValues List is successfully returned</response>
+        </member>
+        <member name="M:API.Controllers.ExchangeValueController.AddExchangeValue(Core.DTO.ExchangeValueDTO.ExchangeValueAddRequest)">
+            <summary>
+            Add a New ExchangeValue to ExchangeValues List
+            </summary>
+            <returns>Redirect to 'GetExchangeValue' action to return ExchangeValue That Has Been Added</returns>
+            <remarks>       
+            Sample request:
+            
+                POST -> "api/ExchangeValue"
+                {
+                }
+            
+            </remarks>
+            <response code="201">The New ExchangeValue is successfully added to ExchangeValues List</response>
+            <response code="400">There is sth wrong in Validation of properties</response>
+        </member>
+        <member name="M:API.Controllers.ExchangeValueController.GetExchangeValue(System.Int32)">
+            <summary>
+            Get an Existing ExchangeValue Based On Given ID
+            </summary>
+            <returns>The ExchangeValue That Has Been Found</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/ExchangeValue/..."
+            
+            </remarks>
+            <response code="200">The ExchangeValue is successfully found and returned</response>
+            <response code="404">A ExchangeValue with Given ID has not been found</response>
+        </member>
+        <member name="M:API.Controllers.ExchangeValueController.UpdateExchangeValue(Core.DTO.ExchangeValueDTO.ExchangeValueUpdateRequest,System.Int32)">
+            <summary>
+            Update an Existing ExchangeValue Based on Given ID and New ExchangeValue Object
+            </summary>
+            <returns>Nothing</returns>
+            <remarks>       
+            Sample request:
+            
+                Put -> "api/ExchangeValue/..."
+                {
+                }
+            
+            </remarks>
+            <response code="204">The ExchangeValue is successfully found and has been updated with New ExchangeValue</response>
+            <response code="404">A ExchangeValue with Given ID has not been found</response>
+        </member>
+        <member name="M:API.Controllers.ExchangeValueController.DeleteExchangeValue(System.Int32)">
+            <summary>
+            Delete an Existing ExchangeValue Based on Given ID
+            </summary>
+            <returns>Nothing</returns>
+            <remarks>       
+            Sample request:
+            
+                Delete -> "api/ExchangeValue/..."
+            
+            </remarks>
+            <response code="204">The ExchangeValue is successfully found and has been deleted from ExchangeValues List</response>
+            <response code="404">A ExchangeValue with Given ID has not been found</response>
+        </member>
+        <member name="M:API.Controllers.TransactionController.GetAllTransactions">
+            <summary>
+            Get All Existing Transactions
+            </summary>
+            <returns>The Transactions List</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/Transaction"
+            
+            </remarks>
+            <response code="200">The Transactions List is successfully returned</response>
+        </member>
+        <member name="M:API.Controllers.TransactionController.AddTransferTransaction(Core.DTO.TransactionDTO.TransactionTransferAddRequest,System.String)">
+            <summary>
+            Add a New Transaction to Transactions List
+            </summary>
+            <returns>Redirect to 'GetTransaction' action to return Transaction That Has Been Added</returns>
+            <remarks>       
+            Sample request:
+            
+                POST -> "api/Transaction"
+                {
+                }
+            
+            </remarks>
+            <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm</response>
+            <response code="400">There is sth wrong in Validation of properties</response>
+        </member>
+        <member name="M:API.Controllers.TransactionController.AddDepositTransaction(Core.DTO.TransactionDTO.TransactionDepositAddRequest,System.String)">
+            <summary>
+            Add a New Transaction to Transactions List
+            </summary>
+            <returns>Redirect to 'GetTransaction' action to return Transaction That Has Been Added</returns>
+            <remarks>       
+            Sample request:
+            
+                POST -> "api/Transaction"
+                {
+                }
+            
+            </remarks>
+            <response code="200">The New Transaction is successfully added to Transactions List, Waiting For Confirm/Cancel</response>
+            <response code="400">There is sth wrong in Validation of properties</response>
+        </member>
+        <member name="M:API.Controllers.TransactionController.ChangeTransactionStatus(Core.DTO.TransactionDTO.ConfirmTransactionRequest)">
+            <summary>
+            Confirm/Cancel a Pending Transaction Based On Given ID
+            </summary>
+            <returns>Redirect to 'GetTransactionByID' action to return Transaction That Has Been Updated</returns>
+            <remarks>       
+            Sample request:
+            
+                Patch -> "api/Transaction"
+                {
+                  "transactionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                  "transactionStatus": "Confirmed|Cancelled"
+                }
+            
+            </remarks>
+            <response code="201">The Transaction is successfully found and Updated</response>
+            <response code="404">A Transaction with Given ID has not been found</response>
+        </member>
+        <member name="M:API.Controllers.TransactionController.GetTransactionByID(System.Guid)">
+            <summary>
+            Get an Existing Transaction Based On Given ID
+            </summary>
+            <returns>The Transaction That Has Been Found</returns>
+            <remarks>       
+            Sample request:
+            
+                Get -> "api/Transaction/..."
+            
+            </remarks>
+            <response code="200">The Transaction is successfully found and returned</response>
+            <response code="404">A Transaction with Given ID has not been found</response>
+        </member>
+    </members>
+</doc>

@@ -4,6 +4,7 @@ using Core.Domain.IdentityEntities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
+using Core.DTO.Money;
 using Core.DTO.TransactionDTO;
 using Core.Enums;
 using Core.Helpers;
@@ -58,59 +59,25 @@ public class TransactionService : ITransactionService
         
         var transaction = transactionAddRequest.ToTransaction();
         var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.FromAccountNumber);
-        if (!isFromValid) return (false, "An Account for from account With This Number Has Not Been Found", null);
+        if (!isFromValid) return (false, "An Account for 'from' account With This Number Has Not Been Found", null);
         var (isToValid, _, toAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.ToAccountNumber);
-        if (!isToValid) return (false, "An Account for from account With This Number Has Not Been Found", null);
-        
+        if (!isToValid) return (false, "An Account for 'to' account With This Number Has Not Been Found", null);
         
         var transactionAmount = transactionAddRequest.Amount!.Value;
-
-        #region AllCalculations
-        
-        // Calculate Commission to be subtracted from 'StashBalance' of 'FromAccount'
-        decimal commissionAmount = 0;
-        decimal? cRate = null;
-        if (!isCommissionFree)
-        {
-            var money = new Money() { Amount = transactionAmount, Currency = fromAccount!.Currency!};
-            cRate = await _commissionRateService.GetUSDAmountCRate(money);
-            if (cRate == null) return (false, "There is No Relevant Commission Rate for the Amount", null);
-                
-            commissionAmount = transactionAmount * cRate.GetValueOrDefault();
-        }
-        
-        // Calculate Final Amount to be subtracted from 'StashBalance' of 'FromAccount'
-        var decreaseAmount = transactionAmount + commissionAmount;
-        var finalBalanceAmount = fromAccount!.Balance - decreaseAmount;
-        var currencyType = fromAccount.Currency?.CurrencyType;
-        
-        var (isMinUSDValid, minUSDMessage) = await CheckMinimumUSDBalanceAsync(currencyType!, finalBalanceAmount);
-        if (!isMinUSDValid) return (false, minUSDMessage, null); 
-        
-        var (isMaxUSDDayValid, maxUSDDayMessage) = await CheckMaxUSDBalanceWithdrawPerDayAsync(currencyType!, decreaseAmount, fromAccount, transaction.DateTime);
-        if (!isMaxUSDDayValid) return (false, maxUSDDayMessage, null);
-        
-        
-        // Calculate Final Amount to be added to 'StashBalance' of 'ToAccount'
-        var (isExchangeValid, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(fromAccount.Currency?.CurrencyType!, toAccount?.Currency?.CurrencyType!);
-        if (!isExchangeValid) return (false, $"There is No Relevant Exchange Value to convert", null);
-        var destinationAmount = transactionAmount * valueToBeMultiplied!.Value;
-        
-        #endregion
-
-        // // All Calculations
-        // var (isValid, message, cRate, commissionAmount, destinationAmount, valueToBeMultiplied) = await CalculateAmounts(transaction, isCommissionFree);
-        // if (!isValid) return (false, message, null);
+       
+        // All Calculations and Check Invalid Balance
+        var (isValid, message, calculationsAmounts) = await CalculateTransferAmounts(fromAccount!, toAccount!, transaction, isCommissionFree);
+        if (!isValid) return (false, message, null);
+        var (cRate, commissionAmount, destinationAmount, valueToBeMultiplied) = calculationsAmounts!.ToTuple();
         
         // Updating the 'StashBalance' of 'FromAccount'
-        _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transactionAmount, (val1, val2) => val1 - val2);
-        if (!isCommissionFree) _currencyAccountService.UpdateStashBalanceAmount(fromAccount, commissionAmount, (val1, val2) => val1 - val2);
+        _currencyAccountService.UpdateStashBalanceAmount(fromAccount!, transactionAmount, (val1, val2) => val1 - val2);
+        if (!isCommissionFree) _currencyAccountService.UpdateStashBalanceAmount(fromAccount!, commissionAmount, (val1, val2) => val1 - val2);
 
         // Updating the 'StashBalance' of 'ToAccount'
-        _currencyAccountService.UpdateStashBalanceAmount(toAccount, destinationAmount, (val1, val2) => val1 + val2);
-
+        _currencyAccountService.UpdateStashBalanceAmount(toAccount!, destinationAmount, (val1, val2) => val1 + val2);
         
-        transaction.CRate = cRate.GetValueOrDefault();
+        transaction.CRate = cRate;
         transaction.FromAccountChangeAmount = transactionAmount + commissionAmount;
         transaction.ToAccountChangeAmount = destinationAmount;
         
@@ -118,43 +85,9 @@ public class TransactionService : ITransactionService
         var numberOfRowsAffected = await _transactionRepository.SaveChangesAsync();
         if (!(numberOfRowsAffected >= 3)) return (false, "The Request Has Not Been Done Completely, Try Again", null);
 
-        var transactionResponse = transactionAddReturned.ToTransactionResponse(valueToBeMultiplied.GetValueOrDefault());
-        return (true, null, transactionResponse);
+        return (true, null, transactionAddReturned.ToTransactionResponse(valueToBeMultiplied));
     }
 
-    // private async Task<(bool isValid, string? message, decimal? cRate, decimal? commissionAmount, decimal? destinationAmount, decimal? valueToBeMultiplied)> 
-    //                 CalculateAmounts(Transaction transaction, bool isCommissionFree)
-    // {
-    //     // Calculate Commission to be subtracted from 'StashBalance' of 'FromAccount'
-    //     decimal commissionAmount = 0;
-    //     decimal? cRate = null;
-    //     if (!isCommissionFree)
-    //     {
-    //         var money = new Money() { Amount = transaction.Amount, Currency = transaction.FromAccount!.Currency!};
-    //         cRate = await _commissionRateService.GetUSDAmountCRate(money);
-    //         if (cRate == null) return (false, "There is No Relevant Commission Rate for the Amount", null ,null, null, null);
-    //             
-    //         commissionAmount = transaction.Amount * cRate.GetValueOrDefault();
-    //     }
-    //     
-    //     // Calculate Final Amount to be subtracted from 'StashBalance' of 'FromAccount'
-    //     var decreaseAmount = transaction.Amount + commissionAmount;
-    //     var finalBalanceAmount = transaction.FromAccount!.Balance - decreaseAmount;
-    //     var currencyType = transaction.FromAccount.Currency?.CurrencyType;
-    //     
-    //     var (isMinUSDValid, minUSDMessage) = await CheckMinimumUSDBalanceAsync(currencyType!, finalBalanceAmount);
-    //     if (!isMinUSDValid) return (false, minUSDMessage, null ,null, null, null); 
-    //     
-    //     var (isMaxUSDDayValid, maxUSDDayMessage) = await CheckMaxUSDBalanceWithdrawPerDayAsync(currencyType!, decreaseAmount, transaction.FromAccount, transaction.DateTime);
-    //     if (!isMaxUSDDayValid) return (false, maxUSDDayMessage, null ,null, null, null);
-    //     
-    //     // Calculate Final Amount to be added to 'StashBalance' of 'ToAccount'
-    //     var (isExchangeValid, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(transaction.FromAccount.Currency?.CurrencyType, transaction.ToAccount?.Currency?.CurrencyType);
-    //     if (!isExchangeValid) return (false, $"There is No Relevant Exchange Value to convert", null ,null, null, null);
-    //     var destinationAmount = transaction.Amount * valueToBeMultiplied!.Value;
-    //
-    //     return (true, null, cRate, commissionAmount, destinationAmount, valueToBeMultiplied);
-    // }
     
     public async Task<(bool isValid, string? message, TransactionResponse? obj)> AddDepositTransaction(TransactionDepositAddRequest transactionAddRequest,
                                                                                                        ClaimsPrincipal userClaims)
@@ -244,68 +177,10 @@ public class TransactionService : ITransactionService
         transaction.FromAccountChangeAmount = finalAmount.GetValueOrDefault();
         transaction.ToAccountChangeAmount = 0;
         var transactionAddReturned = await _transactionRepository.AddTransactionAsync(transaction);
-        
-        return (true, null, transactionAddReturned.ToTransactionResponse(valueToBeMultiplied.GetValueOrDefault(), transactionAddRequest.Money.CurrencyType));
+
+        var transactionResponse = transactionAddReturned.ToTransactionResponse(valueToBeMultiplied.GetValueOrDefault(), transactionAddRequest.Money.CurrencyType);
+        return (true, null, transactionResponse);
     }
-
-    private (bool isValid, string? message) CheckAccountAccess(TransactionTransferAddRequest transactionAddRequest, UserProfile user)
-    {
-        ArgumentNullException.ThrowIfNull(transactionAddRequest,$"The '{nameof(transactionAddRequest)}' object parameter is Null");
-        ArgumentNullException.ThrowIfNull(user,$"The '{nameof(user)}' object parameter is Null");
-
-        // if 'FromAccountNumber' and 'ToAccountNumber' be Same
-        if (transactionAddRequest.FromAccountNumber == transactionAddRequest.ToAccountNumber)
-            return (false, "'FromAccountNumber' and 'ToAccountNumber' can't be Same");
-        
-        // 'FromAccountNumber' has to belong to the user itself //
-        if (!user.CurrencyAccounts!.Any(acc => acc.Number == transactionAddRequest.FromAccountNumber))
-            return (false, "'FromAccountNumber' is Not One of Your Accounts Number");
-        
-        // 'ToAccountNumber' has to be one of the user DefinedAccounts Number //
-        if (!user.DefinedCurrencyAccounts!.Any(acc => acc.Number == transactionAddRequest.ToAccountNumber))
-            return (false, "'ToAccountNumber' is Not One of Your DefinedAccounts Number");
-
-        return (true, null);
-    }
-    
-    private async Task<(bool isValid, string? message)> CheckMinimumUSDBalanceAsync(string currencyType, decimal finalAmount)
-    {
-        ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' object parameter is Null");
-
-        var (isValid, exchnageValueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.USDCurrency);
-        if (!isValid) return (false, "There is No Relevant Exchange Value to convert to USD");
-        
-        var finalUSDAmount = finalAmount * exchnageValueToBeMultiplied!.Value;
-        if (finalUSDAmount < BalanceMinimumUSD)
-            return (false, "The Balance Amount is under 50 USD Dollars, This is Invalid");
-        
-        return (true, null);
-    }
-    
-    private async Task<(bool isValid, string? message)> CheckMaxUSDBalanceWithdrawPerDayAsync(string currencyType, decimal amount, CurrencyAccount currencyAccount, DateTime transactionDate)
-    {
-        ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' parameter is Null");
-        ArgumentNullException.ThrowIfNull(currencyAccount,$"The '{nameof(currencyAccount)}' object parameter is Null");
-
-        var (isValid, exchnageValueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.USDCurrency);
-        if (!isValid) return (false, "There is No Relevant Exchange Value to convert to USD");
-
-        var userAllTransactions = await _transactionRepository.GetAllTransactionsByUserAsync(currencyAccount.OwnerID);
-        var userAllFromTransactionsPerDay = userAllTransactions.Where(t => t.FromAccountNumber == currencyAccount.Number &&
-                                                                           t.TransactionType == TransactionTypeOptions.Transfer)
-                                                               .GroupBy(t => t.DateTime.Date).ToList();
-        var userAllFromTransactionsToday = userAllFromTransactionsPerDay.FirstOrDefault(group => group.Key == transactionDate.Date);
-        if (userAllFromTransactionsToday == null) return (true, null);
-        var finalAmount = userAllFromTransactionsToday.Sum(t => t.FromAccountChangeAmount);
-        
-        var finalUSDAmount = finalAmount * exchnageValueToBeMultiplied!.Value;
-        if ((finalUSDAmount + amount) > BalanceMaxWithdrawPerDay)
-            return (false, "With This Transaction,The Balance Amount Deposit for Today is more than 1000 USD Dollars, This is Invalid");
-        
-        return (true, null);
-    }
-
-    
     
     public async Task<(bool isValid, string? message, TransactionResponse? obj)> UpdateTransactionStatusOfTransaction(ConfirmTransactionRequest confirmTransactionRequest, ClaimsPrincipal userClaims, DateTime DateTimeNow)
     {
@@ -317,6 +192,8 @@ public class TransactionService : ITransactionService
         
         var transaction = await _transactionRepository.GetTransactionByIDAsync(confirmTransactionRequest.TransactionId, ignoreQueryFilter:true);
         if (transaction == null) return (false, null, null); // if 'ID' is invalid (doesn't exist)
+        var fromAccount = transaction.FromAccount;
+        var toAccount = transaction.ToAccount;
         
         // In case Someone Else wants to Confirm transaction (and is not admin also)
         if (transaction.FromAccount!.OwnerID != user!.Id && !userClaims.IsInRole(Constants.AdminRole))
@@ -324,20 +201,13 @@ public class TransactionService : ITransactionService
 
         // if 'transactionStatus' from db is other than "Pending"
         var invalidTransactionStatus = CheckInvalidTransactionStatus(transaction.TransactionStatus);
-        if (!invalidTransactionStatus.isValid)
-            return (false, invalidTransactionStatus.message, null);
-        
-        // Get 'From' and 'To' Currency Accounts
-        // var (_, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transaction.FromAccountNumber);
-        // var (_, _, toAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transaction.ToAccountNumber);
-        var fromAccount = transaction.FromAccount;
-        var toAccount = transaction.ToAccount;
+        if (!invalidTransactionStatus.isValid) return (false, invalidTransactionStatus.message, null);
         
         // if More Than 10 minutes has passed since the transaction time
         if (DateTimeNow.Subtract(transaction.DateTime) > ChangeStatusMaximumTimeOut)
         {
             _transactionRepository.UpdateTransactionStatusOfTransaction(transaction, TransactionStatusOptions.Failed);
-            await DiscardTransactionFee(transaction, fromAccount!, toAccount!);
+            DiscardTransactionFee(transaction, fromAccount!, toAccount!);
             
             var numberOfRowsAffectedFailed = await _transactionRepository.SaveChangesAsync();
             if ((transaction.TransactionType == TransactionTypeOptions.Deposit && !(numberOfRowsAffectedFailed >= 1)) ||
@@ -358,7 +228,7 @@ public class TransactionService : ITransactionService
         else if (confirmTransactionRequest.TransactionStatus == nameof(TransactionStatusOptions.Cancelled))
         {
             updatedTransaction = _transactionRepository.UpdateTransactionStatusOfTransaction(transaction, TransactionStatusOptions.Cancelled);
-            await DiscardTransactionFee(transaction, fromAccount!, toAccount!);
+            DiscardTransactionFee(transaction, fromAccount!, toAccount!);
         }
         
         var numberOfRowsAffected = await _transactionRepository.SaveChangesAsync();
@@ -367,60 +237,6 @@ public class TransactionService : ITransactionService
             return (false, "The Request Has Not Been Done Completely, Try Again", null);
 
         return (true, null, updatedTransaction?.ToTransactionResponse());      
-    }
-
-    private (bool isValid, string? message) CheckInvalidTransactionStatus(TransactionStatusOptions transactionStatus) => transactionStatus switch
-    {
-        TransactionStatusOptions.Confirmed => (false, "Transaction is Already Confirmed"),
-        TransactionStatusOptions.Cancelled => (false, "Transaction is Already Cancelled"),
-        TransactionStatusOptions.Failed => (false, "Transaction is Failed Before and Can't Be Confirmed/Cancelled"),
-        _ => (true, null)
-    };
-    
-    private async Task<(bool isValid, string? message)> ApplyTransactionFee(Transaction transaction, CurrencyAccount fromAccount, CurrencyAccount? toAccount)
-    {
-        ArgumentNullException.ThrowIfNull(transaction, $"The '{nameof(transaction)}' object parameter is Null");
-        ArgumentNullException.ThrowIfNull(fromAccount, $"The '{nameof(fromAccount)}' object parameter is Null");
-
-        if (transaction.TransactionType == TransactionTypeOptions.Deposit)
-        {
-            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
-            _currencyAccountService.UpdateBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
-        }
-        else if (transaction.TransactionType == TransactionTypeOptions.Transfer)
-        {
-            // Check 'From Account' Balance (real Balance)
-            var decreaseAmount = fromAccount.Balance - transaction.FromAccountChangeAmount;
-            
-            var (isMinimumValid, minimumMessage) = await CheckMinimumUSDBalanceAsync(fromAccount.Currency!.CurrencyType, decreaseAmount);
-            if (!isMinimumValid) return (false, minimumMessage);
-            var (isMaxUSDDayValid, maxUSDDayMessage) = await CheckMaxUSDBalanceWithdrawPerDayAsync(fromAccount.Currency!.CurrencyType, decreaseAmount, fromAccount, transaction.DateTime);
-            if (!isMaxUSDDayValid) return (false, maxUSDDayMessage);
-            
-            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
-            _currencyAccountService.UpdateBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
-
-            _currencyAccountService.UpdateStashBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 - val2);
-            _currencyAccountService.UpdateBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 + val2);
-        }
-
-        return (true, null);
-    }
-
-    private async Task DiscardTransactionFee(Transaction transaction, CurrencyAccount fromAccount, CurrencyAccount? toAccount)
-    {
-        ArgumentNullException.ThrowIfNull(transaction, $"The '{nameof(transaction)}' object parameter is Null");
-        ArgumentNullException.ThrowIfNull(fromAccount, $"The '{nameof(fromAccount)}' object parameter is Null");
-        
-        if (transaction.TransactionType == TransactionTypeOptions.Deposit)
-        {
-            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
-        }
-        else if (transaction.TransactionType == TransactionTypeOptions.Transfer)
-        {
-            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
-            _currencyAccountService.UpdateStashBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 - val2);
-        }
     }
     
     public async Task<List<TransactionResponse>> GetAllTransactions(ClaimsPrincipal userClaims)
@@ -505,4 +321,177 @@ public class TransactionService : ITransactionService
 
         return (true, true, null);
     }
+    
+    
+    
+    
+    
+    
+    
+    // Private Methods //
+    
+    private (bool isValid, string? message) CheckAccountAccess(TransactionTransferAddRequest transactionAddRequest, UserProfile user)
+    {
+        ArgumentNullException.ThrowIfNull(transactionAddRequest,$"The '{nameof(transactionAddRequest)}' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(user,$"The '{nameof(user)}' object parameter is Null");
+
+        // if 'FromAccountNumber' and 'ToAccountNumber' be Same
+        if (transactionAddRequest.FromAccountNumber == transactionAddRequest.ToAccountNumber)
+            return (false, "'FromAccountNumber' and 'ToAccountNumber' can't be Same");
+        
+        // 'FromAccountNumber' has to belong to the user itself //
+        if (!user.CurrencyAccounts!.Any(acc => acc.Number == transactionAddRequest.FromAccountNumber))
+            return (false, "'FromAccountNumber' is Not One of Your Accounts Number");
+        
+        // 'ToAccountNumber' has to be one of the user DefinedAccounts Number //
+        if (!user.DefinedCurrencyAccounts!.Any(acc => acc.Number == transactionAddRequest.ToAccountNumber))
+            return (false, "'ToAccountNumber' is Not One of Your DefinedAccounts Number");
+
+        return (true, null);
+    }
+    
+    private async Task<(bool isValid, string? message, TransferCalculationsAmounts? obj)> CalculateTransferAmounts(CurrencyAccount fromAccount, CurrencyAccount toAccount,
+                                                                                                                   Transaction transaction, bool isCommissionFree)
+    {
+        // Calculate Commission to be subtracted from 'StashBalance' of 'FromAccount'
+        decimal commissionAmount = 0;
+        decimal? cRate = null;
+        if (!isCommissionFree)
+        {
+            var money = new Money() { Amount = transaction.Amount, Currency = fromAccount.Currency!};
+            cRate = await _commissionRateService.GetUSDAmountCRate(money);
+            if (cRate == null) return (false, "There is No Relevant Commission Rate for the Amount", null);
+                
+            commissionAmount = transaction.Amount * cRate.GetValueOrDefault();
+        }
+        
+        // Calculate Final Amount to be subtracted from 'StashBalance' of 'FromAccount'
+        var decreaseAmount = transaction.Amount + commissionAmount;
+        var currencyType = fromAccount.Currency?.CurrencyType;
+
+        var (isBalanceValid, balanceMessage) = await CheckFromAccountInvalidBalance(fromAccount, currencyType!, decreaseAmount, transaction.DateTime);
+        if (!isBalanceValid) return (false, balanceMessage, null);
+        
+        // Calculate Final Amount to be added to 'StashBalance' of 'ToAccount'
+        var (isExchangeValid, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(fromAccount.Currency?.CurrencyType!, toAccount.Currency?.CurrencyType!);
+        if (!isExchangeValid) return (false, $"There is No Relevant Exchange Value to convert to {toAccount.Currency?.CurrencyType!}", null);
+        var destinationAmount = transaction.Amount * valueToBeMultiplied!.Value;
+
+        
+        var transactionAmount = new TransferCalculationsAmounts()
+        {
+            CRate = cRate!.Value,
+            CommissionAmount = commissionAmount,
+            DestinationAmount = destinationAmount,
+            ValueToBeMultiplied = valueToBeMultiplied.Value
+        };
+        return (true, null, transactionAmount);
+    }
+
+    private async Task<(bool isValid, string? message)> CheckFromAccountInvalidBalance(CurrencyAccount fromAccount, string currencyType,
+                                                                                       decimal decreaseAmount, DateTime dateTime)
+    {
+        var finalBalanceAmount = fromAccount.Balance - decreaseAmount;
+
+        var (isMinUSDValid, minUSDMessage) = await CheckMinimumUSDBalanceAsync(currencyType, finalBalanceAmount);
+        if (!isMinUSDValid) return (false, minUSDMessage); 
+        
+        var (isMaxUSDDayValid, maxUSDDayMessage) = await CheckMaxUSDBalanceWithdrawPerDayAsync(currencyType, decreaseAmount, fromAccount, dateTime);
+        if (!isMaxUSDDayValid) return (false, maxUSDDayMessage);
+
+        return (true, null);
+    }
+    
+    private async Task<(bool isValid, string? message)> CheckMinimumUSDBalanceAsync(string currencyType, decimal finalAmount)
+    {
+        ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' object parameter is Null");
+
+        var (isValid, exchnageValueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.USDCurrency);
+        if (!isValid) return (false, "There is No Relevant Exchange Value to convert to USD");
+        
+        var finalUSDAmount = finalAmount * exchnageValueToBeMultiplied!.Value;
+        if (finalUSDAmount < BalanceMinimumUSD)
+            return (false, "The Balance Amount is under 50 USD Dollars, This is Invalid");
+        
+        return (true, null);
+    }
+    
+    private async Task<(bool isValid, string? message)> CheckMaxUSDBalanceWithdrawPerDayAsync(string currencyType, decimal amount, CurrencyAccount currencyAccount, DateTime transactionDate)
+    {
+        ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' parameter is Null");
+        ArgumentNullException.ThrowIfNull(currencyAccount,$"The '{nameof(currencyAccount)}' object parameter is Null");
+
+        var (isValid, exchnageValueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.USDCurrency);
+        if (!isValid) return (false, "There is No Relevant Exchange Value to convert to USD");
+
+        var userAllTransactions = await _transactionRepository.GetAllTransactionsByUserAsync(currencyAccount.OwnerID);
+        var userAllFromTransactionsPerDay = userAllTransactions.Where(t => t.FromAccountNumber == currencyAccount.Number &&
+                                                                           t.TransactionType == TransactionTypeOptions.Transfer)
+                                                               .GroupBy(t => t.DateTime.Date).ToList();
+        var userAllFromTransactionsToday = userAllFromTransactionsPerDay.FirstOrDefault(group => group.Key == transactionDate.Date);
+        if (userAllFromTransactionsToday == null) return (true, null);
+        var finalAmount = userAllFromTransactionsToday.Sum(t => t.FromAccountChangeAmount);
+        
+        var finalUSDAmount = finalAmount * exchnageValueToBeMultiplied!.Value;
+        if ((finalUSDAmount + amount) > BalanceMaxWithdrawPerDay)
+            return (false, "With This Transaction,The Balance Amount Deposit for Today is more than 1000 USD Dollars, This is Invalid");
+        
+        return (true, null);
+    }
+    
+    
+    private (bool isValid, string? message) CheckInvalidTransactionStatus(TransactionStatusOptions transactionStatus) => transactionStatus switch
+    {
+        TransactionStatusOptions.Confirmed => (false, "Transaction is Already Confirmed"),
+        TransactionStatusOptions.Cancelled => (false, "Transaction is Already Cancelled"),
+        TransactionStatusOptions.Failed => (false, "Transaction is Failed Before and Can't Be Confirmed/Cancelled"),
+        _ => (true, null)
+    };
+    
+    private async Task<(bool isValid, string? message)> ApplyTransactionFee(Transaction transaction, CurrencyAccount fromAccount, CurrencyAccount? toAccount)
+    {
+        ArgumentNullException.ThrowIfNull(transaction, $"The '{nameof(transaction)}' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(fromAccount, $"The '{nameof(fromAccount)}' object parameter is Null");
+
+        if (transaction.TransactionType == TransactionTypeOptions.Deposit)
+        {
+            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
+            _currencyAccountService.UpdateBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
+        }
+        else if (transaction.TransactionType == TransactionTypeOptions.Transfer)
+        {
+            // Check 'From Account' Balance (real Balance)
+            var decreaseAmount = fromAccount.Balance - transaction.FromAccountChangeAmount;
+            
+            var (isMinimumValid, minimumMessage) = await CheckMinimumUSDBalanceAsync(fromAccount.Currency!.CurrencyType, decreaseAmount);
+            if (!isMinimumValid) return (false, minimumMessage);
+            var (isMaxUSDDayValid, maxUSDDayMessage) = await CheckMaxUSDBalanceWithdrawPerDayAsync(fromAccount.Currency!.CurrencyType, decreaseAmount, fromAccount, transaction.DateTime);
+            if (!isMaxUSDDayValid) return (false, maxUSDDayMessage);
+            
+            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
+            _currencyAccountService.UpdateBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
+
+            _currencyAccountService.UpdateStashBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 - val2);
+            _currencyAccountService.UpdateBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 + val2);
+        }
+
+        return (true, null);
+    }
+
+    private void DiscardTransactionFee(Transaction transaction, CurrencyAccount fromAccount, CurrencyAccount? toAccount)
+    {
+        ArgumentNullException.ThrowIfNull(transaction, $"The '{nameof(transaction)}' object parameter is Null");
+        ArgumentNullException.ThrowIfNull(fromAccount, $"The '{nameof(fromAccount)}' object parameter is Null");
+        
+        if (transaction.TransactionType == TransactionTypeOptions.Deposit)
+        {
+            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
+        }
+        else if (transaction.TransactionType == TransactionTypeOptions.Transfer)
+        {
+            _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
+            _currencyAccountService.UpdateStashBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 - val2);
+        }
+    }
+    
 }

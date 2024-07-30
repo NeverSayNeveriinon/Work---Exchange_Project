@@ -1,11 +1,11 @@
-﻿namespace Core.DTO;
+﻿namespace Core.DTO.ServicesDTO;
 
 public class TransferCalculationsAmounts
 {
-    public decimal CRate { get; set; }
-    public decimal CommissionAmount { get; set; }
-    public decimal DestinationAmount { get; set; }
-    public decimal ValueToBeMultiplied { get; set; }
+    public decimal CRate { get; init; }
+    public decimal CommissionAmount { get; init; }
+    public decimal DestinationAmount { get; init; }
+    public decimal ValueToBeMultiplied { get; init; }
 }
 
 public static class TransferCalculationsAmountsExtensions

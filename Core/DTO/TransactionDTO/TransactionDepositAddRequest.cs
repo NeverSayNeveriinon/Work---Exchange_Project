@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
-using Core.DTO.Money;
+using Core.DTO.ServicesDTO.Money;
 using Core.Enums;
 
 namespace Core.DTO.TransactionDTO;

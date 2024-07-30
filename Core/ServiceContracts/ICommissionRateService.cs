@@ -1,6 +1,6 @@
 ﻿using Core.DTO;
 using Core.DTO.CommissionRateDTO;
-using Core.DTO.Money;
+using Core.DTO.ServicesDTO.Money;
 
 namespace Core.ServiceContracts;
 

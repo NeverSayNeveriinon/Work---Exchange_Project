@@ -4,7 +4,8 @@ using Core.Domain.IdentityEntities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
-using Core.DTO.Money;
+using Core.DTO.ServicesDTO;
+using Core.DTO.ServicesDTO.Money;
 using Core.DTO.TransactionDTO;
 using Core.Enums;
 using Core.Helpers;
@@ -102,7 +103,7 @@ public class TransactionService : ITransactionService
         if (user == null) return (false, "The User Doesn't Exist", null); // if 'user' doesn't exist
         _accountRepository.LoadReferences(user);        
 
-        if (!user!.CurrencyAccounts!.Any(account => account.Number == transactionAddRequest.AccountNumber))
+        if (!user.CurrencyAccounts!.Any(account => account.Number == transactionAddRequest.AccountNumber))
             return (false, "'AccountNumber' is Not One of Your Accounts Number", null);
         
         var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.AccountNumber);

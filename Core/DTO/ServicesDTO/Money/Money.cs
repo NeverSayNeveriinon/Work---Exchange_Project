@@ -1,10 +1,9 @@
 ﻿using Core.Domain.Entities;
-using Core.Enums;
 
-namespace Core.DTO.Money;
+namespace Core.DTO.ServicesDTO.Money;
 
 public class Money
 {
     public decimal Amount { get; set; }
-    public Currency Currency { get; set; }
+    public Currency Currency { get; init; }
 }

@@ -24,10 +24,11 @@ public class TransactionRepository : ITransactionRepository
             transactionsQueryable = transactionsQueryable.IgnoreQueryFilters();
         
         var transactions = transactionsQueryable.Include(property => property.FromAccount)
-                                                .ThenInclude(Property => Property.Currency)
-                                                .ThenInclude(Property => Property.FirstExchangeValues)
+                                                .ThenInclude(property => property!.Currency)
+                                                .ThenInclude(property => property!.FirstExchangeValues)
                                                 .Include(property => property.ToAccount)
-                                                .ThenInclude(property => property.Currency)
+                                                .ThenInclude(property => property!.Currency)
+                                                .ThenInclude(property => property!.FirstExchangeValues)
                                                 .AsNoTracking();
       
         var transactionsList = await transactions.ToListAsync();
@@ -37,10 +38,10 @@ public class TransactionRepository : ITransactionRepository
     public async Task<List<Transaction>> GetAllTransactionsByUserAsync(Guid ownerID)
     {
         var transactions = _dbContext.Transactions.Include(property => property.FromAccount)
-                                                  .ThenInclude(Property => Property.Currency)
-                                                  .ThenInclude(Property => Property.FirstExchangeValues)
+                                                  .ThenInclude(property => property!.Currency)
+                                                  .ThenInclude(property => property!.FirstExchangeValues)
                                                   .Include(property => property.ToAccount)
-                                                  .ThenInclude(property => property.Currency)
+                                                  .ThenInclude(property => property!.Currency)
                                                   .AsNoTracking()
                                                   .Where(transactionItem => transactionItem.FromAccount!.OwnerID == ownerID ||
                                                                             transactionItem.ToAccount!.OwnerID == ownerID);
@@ -56,10 +57,10 @@ public class TransactionRepository : ITransactionRepository
             transactionsQueryable = transactionsQueryable.IgnoreQueryFilters();
         
         var transaction = await transactionsQueryable.Include(property => property.FromAccount)
-                                                     .ThenInclude(Property => Property.Currency)
-                                                     .ThenInclude(Property => Property.FirstExchangeValues)
+                                                     .ThenInclude(property => property!.Currency)
+                                                     .ThenInclude(property => property!.FirstExchangeValues)
                                                      .Include(property => property.ToAccount)
-                                                     .ThenInclude(property => property.Currency)
+                                                     .ThenInclude(property => property!.Currency)
                                                      .AsNoTracking()
                                                      .FirstOrDefaultAsync(transactionItem => transactionItem.Id == id);
 
@@ -85,14 +86,6 @@ public class TransactionRepository : ITransactionRepository
         _dbContext.Entry(transaction).Reference<CurrencyAccount>(c => c.FromAccount).Load();
         _dbContext.Entry(transaction).Reference<CurrencyAccount>(c => c.ToAccount).Load();
     }
-        
-    // public Transaction UpdateTransaction(Transaction transaction, Transaction updatedTransaction)
-    // {
-    //     // _dbContext.Entry(transaction).Property(p => p.FromAccount).IsModified = true;
-    //     // transaction.FromAccount = updatedTransaction.FromAccount;
-    //     
-    //     return transaction;
-    // }  
     
     public Transaction UpdateTransactionStatusOfTransaction(Transaction transaction, TransactionStatusOptions transactionStatus)
     {

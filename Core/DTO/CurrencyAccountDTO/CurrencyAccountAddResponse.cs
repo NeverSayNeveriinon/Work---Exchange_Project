@@ -5,7 +5,7 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountAddResponse : CurrencyAccountResponse
 {
-    public Guid TransactionId { get; set; }
+    public Guid TransactionId { get; init; }
 }
 
 

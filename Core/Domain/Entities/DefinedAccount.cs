@@ -9,14 +9,14 @@ namespace Core.Domain.Entities;
 public class DefinedAccount
 {
     [Key] 
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     
     [ForeignKey("UserProfile")]
-    public Guid UserProfileId { get; set; }
+    public Guid UserProfileId { get; init; }
     
     [ForeignKey("CurrencyAccount")]
     [Column(TypeName="varchar(10)")]
-    public string CurrencyAccountNumber { get; set; }
+    public string CurrencyAccountNumber { get; init; }
     
     public UserProfile? UserProfile { get; } = null!;
     public CurrencyAccount? CurrencyAccount { get; } = null!;

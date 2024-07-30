@@ -6,21 +6,21 @@ namespace Core.DTO.TransactionDTO;
 [Serializable]
 public class TransactionResponse
 {
-    public Guid Id { get; set; }
-    public decimal Amount { get; set; }
-    public string FromAccountNumber { get; set; }
-    public string? ToAccountNumber { get; set; }
-    public decimal FromAccountChangeAmount { get; set; }
-    public decimal ToAccountChangeAmount { get; set; } 
+    public Guid Id { get; init; }
+    public decimal Amount { get; init; }
+    public string FromAccountNumber { get; init; }
+    public string? ToAccountNumber { get; init; }
+    public decimal FromAccountChangeAmount { get; init; }
+    public decimal ToAccountChangeAmount { get; init; } 
 
-    public DateTime DateTime { get; set; }
-    public string? RealTimeExchangeValue { get; set; }
-    public TransactionStatusOptions TransactionStatus { get; set; }
-    public TransactionTypeOptions TransactionType { get; set; }
-    public decimal CRate { get; set; }
-    // public decimal? FromAccountRemainingBalance { get; set; }
-    public string? FromCurrencyType { get; set; }
-    public string? ToCurrencyType { get; set; }
+    public DateTime DateTime { get; init; }
+    public string? RealTimeExchangeValue { get; init; }
+    public TransactionStatusOptions TransactionStatus { get; init; }
+    public TransactionTypeOptions TransactionType { get; init; }
+    public decimal CRate { get; init; }
+    // public decimal? FromAccountRemainingBalance { get; init; }
+    public string? FromCurrencyType { get; init; }
+    public string? ToCurrencyType { get; init; }
 }
 
 

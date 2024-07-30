@@ -8,11 +8,11 @@ namespace Core.Domain.Entities;
 public class Transaction
 {
     [Key]
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
     [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
-    public decimal Amount { get; set; }
+    public decimal Amount { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
     [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
@@ -22,9 +22,9 @@ public class Transaction
     [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
     public decimal ToAccountChangeAmount { get; set; } 
     
-    public DateTime DateTime { get; set; }
+    public DateTime DateTime { get; init; }
     public TransactionStatusOptions TransactionStatus { get; set; }
-    public TransactionTypeOptions TransactionType { get; set; }    
+    public TransactionTypeOptions TransactionType { get; init; }    
     
     [Column(TypeName="decimal(6,5)")]
     [DecimalRange("0","0.5")]
@@ -32,11 +32,11 @@ public class Transaction
     
     [ForeignKey("FromAccount")]
     [Column(TypeName="varchar(10)")]
-    public string FromAccountNumber { get; set; }
+    public string FromAccountNumber { get; init; }
     
     [ForeignKey("ToAccount")]
     [Column(TypeName="varchar(10)")]
-    public string? ToAccountNumber { get; set; }
+    public string? ToAccountNumber { get; init; }
     
     public virtual CurrencyAccount? FromAccount { get; set; } = null!;
     public virtual CurrencyAccount? ToAccount { get; set; } = null!;

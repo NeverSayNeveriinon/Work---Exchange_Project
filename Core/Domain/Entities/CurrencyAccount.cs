@@ -10,7 +10,7 @@ public class CurrencyAccount
     [Key]
     [Length(10,10)]  
     [Column(TypeName="varchar(10)")]
-    public string Number { get; set; }
+    public string Number { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
     [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
@@ -19,7 +19,7 @@ public class CurrencyAccount
     [Column(TypeName="decimal(20,9)")]
     public decimal StashBalance { get; set; }
 
-    public DateTime DateTimeOfOpen { get; set; }
+    public DateTime DateTimeOfOpen { get; init; }
     
     // Relations //
     #region Relations

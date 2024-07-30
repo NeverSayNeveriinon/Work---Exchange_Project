@@ -4,15 +4,15 @@ namespace Core.DTO.ExchangeValueDTO;
 
 public class ExchangeValueResponse
 {
-    public int Id { get; set; }
+    public int Id { get; init; }
 
-    public int FirstCurrencyId { get; set; }
-    public int SecondCurrencyId { get; set; }
+    public int FirstCurrencyId { get; init; }
+    public int SecondCurrencyId { get; init; }
     
-    public string? FirstCurrencyType { get; set; }
-    public string? SecondCurrencyType { get; set; }
+    public string? FirstCurrencyType { get; init; }
+    public string? SecondCurrencyType { get; init; }
     
-    public decimal UnitOfFirstValue { get; set; }
+    public decimal UnitOfFirstValue { get; init; }
 }
 
 public static partial class ExchangeValueExtensions

@@ -9,17 +9,17 @@ namespace Core.Domain.Entities;
 public class ExchangeValue
 {
     [Key]
-    public int Id { get; set; }
+    public int Id { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
     [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
     public decimal UnitOfFirstValue { get; set; }
     
     [ForeignKey("FirstCurrency")]
-    public int FirstCurrencyId { get; set; }
+    public int FirstCurrencyId { get; init; }
     
     [ForeignKey("SecondCurrency")]
-    public int SecondCurrencyId { get; set; }
+    public int SecondCurrencyId { get; init; }
     
     public Currency FirstCurrency { get; set; } = null!;
     public Currency SecondCurrency { get; set; } = null!;

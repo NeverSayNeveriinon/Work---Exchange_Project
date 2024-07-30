@@ -9,11 +9,11 @@ namespace Core.Domain.Entities;
 public class CommissionRate
 {
     [Key]
-    public int Id { get; set; }
+    public int Id { get; init; }
 
     [Column(TypeName="decimal(20,9)")]
     [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
-    public decimal MaxUSDRange { get; set; }
+    public decimal MaxUSDRange { get; init; }
     
     [DecimalRange("0","0.5")]
     [Column(TypeName="decimal(6,5)")]

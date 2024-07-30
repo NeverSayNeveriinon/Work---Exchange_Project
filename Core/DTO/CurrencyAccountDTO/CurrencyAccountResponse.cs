@@ -5,12 +5,12 @@ namespace Core.DTO.CurrencyAccountDTO;
 
 public class CurrencyAccountResponse
 {
-    public string Number { get; set; }
-    public Guid OwnerID { get; set; }
-    public string? FullName { get; set; }
-    public decimal Balance { get; set; }
-    public string? CurrencyType { get; set; }
-    public DateTime DateTimeOfOpen { get; set; }
+    public string Number { get; init; }
+    public Guid OwnerID { get; init; }
+    public string? FullName { get; init; }
+    public decimal Balance { get; init; }
+    public string? CurrencyType { get; init; }
+    public DateTime DateTimeOfOpen { get; init; }
 }
 
 

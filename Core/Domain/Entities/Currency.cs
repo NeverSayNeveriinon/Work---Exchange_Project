@@ -9,10 +9,10 @@ namespace Core.Domain.Entities;
 public class Currency
 {
     [Key]
-    public int Id { get; set; }
+    public int Id { get; init; }
     
     [Column(TypeName="varchar(3)")]
-    public string CurrencyType  { get; set; }
+    public string CurrencyType  { get; init; }
     
     
     // Relations //

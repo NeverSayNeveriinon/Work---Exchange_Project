@@ -4,9 +4,9 @@ namespace Core.DTO.CommissionRateDTO;
 
 public class CommissionRateResponse
 {
-    public int Id { get; set; }
-    public decimal MaxUSDRange { get; set; }
-    public decimal CRate { get; set; }
+    public int Id { get; init; }
+    public decimal MaxUSDRange { get; init; }
+    public decimal CRate { get; init; }
 }
 
 public static partial class CommissionRateExtensions

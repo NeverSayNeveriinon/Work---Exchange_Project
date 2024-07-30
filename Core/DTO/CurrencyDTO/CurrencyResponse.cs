@@ -5,8 +5,8 @@ namespace Core.DTO.CurrencyDTO;
 
 public class CurrencyResponse
 {
-    public int Id { get; set; }
-    public string CurrencyType  { get; set; }
+    public int Id { get; init; }
+    public string CurrencyType  { get; init; }
 }
 
 public static partial class CurrencyExtensions

@@ -41,29 +41,7 @@ public class Program
         // });
 
         // Services IOC        
-        builder.Services.AddTransient<ITokenService, TokenService>();
-        builder.Services.AddTransient<INotificationService, EmailService>();
-        
-        builder.Services.AddScoped<IAccountService, AccountService>();
-        builder.Services.AddScoped<IAccountRepository, AccountRepository>();
-        
-        builder.Services.AddScoped<ICurrencyAccountRepository, CurrencyAccountRepository>();
-        builder.Services.AddScoped<ICurrencyAccountService, CurrencyAccountService>();
-        
-        builder.Services.AddScoped<ICurrencyRepository, CurrencyRepository>();
-        builder.Services.AddScoped<ICurrencyService, CurrencyService>();
-        
-        builder.Services.AddScoped<ICommissionRateRepository, CommissionRateRepository>();
-        builder.Services.AddScoped<ICommissionRateService, CommissionRateService>();
-
-        builder.Services.AddScoped<IExchangeValueRepository, ExchangeValueRepository>();
-        builder.Services.AddScoped<IExchangeValueService, ExchangeValueService>();
-        
-        builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
-        builder.Services.AddLazyScoped<ITransactionService, TransactionService>();
-
-        builder.Services.AddScoped<IValidator, Validator>();
-        
+        builder.Services.RegisterServices();
         
         // DataBase IOC
         var DBconnectionString = builder.Configuration.GetConnectionString("DefaultConnection");

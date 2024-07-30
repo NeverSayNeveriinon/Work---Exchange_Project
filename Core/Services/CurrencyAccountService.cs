@@ -4,6 +4,7 @@ using Core.Domain.IdentityEntities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
+using Core.DTO.Money;
 using Core.DTO.TransactionDTO;
 using Core.Helpers;
 using Core.ServiceContracts;

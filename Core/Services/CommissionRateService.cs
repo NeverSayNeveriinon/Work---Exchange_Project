@@ -3,6 +3,7 @@ using Core.Domain.RepositoryContracts;
 using Core.DTO;
 using Core.DTO.CommissionRateDTO;
 using Core.DTO.CurrencyDTO;
+using Core.DTO.Money;
 using Core.Enums;
 using Core.Helpers;
 using Core.ServiceContracts;

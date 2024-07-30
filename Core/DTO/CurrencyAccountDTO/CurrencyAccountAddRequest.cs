@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
+using Core.DTO.Money;
 using Core.Enums;
 using Core.Helpers;
 

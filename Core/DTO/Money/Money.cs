@@ -1,7 +1,7 @@
 ﻿using Core.Domain.Entities;
 using Core.Enums;
 
-namespace Core.DTO;
+namespace Core.DTO.Money;
 
 public class Money
 {

@@ -2,7 +2,7 @@
 using Core.Enums;
 using Core.Helpers;
 
-namespace Core.DTO;
+namespace Core.DTO.Money;
 
 public class MoneyOpenAccountRequest
 {

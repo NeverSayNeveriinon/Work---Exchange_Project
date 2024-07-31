@@ -68,11 +68,17 @@ public class ExchangeValueController : ControllerBase
             return new BadRequestObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext,ModelState));
         }
         
-        var (isValidExchangeValue, message, exchangeValueResponse) = await _exchangeValueService.AddExchangeValue(exchangeValueAddRequest);
-        if (!isValidExchangeValue)
-            return Problem(message, statusCode:400);
+        var res = await _exchangeValueService.AddExchangeValue(exchangeValueAddRequest);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        return CreatedAtAction(nameof(GetExchangeValue), new {exchangeValueID = exchangeValueResponse!.Id}, new { exchangeValueResponse.Id });
+        return CreatedAtAction(nameof(GetExchangeValueByID), new {exchangeValueID = res.Value!.Id}, new { res.Value.Id });
     }
 
     
@@ -91,13 +97,19 @@ public class ExchangeValueController : ControllerBase
     /// <response code="404">A ExchangeValue with Given ID has not been found</response>
     [HttpGet("{exchangeValueID:int}")]
     // GET: api/ExchangeValue/{exchangeValueID}
-    public async Task<ActionResult<ExchangeValueResponse>> GetExchangeValue(int exchangeValueID)
+    public async Task<ActionResult<ExchangeValueResponse>> GetExchangeValueByID(int exchangeValueID)
     {
-        var exchangeValueResponse = await _exchangeValueService.GetExchangeValueByID(exchangeValueID);
-        if (exchangeValueResponse is null)
-            return NotFound("!!An Exchange Value With This ID Has Not Been Found!!");
+        var res = await _exchangeValueService.GetExchangeValueByID(exchangeValueID);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        return Ok(exchangeValueResponse);
+        return Ok(res.Value);
     }
     
     
@@ -118,13 +130,17 @@ public class ExchangeValueController : ControllerBase
     // /// <response code="400">The ID in Url doesn't match with the ID in Body</response>
     [HttpPut("{exchangeValueID:int}")]
     // Put: api/ExchangeValue/{exchangeValueID}
-    public async Task<IActionResult> UpdateExchangeValue(ExchangeValueUpdateRequest exchangeValueUpdateRequest, int exchangeValueID)
+    public async Task<IActionResult> UpdateExchangeValueByID(ExchangeValueUpdateRequest exchangeValueUpdateRequest, int exchangeValueID)
     {
-        var (isValid, message, exchangeValueResponse) = await _exchangeValueService.UpdateExchangeValueByID(exchangeValueUpdateRequest, exchangeValueID);
-        if (!isValid && message is null)
-            return NotFound("!!An Exchange Value With This ID Has Not Been Found!!");
-        if (!isValid)
-            return BadRequest(message);
+        var res = await _exchangeValueService.UpdateExchangeValueByID(exchangeValueUpdateRequest, exchangeValueID);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
         return NoContent();
     }
@@ -144,15 +160,18 @@ public class ExchangeValueController : ControllerBase
     /// <response code="404">A ExchangeValue with Given ID has not been found</response>
     [HttpDelete("{exchangeValueID:int}")]
     // Delete: api/ExchangeValue/{exchangeValueID}
-    public async Task<IActionResult> DeleteExchangeValue(int exchangeValueID)
+    public async Task<IActionResult> DeleteExchangeValueByID(int exchangeValueID)
     {
-        var (isValid, message) = await _exchangeValueService.DeleteExchangeValueByID(exchangeValueID);
-        if (!isValid && message is null)
-            return NotFound("!!An Exchange Value With This ID Has Not Been Found!!");
+        var res = await _exchangeValueService.DeleteExchangeValueByID(exchangeValueID);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        if (!isValid)
-            return BadRequest(message);
-        
-        return NoContent();
+        return Content(res.FirstSuccessMessage()!);
     }
 }

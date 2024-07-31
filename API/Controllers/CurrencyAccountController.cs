@@ -1,4 +1,5 @@
-﻿using Core.DTO;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
 using Core.DTO.TransactionDTO;
 using Core.Helpers;
@@ -38,8 +39,17 @@ public class CurrencyAccountController : ControllerBase
     // GET: api/CurrencyAccount
     public async Task<ActionResult<IEnumerable<CurrencyAccountResponse>>> GetAllCurrencyAccounts()
     {
-        var currencyAccountsList = await _currencyAccountService.GetAllCurrencyAccounts(User);
-        return Ok(currencyAccountsList);
+        var res = await _currencyAccountService.GetAllCurrencyAccounts(User);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
+        
+        return Ok(res.Value);
     }
     
      
@@ -70,12 +80,18 @@ public class CurrencyAccountController : ControllerBase
             return new BadRequestObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext,ModelState));
         }
         
-        var (isValidCurrencyAccount, message, currencyAccountResponse) = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
-        if (!isValidCurrencyAccount)
-            return Problem(message, statusCode:400);
+        var res = await _currencyAccountService.AddCurrencyAccount(currencyAccountAdd, User);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        return CreatedAtAction(nameof(GetCurrencyAccountByNumber), new {currencyAccountNumber = currencyAccountResponse!.Number}, 
-                                                                   new { currencyAccountResponse.Number , currencyAccountResponse.TransactionId});
+        return CreatedAtAction(nameof(GetCurrencyAccountByNumber), new {currencyAccountNumber = res.Value.Number}, 
+                                                                   new { res.Value.Number , res.Value.TransactionId});
     }    
     
     
@@ -93,20 +109,23 @@ public class CurrencyAccountController : ControllerBase
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
     [HttpGet("{currencyAccountNumber}")]
     // GET: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccountByNumber(string currencyAccountNumber)
+    public async Task<ActionResult<CurrencyAccountResponse>> GetCurrencyAccountByNumber([Length(10,10)]string currencyAccountNumber)
     {
-        var (isValid, message, currencyAccountResponse) = await _currencyAccountService.GetCurrencyAccountByNumber(currencyAccountNumber, User);
+        var res = await _currencyAccountService.GetCurrencyAccountByNumber(currencyAccountNumber, User);
         
-        if (!isValid && message is null)
-            return NotFound("!!A Currency Account With This Number Has Not Been Found!!");
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        if (!isValid)
-            return Problem(message, statusCode:400);
-        
-        return Ok(currencyAccountResponse);
+        return Ok(res.Value);
     }
-    
-    
+
+
     /// <summary>
     /// Delete an Existing CurrencyAccount Based on Given Number
     /// </summary>
@@ -121,15 +140,19 @@ public class CurrencyAccountController : ControllerBase
     /// <response code="404">A CurrencyAccount with Given Number has not been found</response>
     [HttpDelete("{currencyAccountNumber}")]
     // Delete: api/CurrencyAccount/{currencyAccountNumber}
-    public async Task<IActionResult> DeleteCurrencyAccountByNumber(string currencyAccountNumber)
+    public async Task<IActionResult> DeleteCurrencyAccountByNumber([Length(10,10)]string currencyAccountNumber)
     {
-        var (isValid, isFound, message) = await _currencyAccountService.DeleteCurrencyAccountByNumber(currencyAccountNumber, User);
+        var res = await _currencyAccountService.DeleteCurrencyAccountByNumber(currencyAccountNumber, User);
+
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode: 400);
+        }
         
-        if (!isValid && !isFound)
-            return NotFound("!!A Currency Account With This Number Has Not Been Found!!");
-        if (!isValid)
-            return Problem(message, statusCode:400);
-        
-        return NoContent();
+        return Content(res.FirstSuccessMessage()!);
     }
 }

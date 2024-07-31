@@ -2,21 +2,22 @@
 using Core.Domain.Entities;
 using Core.DTO;
 using Core.DTO.CurrencyAccountDTO;
+using FluentResults;
 
 namespace Core.ServiceContracts;
 
 public interface ICurrencyAccountService
 {
-    Task<(bool isValid, string? message, CurrencyAccountAddResponse? obj)> AddCurrencyAccount(CurrencyAccountAddRequest currencyAccountAddRequest, ClaimsPrincipal userClaims);
-    Task<List<CurrencyAccountResponse>> GetAllCurrencyAccounts(ClaimsPrincipal userClaims);
+    Task<Result<CurrencyAccountAddResponse>> AddCurrencyAccount(CurrencyAccountAddRequest currencyAccountAddRequest, ClaimsPrincipal userClaims);
+    Task<Result<List<CurrencyAccountResponse>>> GetAllCurrencyAccounts(ClaimsPrincipal userClaims);
     Task<List<CurrencyAccountResponse>> GetAllCurrencyAccountsInternal();
     
-    Task<(bool isValid, string? message, CurrencyAccountResponse? obj)> GetCurrencyAccountByNumber(string number, ClaimsPrincipal userClaims);
-    Task<(bool isValid, string? message, CurrencyAccountResponse? obj)> GetCurrencyAccountByNumberInternal(string number);
-    Task<(bool isValid, string? message, CurrencyAccount? obj)> GetCurrencyAccountByNumberWithNavigationInternal(string number);
+    Task<Result<CurrencyAccountResponse>> GetCurrencyAccountByNumber(string number, ClaimsPrincipal userClaims);
+    Task<Result<CurrencyAccountResponse>> GetCurrencyAccountByNumberInternal(string number);
+    Task<Result<CurrencyAccount>> GetCurrencyAccountByNumberWithNavigationInternal(string number);
     
-    Task<(bool isValid, bool isFound, string? message)> DeleteCurrencyAccountByNumber(string number, ClaimsPrincipal userClaims);
-    Task<(bool isValid, bool isFound, string? message)> DeleteCurrencyAccountByNumberInternal(string number);
+    Task<Result> DeleteCurrencyAccountByNumber(string number, ClaimsPrincipal userClaims);
+    Task<Result> DeleteCurrencyAccountByNumberInternal(string number);
     
     CurrencyAccountResponse? UpdateBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc);
     CurrencyAccountResponse? UpdateStashBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal, decimal, decimal> calculationFunc);

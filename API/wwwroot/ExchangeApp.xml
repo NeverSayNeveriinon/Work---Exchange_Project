@@ -235,7 +235,7 @@
             <response code="201">The New ExchangeValue is successfully added to ExchangeValues List</response>
             <response code="400">There is sth wrong in Validation of properties</response>
         </member>
-        <member name="M:API.Controllers.ExchangeValueController.GetExchangeValue(System.Int32)">
+        <member name="M:API.Controllers.ExchangeValueController.GetExchangeValueByID(System.Int32)">
             <summary>
             Get an Existing ExchangeValue Based On Given ID
             </summary>
@@ -249,7 +249,7 @@
             <response code="200">The ExchangeValue is successfully found and returned</response>
             <response code="404">A ExchangeValue with Given ID has not been found</response>
         </member>
-        <member name="M:API.Controllers.ExchangeValueController.UpdateExchangeValue(Core.DTO.ExchangeValueDTO.ExchangeValueUpdateRequest,System.Int32)">
+        <member name="M:API.Controllers.ExchangeValueController.UpdateExchangeValueByID(Core.DTO.ExchangeValueDTO.ExchangeValueUpdateRequest,System.Int32)">
             <summary>
             Update an Existing ExchangeValue Based on Given ID and New ExchangeValue Object
             </summary>
@@ -265,7 +265,7 @@
             <response code="204">The ExchangeValue is successfully found and has been updated with New ExchangeValue</response>
             <response code="404">A ExchangeValue with Given ID has not been found</response>
         </member>
-        <member name="M:API.Controllers.ExchangeValueController.DeleteExchangeValue(System.Int32)">
+        <member name="M:API.Controllers.ExchangeValueController.DeleteExchangeValueByID(System.Int32)">
             <summary>
             Delete an Existing ExchangeValue Based on Given ID
             </summary>

@@ -1,12 +1,13 @@
 ﻿using Core.DTO.CurrencyDTO;
+using FluentResults;
 
 namespace Core.ServiceContracts;
 
 public interface ICurrencyService
 {
-    Task<(bool isValid, string? message, CurrencyResponse? obj)> AddCurrency(CurrencyRequest currencyRequest);
+    Task<Result<CurrencyResponse>> AddCurrency(CurrencyRequest currencyRequest);
     Task<List<CurrencyResponse>> GetAllCurrencies();
-    Task<CurrencyResponse?> GetCurrencyByID(int id);
-    Task<CurrencyResponse?> GetCurrencyByCurrencyType(string currencyType);
-    Task<(bool, string? message)> DeleteCurrencyByID(int id);
+    Task<Result<CurrencyResponse>> GetCurrencyByID(int id);
+    Task<Result<CurrencyResponse>> GetCurrencyByCurrencyType(string currencyType);
+    Task<Result> DeleteCurrencyByID(int id);
 }

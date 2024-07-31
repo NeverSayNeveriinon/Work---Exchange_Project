@@ -1,4 +1,5 @@
-﻿using Core.DTO.CurrencyDTO;
+﻿using System.ComponentModel.DataAnnotations;
+using Core.DTO.CurrencyDTO;
 using Core.Helpers;
 using Core.ServiceContracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -57,12 +58,11 @@ public class CurrencyController : ControllerBase
     // Post: api/Currency
     public async Task<IActionResult> AddCurrency(CurrencyRequest currencyRequest)
     {
-        // todo: convert to well-structured Error Handling
-        var (isValid, message, currencyResponse) = await _currencyService.AddCurrency(currencyRequest);
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _currencyService.AddCurrency(currencyRequest);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
         
-        return CreatedAtAction(nameof(GetCurrencyByID), new {currencyID = currencyResponse!.Id}, new { currencyResponse.Id });
+        return CreatedAtAction(nameof(GetCurrencyByID), new {currencyID = res.Value.Id}, new { res.Value.Id });
     }
 
     
@@ -83,11 +83,17 @@ public class CurrencyController : ControllerBase
     // GET: api/Currency/{currencyID}
     public async Task<ActionResult<CurrencyResponse>> GetCurrencyByID(int currencyID)
     {
-        var currencyResponse = await _currencyService.GetCurrencyByID(currencyID);
-        if (currencyResponse is null)
-            return NotFound("!!A Currency With This ID Has Not Been Found!!");
+        var res = await _currencyService.GetCurrencyByID(currencyID);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode: 400);
+        }
         
-        return Ok(currencyResponse);
+        return Ok(res.Value);
     }    
     
     /// <summary>
@@ -104,13 +110,19 @@ public class CurrencyController : ControllerBase
     /// <response code="404">A Currency with Given currencyType has not been found</response>
     [HttpGet("{currencyType}")]
     // GET: api/Currency/{currencyType}
-    public async Task<ActionResult<CurrencyResponse>> GetCurrencyByCurrencyType(string currencyType)
+    public async Task<ActionResult<CurrencyResponse>> GetCurrencyByCurrencyType([RegularExpression("^[A-Z]{3}$")]string currencyType)
     {
-        var currencyResponse = await _currencyService.GetCurrencyByCurrencyType(currencyType);
-        if (currencyResponse is null)
-            return NotFound("!!A Currency With This currencyType Has Not Been Found!!");
+        var res = await _currencyService.GetCurrencyByCurrencyType(currencyType);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode: 400);
+        }
         
-        return Ok(currencyResponse);
+        return Ok(res.Value);
     }
     
     
@@ -130,13 +142,16 @@ public class CurrencyController : ControllerBase
     // Delete: api/Currency/{currencyID}
     public async Task<IActionResult> DeleteCurrencyByID(int currencyID)
     {
-        var (isValid, message) = await _currencyService.DeleteCurrencyByID(currencyID);
-        if (!isValid && message is null)
-            return NotFound("!!A Currency With This ID Has Not Been Found!!");
+        var res = await _currencyService.DeleteCurrencyByID(currencyID);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode: 400);
+        }
         
-        if (!isValid)
-            return BadRequest(message);
-        
-        return NoContent();
+        return Content(res.FirstSuccessMessage()!);
     }
 }

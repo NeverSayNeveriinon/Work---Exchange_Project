@@ -3,6 +3,8 @@ using Core.Domain.RepositoryContracts;
 using Core.DTO.CurrencyDTO;
 using Core.Enums;
 using Core.ServiceContracts;
+using FluentResults;
+using static Core.Helpers.FluentResultsExtensions;
 
 namespace Core.Services;
 
@@ -15,20 +17,20 @@ public class CurrencyService : ICurrencyService
         _currencyRepository = currencyRepository;
     }
 
-    public async Task<(bool isValid, string? message, CurrencyResponse? obj)> AddCurrency(CurrencyRequest currencyRequest)
+    public async Task<Result<CurrencyResponse>> AddCurrency(CurrencyRequest currencyRequest)
     {
         ArgumentNullException.ThrowIfNull(currencyRequest,$"The '{nameof(currencyRequest)}' object parameter is Null");
         
         var currency = currencyRequest.ToCurrency();
         var currencyResponseByType = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currency.CurrencyType);
         if (currencyResponseByType is not null) // if currencyResponseByType has sth, means this currencytype already exists
-            return (false, "There is Already a Currency Object With This 'Currency Type'", null);
+            return Result.Fail("There is Already a Currency Object With This 'Currency Type'");
         
         var currencyReturned = await _currencyRepository.AddCurrencyAsync(currency);
         var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return (false, "The Request Has Not Been Done Completely, Try Again", null);
+        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
-        return (true, null, currencyReturned.ToCurrencyResponse());
+        return Result.Ok(currencyReturned.ToCurrencyResponse());
     }   
 
     public async Task<List<CurrencyResponse>> GetAllCurrencies()
@@ -39,33 +41,33 @@ public class CurrencyService : ICurrencyService
         return currencyResponses;
     }
 
-    public async Task<CurrencyResponse?> GetCurrencyByID(int id)
+    public async Task<Result<CurrencyResponse>> GetCurrencyByID(int id)
     {
         var currency = await _currencyRepository.GetCurrencyByIDAsync(id);
-        if (currency == null) return null; // if 'id' doesn't exist in 'currencies list' 
+        if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'currencies list' 
         
-        return currency.ToCurrencyResponse();
+        return Result.Ok(currency.ToCurrencyResponse());
     }
     
-    public async Task<CurrencyResponse?> GetCurrencyByCurrencyType(string currencyType)
+    public async Task<Result<CurrencyResponse>> GetCurrencyByCurrencyType(string currencyType)
     {
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' parameter is Null");
         
         var currency = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currencyType);
-        if (currency == null) return null; // if 'currencyType' doesn't exist in 'currencies list' 
+        if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This currencyType Has Not Been Found!!")); // if 'currencyType' doesn't exist in 'currencies list' 
 
-        return currency.ToCurrencyResponse();
+        return Result.Ok(currency.ToCurrencyResponse());
     }   
     
-    public async Task<(bool, string? message)> DeleteCurrencyByID(int id)
+    public async Task<Result> DeleteCurrencyByID(int id)
     {
         var currency = await _currencyRepository.GetCurrencyByIDAsync(id);
-        if (currency == null) return (false, null); // if 'id' doesn't exist in 'currencies list' 
+        if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'currencies list' 
     
         _currencyRepository.DeleteCurrency(currency);
         var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return (false, "The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
-        return (true, null);
+        return Result.Ok().WithSuccess("The Deletion Has Been Successful");
     }
 }

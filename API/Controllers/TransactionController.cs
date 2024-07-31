@@ -3,6 +3,7 @@ using Core.DTO.TransactionDTO;
 using Core.Enums;
 using Core.Helpers;
 using Core.ServiceContracts;
+using FluentResults.Extensions.AspNetCore;
 using IdempotentAPI.Filters;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -39,8 +40,17 @@ public class TransactionController : ControllerBase
     // GET: api/Transaction
     public async Task<ActionResult<IEnumerable<TransactionResponse>>> GetAllTransactions()
     {
-        var transactionsList = await _transactionService.GetAllTransactions(User);
-        return Ok(transactionsList);
+        var res = await _transactionService.GetAllTransactions(User);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
+        
+        return Ok(res.Value);
     }
     
      
@@ -66,11 +76,17 @@ public class TransactionController : ControllerBase
         if (string.IsNullOrEmpty(IdempotencyKey))
             return Problem("You Must Set 'IdempotencyKey' in Header", statusCode:400);
         
-        var (isValid, message, transactionResponse) = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _transactionService.AddTransferTransaction(transactionAddRequest, User);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        return Ok(transactionResponse);
+        return Ok(res.Value);
         // return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
         // return Ok("Please Confirm The Transaction");
         // return RedirectToRoute(nameof(ConfirmTransaction), new { transactionId = transactionResponse.Id, isConfirmed = true });
@@ -105,11 +121,17 @@ public class TransactionController : ControllerBase
             return new BadRequestObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext,ModelState));
         }
         
-        var (isValidTransaction, message, transactionResponse) = await _transactionService.AddDepositTransaction(transactionAddRequest, User);
-        if (!isValidTransaction)
-            return Problem(message, statusCode:400);
+        var res = await _transactionService.AddDepositTransaction(transactionAddRequest, User);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        return Ok(transactionResponse);
+        return Ok(res.Value);
         // return Ok("Please Confirm The Transaction");
         // return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse.Id}, new { transactionResponse.Id });
         // return RedirectToAction(nameof(ConfirmTransaction), new { transactionId = transactionResponse.Id, isConfirmed = true });
@@ -136,13 +158,17 @@ public class TransactionController : ControllerBase
     // Post: api/Transaction/ChangeStatus
     public async Task<IActionResult> ChangeTransactionStatus(ConfirmTransactionRequest confirmTransactionRequest)
     {
-        var (isValid, message, transactionResponse) = await _transactionService.UpdateTransactionStatusOfTransaction(confirmTransactionRequest, User, DateTime.Now);
-        if (!isValid && message is null)
-            return NotFound("!!A Transaction With This ID Has Not Been Found!!");
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _transactionService.UpdateTransactionStatusOfTransaction(confirmTransactionRequest, User, DateTime.Now);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        }
         
-        return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = transactionResponse!.Id}, new { transactionResponse.Id });
+        return CreatedAtAction(nameof(GetTransactionByID), new {transactionID = res.Value.Id}, new { res.Value.Id });
     }
     
     
@@ -162,13 +188,17 @@ public class TransactionController : ControllerBase
     // GET: api/Transaction/{transactionID}
     public async Task<ActionResult<TransactionResponse>> GetTransactionByID(Guid transactionID)
     {
-        var (isValid, message, transactionResponse) = await _transactionService.GetTransactionByID(transactionID, User);
-        if (!isValid && message is null)
-            return NotFound("!!A Transaction With This ID Has Not Been Found!!");
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _transactionService.GetTransactionByID(transactionID, User);
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+
+            return Problem(error?.Message, statusCode:400);
+        };
         
-        return Ok(transactionResponse);
+        return Ok(res.Value);
     }
     
     

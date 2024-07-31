@@ -1,6 +1,9 @@
-﻿using Core.DTO.CommissionRateDTO;
+﻿using API.Helpers;
+using Core.DTO.CommissionRateDTO;
 using Core.Helpers;
 using Core.ServiceContracts;
+using FluentResults;
+using FluentResults.Extensions.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,13 +61,13 @@ public class CommissionRateController : ControllerBase
     // Post: api/CommissionRate
     public async Task<IActionResult> AddCommissionRate(CommissionRateRequest commissionRateRequest)
     {
-        var (isValid, message, commissionRateResponse) = await _commissionRateService.AddCommissionRate(commissionRateRequest);
+        var res = await _commissionRateService.AddCommissionRate(commissionRateRequest);
         
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
 
-        return CreatedAtAction(nameof(GetCommissionRateByMaxRange), new { maxRange = commissionRateResponse.MaxUSDRange }, 
-                                                                    new { commissionRateResponse.Id , commissionRateResponse.MaxUSDRange });
+        return CreatedAtAction(nameof(GetCommissionRateByMaxRange), new { maxRange = res.Value.MaxUSDRange }, 
+                                                                    new { res.Value.Id , res.Value.MaxUSDRange });
     }
 
     
@@ -83,13 +86,17 @@ public class CommissionRateController : ControllerBase
     [HttpGet("{maxRange:decimal}")]
     // GET: api/CommissionRate/{commissionRateID}
     public async Task<ActionResult<CommissionRateResponse>> GetCommissionRateByMaxRange(decimal maxRange)
+    {
+        var res = await _commissionRateService.GetCommissionRateByMaxRange(maxRange);
+        if (res.IsFailed)
         {
-        var commissionRateResponse = await _commissionRateService.GetCommissionRateByMaxRange(maxRange);
-            
-        if (commissionRateResponse is null)
-            return NotFound("!!A Commission Rate With This maxRange Has Not Been Found!!");
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
 
-        return Ok(commissionRateResponse);
+            return Problem(error?.Message, statusCode:400);
+        }
+        return Ok(res.Value);
     }
 
     /// <summary>
@@ -110,14 +117,17 @@ public class CommissionRateController : ControllerBase
     // Patch: api/CommissionRate
     public async Task<IActionResult> UpdateCRateByMaxRange(CommissionRateRequest commissionRateRequest)
     {
-        var (isValid, message, _) = await _commissionRateService.UpdateCRateByMaxRange(commissionRateRequest);
+        var res = await _commissionRateService.UpdateCRateByMaxRange(commissionRateRequest);
         
-        if (!isValid && message is null)
-            return NotFound("!!A Commission Rate With This MaxUSDRange Has Not Been Found!!");
-        
-        if (!isValid)
-            return Problem(message, statusCode:400);
-        
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+            
+            return Problem(error?.Message, statusCode:400);
+        }
+           
         return NoContent();
     }
     
@@ -137,14 +147,16 @@ public class CommissionRateController : ControllerBase
     // Delete: api/CommissionRate/{commissionRateID}
     public async Task<IActionResult> DeleteCommissionRateByMaxRange(decimal maxRange)
     {
-        var (isValid, message) = await _commissionRateService.DeleteCommissionRateByMaxRange(maxRange);
+        var res = await _commissionRateService.DeleteCommissionRateByMaxRange(maxRange);
         
-        if (!isValid && message is null)
-            return NotFound("!!A Commission Rate With This maxRange Has Not Been Found!!");
-
-        if (!isValid)
-            return Problem(message, statusCode:400);
-        
-        return NoContent();
+        if (res.IsFailed)
+        {
+            var error = res.Errors.FirstOrDefault();
+            if (error.IsStatusCode(nameof(StatusCodes.Status404NotFound)))
+                return Problem(error?.Message, statusCode:404);
+            
+            return Problem(error?.Message, statusCode:400);
+        }
+        return Content(res.FirstSuccessMessage()!);
     }
 }

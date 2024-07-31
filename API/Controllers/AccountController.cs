@@ -49,12 +49,11 @@ public class AccountController : ControllerBase
         if (userRegister.Role == Constants.AdminRole && !User.IsInRole(Constants.AdminRole))
             return Problem("You Are Not Allowed to Create an 'Admin' account", statusCode:403);
         
-        var (isValid, message) = await _accountService.Register(userRegister);
+        var res = await _accountService.Register(userRegister);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
         
-        if (!isValid)
-            return Problem(message, statusCode:400);
-        
-        return Ok(message);
+        return Ok(res.FirstSuccessMessage());
     }
     
         
@@ -68,12 +67,11 @@ public class AccountController : ControllerBase
         if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.AdminRole))
             return Unauthorized("You Have Already Logged-In");
         
-        var (isValid, message, obj) = await _accountService.Login(userLogin);
-
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _accountService.Login(userLogin);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
         
-        return Ok(obj);
+        return Ok(res.Value);
     }
     
     
@@ -93,12 +91,11 @@ public class AccountController : ControllerBase
         if (string.IsNullOrEmpty(token))
             return Problem("Token Can't Be Blank", statusCode:400);
         
-        var (isValid, message) = await _accountService.ConfirmEmail(userId, token);
-
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _accountService.ConfirmEmail(userId, token);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
         
-        return Ok("Email Has Successfully Confirmed");
+        return Ok(res.FirstSuccessMessage());
     } 
     
     // Confirm Email //
@@ -111,26 +108,24 @@ public class AccountController : ControllerBase
         if (User.Identity?.IsAuthenticated ?? false)
             return Unauthorized("You Have Already Logged-In");
         
-        var (isValid, message) = await _accountService.SendConfirmationEmail(userName);
-
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _accountService.SendConfirmationEmail(userName);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
         
-        return Ok(message);
+        return Ok(res.FirstSuccessMessage());
     }
     
     
     [HttpPost("Defined-Accounts")]
     [Authorize]
     // Post: api/Account/Defined-Accounts
-    public async Task<IActionResult> AddDefinedAccount([Length(10,10)][FromBody]string definedAccountAddNumber)
+    public async Task<IActionResult> AddDefinedAccount([Length(10,10)]string definedAccountAddNumber)
     {
-        var (isValid, message) = await _accountService.AddDefinedAccount(definedAccountAddNumber, User.Identity!.Name!);
-
-        if (!isValid)
-            return Problem(message, statusCode:400);
+        var res = await _accountService.AddDefinedAccount(definedAccountAddNumber, User.Identity!.Name!);
+        if (res.IsFailed)
+            return Problem(res.FirstErrorMessage(), statusCode:400);
         
-        return Ok(message);
+        return Ok(res.FirstSuccessMessage());
     }
     
     

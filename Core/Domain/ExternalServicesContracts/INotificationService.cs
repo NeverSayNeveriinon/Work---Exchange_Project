@@ -1,6 +1,8 @@
-﻿namespace Core.Domain.ExternalServicesContracts;
+﻿using FluentResults;
+
+namespace Core.Domain.ExternalServicesContracts;
 
 public interface INotificationService
 {
-    Task<(bool isValid, string message)> SendAsync(string toWhom, string subject, string body, bool isBodyHTML);
+    Task<Result> SendAsync(string toWhom, string subject, string body, bool isBodyHTML);
 }

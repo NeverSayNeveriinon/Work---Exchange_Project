@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using Core.Domain.ExternalServicesContracts;
+using FluentResults;
 using Microsoft.Extensions.Configuration;
 
 namespace Infrastructure.ExternalServices;
@@ -15,7 +16,7 @@ public class EmailService : INotificationService
         _config = config;
     }
     
-    public async Task<(bool isValid, string message)> SendAsync(string toEmail, string subject, string body, bool isBodyHTML)
+    public async Task<Result> SendAsync(string toEmail, string subject, string body, bool isBodyHTML)
     {
         var MailServer = _config["EmailSettings:MailServer"];
         var Port = _config["EmailSettings:MailPort"];
@@ -36,8 +37,8 @@ public class EmailService : INotificationService
         MailMessage mailMessage = new MailMessage(FromEmail!, toEmail, subject, body) { IsBodyHtml = isBodyHTML };
         
         try { await client.SendMailAsync(mailMessage); }
-        catch (Exception e) { return (false, "There is Something Wrong in Sending The Confirmation Email to You, Please Try Again"); }
-
-        return (true, "The Confirmation Link Has Successfully Sent\n!!Please Check Your Email!!");
+        catch (Exception e) { return Result.Fail("There is Something Wrong in Sending The Confirmation Email to You, Please Try Again"); }
+        
+        return Result.Ok().WithSuccess("The Confirmation Link Has Successfully Sent\n!!Please Check Your Email!!");
     }
 }

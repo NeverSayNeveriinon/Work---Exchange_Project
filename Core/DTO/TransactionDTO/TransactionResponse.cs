@@ -29,24 +29,14 @@ public static partial class TransactionExtensions
     public static TransactionResponse ToTransactionResponse (this Transaction transaction, decimal exchangeValue = 1, string? moneyCurrency = null)
     {
         var tranactionFromCurrencyType = transaction.FromAccount?.Currency?.CurrencyType;
-
         var tranactionToCurrencyType = transaction.ToAccount?.Currency?.CurrencyType;
 
         string realTimeExchangeValue = string.Empty;
-        // decimal? fromAccountRemainingBalance = null;
         if (transaction.TransactionType == TransactionTypeOptions.Transfer)
-        {
             realTimeExchangeValue = "1 " + tranactionFromCurrencyType + " = " + exchangeValue + " " + tranactionToCurrencyType;
-            // fromAccountRemainingBalance = transaction.FromAccount?.Balance - transaction.FromAccountChangeAmount;
-        }
         
         else if (transaction.TransactionType == TransactionTypeOptions.Deposit)
-        {
             realTimeExchangeValue = "1 " + (moneyCurrency ?? tranactionFromCurrencyType) + " = " + exchangeValue + " " + tranactionFromCurrencyType;
-            // fromAccountRemainingBalance = transaction.FromAccount?.Balance + transaction.FromAccountChangeAmount;
-        }
-        
-        
         
         TransactionResponse response = new TransactionResponse()
         {
@@ -62,10 +52,7 @@ public static partial class TransactionExtensions
             DateTime = transaction.DateTime,
             TransactionStatus = transaction.TransactionStatus,
             TransactionType = transaction.TransactionType,
-            RealTimeExchangeValue = realTimeExchangeValue,
-            // FromAccountRemainingBalance = fromAccountRemainingBalance
-            // RealTimeExchangeValue = "1 " + tranactionFromCurrencyType + " = " + transaction.FromAccount.Currency.FirstExchangeValues.FirstOrDefault(exchangeValue => exchangeValue.SecondCurrencyId == transaction.ToAccount.CurrencyID)
-            //                                     .UnitOfFirstValue + " " + tranactionToCurrencyType
+            RealTimeExchangeValue = realTimeExchangeValue
         };
 
         return response;

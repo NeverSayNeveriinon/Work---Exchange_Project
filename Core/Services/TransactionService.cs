@@ -110,11 +110,6 @@ public class TransactionService : ITransactionService
         
         var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.AccountNumber);
         if (!isFromValid) return Result.Fail(CreateNotFoundError("An Account With This Number Has Not Been Found"));
-
-        var finalAmount = fromAccount.Balance + transactionAddRequest.Money.Amount!.Value;
-        var minimumUSDValidateResult = await CheckMinimumUSDBalanceAsync(transactionAddRequest.Money.CurrencyType, finalAmount);
-        // if (minimumUSDValidateResult.IsFailed) return minimumUSDValidateResult.ToResult();
-        if (minimumUSDValidateResult.IsFailed) return Result.Fail(minimumUSDValidateResult.FirstErrorMessage());
         
         // Calculate Amount to be added to 'StashBalance' of 'Account'
         var toCurrencyType = fromAccount.Currency?.CurrencyType;

@@ -119,7 +119,7 @@ public class AccountController : ControllerBase
     [HttpPost("Defined-Accounts")]
     [Authorize]
     // Post: api/Account/Defined-Accounts
-    public async Task<IActionResult> AddDefinedAccount([Length(10,10)]string definedAccountAddNumber)
+    public async Task<IActionResult> AddDefinedAccount([FromForm][Length(10,10)]string definedAccountAddNumber)
     {
         var res = await _accountService.AddDefinedAccount(definedAccountAddNumber, User.Identity!.Name!);
         if (res.IsFailed)

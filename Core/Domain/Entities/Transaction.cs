@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Core.Enums;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.Domain.Entities;
 

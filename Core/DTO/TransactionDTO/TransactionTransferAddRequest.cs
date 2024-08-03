@@ -3,6 +3,7 @@ using Core.Domain.Entities;
 using Core.Domain.IdentityEntities;
 using Core.Enums;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.DTO.TransactionDTO;
 

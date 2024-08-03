@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Core.Domain.IdentityEntities;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.Domain.Entities;
 

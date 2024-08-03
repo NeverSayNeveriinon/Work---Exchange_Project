@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 using Microsoft.EntityFrameworkCore;
 
 namespace Core.Domain.Entities;

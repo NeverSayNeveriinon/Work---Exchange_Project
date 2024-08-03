@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.DTO.ServicesDTO.Money;
 

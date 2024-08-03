@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Core.Domain.Entities;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.DTO.CommissionRateDTO;
 

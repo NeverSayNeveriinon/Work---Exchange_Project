@@ -2,6 +2,7 @@
 using Core.Domain.Entities;
 using Core.Enums;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.DTO.ExchangeValueDTO;
 

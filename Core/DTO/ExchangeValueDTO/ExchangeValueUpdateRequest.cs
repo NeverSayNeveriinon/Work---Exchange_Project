@@ -1,5 +1,6 @@
 ﻿using Core.Domain.Entities;
 using Core.Helpers;
+using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.DTO.ExchangeValueDTO;
 

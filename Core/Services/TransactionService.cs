@@ -191,8 +191,9 @@ public class TransactionService : ITransactionService
         
         var user = await _userManager.GetUserAsync(userClaims);
         if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
-        
-        var transaction = await _transactionRepository.GetTransactionByIDAsync(confirmTransactionRequest.TransactionId, ignoreQueryFilter:true);
+
+            
+        var transaction = await _transactionRepository.GetTransactionByIDAsync(Guid.Parse(confirmTransactionRequest.TransactionId), ignoreQueryFilter:true);
         if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
         var fromAccount = transaction.FromAccount;
         var toAccount = transaction.ToAccount;

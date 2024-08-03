@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Core.Helpers;
+namespace Core.Helpers.CustomValidateAttribute;
 
 public class DecimalRangeAttribute : ValidationAttribute
 {
@@ -69,5 +69,27 @@ public class DecimalRangeAttribute : ValidationAttribute
     {
         if (minNumber > maxNumber)
             throw new InvalidOperationException($"{nameof(minNumber)} can't be more than {nameof(maxNumber)}");
+    }
+}
+
+
+public class GuidDataTypeAttribute : ValidationAttribute
+{
+    public GuidDataTypeAttribute()
+    {
+    }
+    
+    public override bool IsValid(object? value)
+    {
+        if (value == null) return false;
+        
+        if (!Guid.TryParse(value.ToString(), out _)) return false;
+
+        return true;
+    }
+    
+    public override string FormatErrorMessage(string name)
+    {
+        return string.Format(this.ErrorMessageString, name);
     }
 }

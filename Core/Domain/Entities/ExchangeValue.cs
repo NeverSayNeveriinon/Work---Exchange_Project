@@ -12,7 +12,7 @@ public class ExchangeValue
     public int Id { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalMaxValue)]
     public decimal UnitOfFirstValue { get; set; }
     
     [ForeignKey("FirstCurrency")]

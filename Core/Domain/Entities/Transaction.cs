@@ -11,15 +11,15 @@ public class Transaction
     public Guid Id { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalMaxValue)]
     public decimal Amount { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalMaxValue)]
     public decimal FromAccountChangeAmount { get; set; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalMaxValue)]
     public decimal ToAccountChangeAmount { get; set; } 
     
     public DateTime DateTime { get; init; }

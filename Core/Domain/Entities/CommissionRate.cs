@@ -12,7 +12,7 @@ public class CommissionRate
     public int Id { get; init; }
 
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalMaxValue)]
     public decimal MaxUSDRange { get; init; }
     
     [DecimalRange("0","0.5")]

@@ -13,7 +13,7 @@ public class CurrencyAccount
     public string Number { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalMaxValue)]
     public decimal Balance { get; set; }
     
     [Column(TypeName="decimal(20,9)")]

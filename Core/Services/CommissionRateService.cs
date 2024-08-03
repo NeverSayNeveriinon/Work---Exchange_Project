@@ -53,7 +53,7 @@ public class CommissionRateService : ICommissionRateService
         return commissionRateResponses;
     }    
     
-    //todo:check no need to calculate exchangevalue -> instead call its function
+    // todo:check no need to calculate exchangevalue -> instead call its function
     public async Task<Result<decimal>> GetUSDAmountCRate(Money money)
     {
         ArgumentNullException.ThrowIfNull(money,$"The '{nameof(money)}' object parameter is Null");

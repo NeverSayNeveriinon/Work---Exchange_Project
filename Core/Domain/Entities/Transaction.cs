@@ -11,15 +11,15 @@ public class Transaction
     public Guid Id { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue)]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue)]
     public decimal Amount { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue)]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue)]
     public decimal FromAccountChangeAmount { get; set; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue)]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue)]
     public decimal ToAccountChangeAmount { get; set; } 
     
     public DateTime DateTime { get; init; }

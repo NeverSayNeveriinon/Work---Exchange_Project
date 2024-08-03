@@ -13,7 +13,7 @@ public class CurrencyAccount
     public string Number { get; init; }
     
     [Column(TypeName="decimal(20,9)")]
-    [DecimalRange("0", Constants.DecimalMaxValue)]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue)]
     public decimal Balance { get; set; }
     
     [Column(TypeName="decimal(20,9)")]

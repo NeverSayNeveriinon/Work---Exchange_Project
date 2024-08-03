@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.Net.Mime;
+using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO.CurrencyDTO;
 using Core.Enums;
@@ -63,7 +64,7 @@ public class CurrencyService : ICurrencyService
     {
         var currency = await _currencyRepository.GetCurrencyByIDAsync(id);
         if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'currencies list' 
-    
+        
         _currencyRepository.DeleteCurrency(currency);
         var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
         if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");

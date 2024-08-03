@@ -7,7 +7,7 @@ namespace Core.DTO.CommissionRateDTO;
 public class CommissionRateRequest
 {
     [Required(ErrorMessage = "The 'MaxUSDRange' Can't Be Blank!!!")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue, ErrorMessage = "The 'MaxUSDRange' Must Be Positive")]
     public decimal? MaxUSDRange { get; set; }
     // [StringLength()]
     [Required(ErrorMessage = "The 'Commission Rate' Can't Be Blank!!!")]

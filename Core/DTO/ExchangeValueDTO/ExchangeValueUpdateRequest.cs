@@ -5,7 +5,7 @@ namespace Core.DTO.ExchangeValueDTO;
 
 public class ExchangeValueUpdateRequest
 {
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'UnitOfFirstValue' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue, ErrorMessage = "The 'UnitOfFirstValue' Must Be Positive")]
     public decimal? UnitOfFirstValue { get; set; }
 }
 

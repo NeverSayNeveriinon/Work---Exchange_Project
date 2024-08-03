@@ -43,10 +43,10 @@ public class AccountController : ControllerBase
     // Post: api/Account/register
     public async Task<IActionResult> Register(UserRegister userRegister)
     {
-        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.AdminRole))
+        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.Role.Admin))
             return Unauthorized("You Have Already Logged-In");
         
-        if (userRegister.Role == Constants.AdminRole && !User.IsInRole(Constants.AdminRole))
+        if (userRegister.Role == Constants.Role.Admin && !User.IsInRole(Constants.Role.Admin))
             return Problem("You Are Not Allowed to Create an 'Admin' account", statusCode:403);
         
         var res = await _accountService.Register(userRegister);
@@ -64,7 +64,7 @@ public class AccountController : ControllerBase
     // Post: api/Account/login
     public async Task<IActionResult> Login(UserLogin userLogin)
     {
-        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.AdminRole))
+        if ((User.Identity?.IsAuthenticated ?? false) && !User.IsInRole(Constants.Role.Admin))
             return Unauthorized("You Have Already Logged-In");
         
         var res = await _accountService.Login(userLogin);

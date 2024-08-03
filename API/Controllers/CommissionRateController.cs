@@ -12,7 +12,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles = Constants.AdminRole)]
+[Authorize(Roles = Constants.Role.Admin)]
 public class CommissionRateController : ControllerBase
 {
     private readonly ICommissionRateService _commissionRateService;

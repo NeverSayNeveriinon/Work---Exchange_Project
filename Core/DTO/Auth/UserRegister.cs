@@ -35,6 +35,6 @@ public class UserRegister
       
     [Required(ErrorMessage = "The 'Role' of You Must be Specified in System!!!")]
     [StringLength(15, ErrorMessage = "The 'Role' Can't Be More Than 15 Characters")]
-    [AllowedValues(Constants.UserRole, Constants.AdminRole, ErrorMessage = "The Role Must be 'User' or 'Admin'")]
+    [AllowedValues(Constants.Role.User, Constants.Role.Admin, ErrorMessage = "The Role Must be 'User' or 'Admin'")]
     public string Role { get; set; }
 }

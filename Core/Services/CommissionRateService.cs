@@ -58,11 +58,11 @@ public class CommissionRateService : ICommissionRateService
     {
         ArgumentNullException.ThrowIfNull(money,$"The '{nameof(money)}' object parameter is Null");
 
-        if (money.Currency.CurrencyType != Constants.USDCurrency)
+        if (money.Currency.CurrencyType != Constants.Currency.USD)
         {
             var exchangeValue = money.Currency.FirstExchangeValues?.FirstOrDefault(exValue => exValue.SecondCurrency.CurrencyType == 
-                                                                                              Constants.USDCurrency);
-            if (exchangeValue == null) return Result.Fail($"There is No Relevant Exchange Value to Convert to '{Constants.USDCurrency}'");
+                                                                                              Constants.Currency.USD);
+            if (exchangeValue == null) return Result.Fail($"There is No Relevant Exchange Value to Convert to '{Constants.Currency.USD}'");
             var valueToBeMultiplied = exchangeValue.UnitOfFirstValue;
             money.Amount *= valueToBeMultiplied;
         }

@@ -10,7 +10,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
-[Authorize(Roles = Constants.AdminRole)]
+[Authorize(Roles = Constants.Role.Admin)]
 public class ExchangeValueController : ControllerBase
 {
     private readonly IExchangeValueService _exchangeValueService;

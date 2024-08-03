@@ -10,7 +10,7 @@ namespace API.Controllers;
 
 [Route("api/[controller]")] 
 [ApiController]
-[Authorize(Roles = Constants.AdminRole)]
+[Authorize(Roles = Constants.Role.Admin)]
 public class CurrencyController : ControllerBase
 {
     private readonly ICurrencyService _currencyService;

@@ -68,7 +68,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         var user = await _userManager.GetUserAsync(userClaims);
         if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
         
-        if (userClaims.IsInRole(Constants.AdminRole))
+        if (userClaims.IsInRole(Constants.Role.Admin))
             return await GetAllCurrencyAccountsInternal();
 
         var currencyAccounts = await _accountRepository.GetAllCurrencyAccountsByUserAsync(user.Id);
@@ -89,7 +89,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         ArgumentNullException.ThrowIfNull(number,$"The CurrencyAccount'{nameof(number)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' object parameter is Null");
 
-        if (userClaims.IsInRole(Constants.AdminRole))
+        if (userClaims.IsInRole(Constants.Role.Admin))
             return await GetCurrencyAccountByNumberInternal(number);
         
         var user = await _userManager.GetUserAsync(userClaims);
@@ -129,7 +129,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         ArgumentNullException.ThrowIfNull(number,$"The CurrencyAccount'{nameof(number)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' object parameter is Null");
 
-        if (userClaims.IsInRole(Constants.AdminRole))
+        if (userClaims.IsInRole(Constants.Role.Admin))
             return await DeleteCurrencyAccountByNumberInternal(number);
         
         var user = await _userManager.GetUserAsync(userClaims);

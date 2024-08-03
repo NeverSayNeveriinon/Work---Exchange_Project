@@ -16,7 +16,7 @@ public class ExchangeValueAddRequest
     public string SecondCurrencyType { get; set; }
     
     [Required(ErrorMessage = "The 'UnitOfFirstValue' Can't Be Blank!!!")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'UnitOfFirstValue' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue, ErrorMessage = "The 'UnitOfFirstValue' Must Be Positive")]
     public decimal? UnitOfFirstValue { get; set; }
 }
 

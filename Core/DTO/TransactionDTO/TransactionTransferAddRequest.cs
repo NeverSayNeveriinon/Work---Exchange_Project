@@ -9,7 +9,7 @@ namespace Core.DTO.TransactionDTO;
 public class TransactionTransferAddRequest
 {
     [Required(ErrorMessage = "The 'Amount' Can't Be Blank!!!")]
-    [DecimalRange("0", Constants.DecimalMaxValue, ErrorMessage = "The 'Amount' Must Be Positive")]
+    [DecimalRange("0", Constants.DecimalRange.MaxValue, ErrorMessage = "The 'Amount' Must Be Positive")]
     public decimal? Amount { get; set; }
     
     [Required(ErrorMessage = "The 'FromAccountNumber' Can't Be Blank!!!")]

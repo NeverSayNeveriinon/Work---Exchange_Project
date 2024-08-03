@@ -32,8 +32,8 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             var adminRole = new UserRole()
             {
                 Id = Guid.Parse("0D8EA822-1454-4853-9753-78FCDBD429D3"),
-                Name = Constants.AdminRole,
-                NormalizedName = Constants.AdminRole.ToUpper(),
+                Name = Constants.Role.Admin,
+                NormalizedName = Constants.Role.Admin.ToUpper(),
                 ConcurrencyStamp = Guid.Parse("878EEDAF-E795-411E-A0FC-847D0D4193DC").ToString()
             };
             var userRole = new UserRole()
@@ -66,7 +66,7 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
             modelBuilder.Entity<UserProfile>().HasData(adminProfile);
             modelBuilder.Entity<IdentityUserRole<Guid>>().HasData(new IdentityUserRole<Guid>{RoleId = adminRole.Id, UserId = adminProfile.Id});
             modelBuilder.Entity<IdentityUserClaim<Guid>>().HasData(new IdentityUserClaim<Guid>
-            { ClaimType = ClaimTypes.Role, ClaimValue = Constants.AdminRole, UserId = adminProfile.Id, Id = 1});
+            { ClaimType = ClaimTypes.Role, ClaimValue = Constants.Role.Admin, UserId = adminProfile.Id, Id = 1});
         #endregion
 
         #region Currency_Seed

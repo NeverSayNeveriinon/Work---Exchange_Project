@@ -199,7 +199,7 @@ public class TransactionService : ITransactionService
         var toAccount = transaction.ToAccount;
         
         // In case Someone Else wants to Confirm transaction (and is not admin also)
-        if (transaction.FromAccount!.OwnerID != user.Id && !userClaims.IsInRole(Constants.AdminRole))
+        if (transaction.FromAccount!.OwnerID != user.Id && !userClaims.IsInRole(Constants.Role.Admin))
             return Result.Fail("You Are Not Allowed to Confirm/Cancel This Transaction");
 
         // if 'transactionStatus' from db is other than "Pending"
@@ -251,7 +251,7 @@ public class TransactionService : ITransactionService
         var user = await _userManager.GetUserAsync(userClaims);
         if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
 
-        if (await _userManager.IsInRoleAsync(user, Constants.AdminRole))
+        if (await _userManager.IsInRoleAsync(user, Constants.Role.Admin))
             return await GetAllTransactionsInternal();
         
         var transactions = await _transactionRepository.GetAllTransactionsByUserAsync(user.Id);
@@ -274,7 +274,7 @@ public class TransactionService : ITransactionService
         var user = await _userManager.GetUserAsync(userClaims);
         if (user == null) return Result.Fail("The User Doesn't Exist"); // if 'user' doesn't exist
 
-        if (await _userManager.IsInRoleAsync(user, Constants.AdminRole))
+        if (await _userManager.IsInRoleAsync(user, Constants.Role.Admin))
             return await GetTransactionByIDInternal(id);
 
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id, ignoreQueryFilter);
@@ -301,7 +301,7 @@ public class TransactionService : ITransactionService
         var user = await _userManager.GetUserAsync(userClaims);
         if (user == null) return Result.Fail("The User Doesn't Exist"); // if 'user' doesn't exist
 
-        if (await _userManager.IsInRoleAsync(user, Constants.AdminRole))
+        if (await _userManager.IsInRoleAsync(user, Constants.Role.Admin))
             return await DeleteTransactionByIdInternal(id);
         
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id);
@@ -424,8 +424,8 @@ public class TransactionService : ITransactionService
     {
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' object parameter is Null");
         
-        var (exchangeValidateResult, valueToBeMultiplied) = (await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.USDCurrency)).DeconstructObject();
-        if (exchangeValidateResult.IsFailed) return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.USDCurrency}");
+        var (exchangeValidateResult, valueToBeMultiplied) = (await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.Currency.USD)).DeconstructObject();
+        if (exchangeValidateResult.IsFailed) return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
         
         var finalUSDAmount = finalAmount * valueToBeMultiplied;
         if (finalUSDAmount < BalanceMinimumUSD)
@@ -439,8 +439,8 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(currencyAccount,$"The '{nameof(currencyAccount)}' object parameter is Null");
 
-        var (exchangeValidateResult, valueToBeMultiplied) = (await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.USDCurrency)).DeconstructObject();
-        if (exchangeValidateResult.IsFailed) return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.USDCurrency}");
+        var (exchangeValidateResult, valueToBeMultiplied) = (await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.Currency.USD)).DeconstructObject();
+        if (exchangeValidateResult.IsFailed) return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
 
         var userAllTransactions = await _transactionRepository.GetAllTransactionsByUserAsync(currencyAccount.OwnerID);
         var userAllFromTransactionsPerDay = userAllTransactions.Where(t => t.FromAccountNumber == currencyAccount.Number &&

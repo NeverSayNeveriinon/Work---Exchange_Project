@@ -54,7 +54,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         
         var currencyAccountReturned = await _accountRepository.AddCurrencyAccountAsync(currencyAccount);
         
-        UpdateStashBalanceAmount(currencyAccount, transactionResponse!.FromAccountChangeAmount, (val1, val2) => val1 + val2);
+        UpdateStashBalanceAmount(currencyAccount, transactionResponse.FromAccountChangeAmount, (val1, val2) => val1 + val2);
         var numberOfRowsAffected = await _accountRepository.SaveChangesAsync();
         if (!(numberOfRowsAffected >= 2)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
@@ -163,7 +163,7 @@ public class CurrencyAccountService : ICurrencyAccountService
     }
     
     
-    public CurrencyAccountResponse? UpdateStashBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc)
+    public CurrencyAccountResponse UpdateStashBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc)
     {
         ArgumentNullException.ThrowIfNull(currencyAccount, $"The '{nameof(currencyAccount)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(amount, $"The '{nameof(amount)}' parameter is Null");
@@ -176,7 +176,7 @@ public class CurrencyAccountService : ICurrencyAccountService
         return updatedCurrencyAccount.ToCurrencyAccountResponse();
     }    
     
-    public CurrencyAccountResponse? UpdateBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc)
+    public CurrencyAccountResponse UpdateBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc)
     {
         ArgumentNullException.ThrowIfNull(currencyAccount, $"The '{nameof(currencyAccount)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(amount, $"The '{nameof(amount)}' parameter is Null");

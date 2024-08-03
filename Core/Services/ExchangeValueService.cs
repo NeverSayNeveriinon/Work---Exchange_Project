@@ -79,7 +79,7 @@ public class ExchangeValueService : IExchangeValueService
         if (destCurrencyResult.IsFailed) return destCurrencyResult.ToResult(); // if 'dest currency' doesn't exist
         
         var valueToBeMultiplied = await _exchangeValueRepository.GetUnitValueByCurrencyTypeAsync(sourceCurrencyResponse.Id, destCurrencyResponse.Id);
-        if (valueToBeMultiplied == null) return Result.Fail(CreateNotFoundError("!!An Exchange Value With This Currency Types Has Not Been Found!!"));;
+        if (valueToBeMultiplied == null) return Result.Fail(CreateNotFoundError("!!An Exchange Value With This Currency Types Has Not Been Found!!"));
          
         return Result.Ok(valueToBeMultiplied.Value);
     }

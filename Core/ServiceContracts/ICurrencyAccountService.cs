@@ -19,6 +19,6 @@ public interface ICurrencyAccountService
     Task<Result> DeleteCurrencyAccountByNumber(string number, ClaimsPrincipal userClaims);
     Task<Result> DeleteCurrencyAccountByNumberInternal(string number);
     
-    CurrencyAccountResponse? UpdateBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc);
-    CurrencyAccountResponse? UpdateStashBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal, decimal, decimal> calculationFunc);
+    CurrencyAccountResponse UpdateBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal,decimal,decimal> calculationFunc);
+    CurrencyAccountResponse UpdateStashBalanceAmount(CurrencyAccount currencyAccount, decimal amount, Func<decimal, decimal, decimal> calculationFunc);
 }

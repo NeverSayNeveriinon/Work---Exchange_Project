@@ -123,7 +123,7 @@ public class TransactionService : ITransactionService
         var amount = transactionAddRequest.Money.Amount * valueToBeMultiplied;
 
         // Updating the 'StashBalance' of 'Account'
-        _currencyAccountService.UpdateStashBalanceAmount(fromAccount!, amount.GetValueOrDefault(), (val1, val2) => val1 + val2);
+        _currencyAccountService.UpdateStashBalanceAmount(fromAccount, amount.GetValueOrDefault(), (val1, val2) => val1 + val2);
         
         transaction.FromAccountChangeAmount = amount.GetValueOrDefault();
         transaction.ToAccountChangeAmount = 0;
@@ -199,7 +199,7 @@ public class TransactionService : ITransactionService
         var toAccount = transaction.ToAccount;
         
         // In case Someone Else wants to Confirm transaction (and is not admin also)
-        if (transaction.FromAccount!.OwnerID != user!.Id && !userClaims.IsInRole(Constants.AdminRole))
+        if (transaction.FromAccount!.OwnerID != user.Id && !userClaims.IsInRole(Constants.AdminRole))
             return Result.Fail("You Are Not Allowed to Confirm/Cancel This Transaction");
 
         // if 'transactionStatus' from db is other than "Pending"
@@ -254,7 +254,7 @@ public class TransactionService : ITransactionService
         if (await _userManager.IsInRoleAsync(user, Constants.AdminRole))
             return await GetAllTransactionsInternal();
         
-        var transactions = await _transactionRepository.GetAllTransactionsByUserAsync(user!.Id);
+        var transactions = await _transactionRepository.GetAllTransactionsByUserAsync(user.Id);
         
         var transactionResponses = transactions.Select(transactionItem => transactionItem.ToTransactionResponse()).ToList();
         return transactionResponses;
@@ -280,7 +280,7 @@ public class TransactionService : ITransactionService
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id, ignoreQueryFilter);
         if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
 
-        if (transaction.FromAccount!.OwnerID != user!.Id && transaction.ToAccount!.OwnerID != user!.Id)
+        if (transaction.FromAccount!.OwnerID != user.Id && transaction.ToAccount!.OwnerID != user.Id)
             return Result.Fail("This Transaction Doesn't Belong To You");
         
         return Result.Ok(transaction.ToTransactionResponse());

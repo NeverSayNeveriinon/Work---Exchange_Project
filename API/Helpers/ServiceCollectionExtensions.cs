@@ -34,7 +34,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITransactionRepository, TransactionRepository>();
         services.AddLazyScoped<ITransactionService, TransactionService>();
 
-        services.AddScoped<IValidator, Validator>();
+        services.AddScoped<ICurrencyValidator, CurrencyValidator>();
 
         return services;
     }

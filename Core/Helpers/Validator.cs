@@ -2,11 +2,11 @@
 
 namespace Core.Helpers;
 
-public class Validator : IValidator
+public class CurrencyValidator : ICurrencyValidator
 {
     private readonly ICurrencyService _currencyService;
     
-    public Validator(ICurrencyService currencyService)
+    public CurrencyValidator(ICurrencyService currencyService)
     {
         _currencyService = currencyService;
     }

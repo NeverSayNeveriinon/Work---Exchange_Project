@@ -14,9 +14,9 @@ namespace API.Controllers;
 public class ExchangeValueController : ControllerBase
 {
     private readonly IExchangeValueService _exchangeValueService;
-    private readonly IValidator _validator ;
+    private readonly ICurrencyValidator _validator ;
     
-    public ExchangeValueController(IExchangeValueService exchangeValueService, IValidator validator)
+    public ExchangeValueController(IExchangeValueService exchangeValueService, ICurrencyValidator validator)
     {
         _exchangeValueService = exchangeValueService;
         _validator = validator;

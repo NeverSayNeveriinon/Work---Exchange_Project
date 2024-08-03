@@ -17,9 +17,9 @@ namespace API.Controllers;
 public class TransactionController : ControllerBase
 {
     private readonly ITransactionService _transactionService;
-    private readonly IValidator _validator ;
+    private readonly ICurrencyValidator _validator ;
     
-    public TransactionController(ITransactionService transactionService, IValidator validator)
+    public TransactionController(ITransactionService transactionService, ICurrencyValidator validator)
     {
         _transactionService = transactionService;
         _validator = validator;

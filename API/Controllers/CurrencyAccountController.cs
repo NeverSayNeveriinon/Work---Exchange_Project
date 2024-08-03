@@ -16,9 +16,9 @@ namespace API.Controllers;
 public class CurrencyAccountController : ControllerBase
 {
     private readonly ICurrencyAccountService _currencyAccountService;
-    private readonly IValidator _validator;
+    private readonly ICurrencyValidator _validator;
     
-    public CurrencyAccountController(ICurrencyAccountService currencyAccountService, IValidator validator)
+    public CurrencyAccountController(ICurrencyAccountService currencyAccountService, ICurrencyValidator validator)
     {
         _currencyAccountService = currencyAccountService;
         _validator = validator;

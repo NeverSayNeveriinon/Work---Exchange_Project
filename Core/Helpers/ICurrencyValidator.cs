@@ -1,6 +1,6 @@
 ﻿namespace Core.Helpers;
 
-public interface IValidator
+public interface ICurrencyValidator
 {
     Task<bool> ExistsInCurrentCurrencies(string currencyType);
 }

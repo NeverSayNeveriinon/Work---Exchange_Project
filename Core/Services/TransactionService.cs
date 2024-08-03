@@ -49,7 +49,17 @@ public class TransactionService : ITransactionService
         var user = await _userManager.GetUserAsync(userClaims);
         if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
         _accountService.LoadReferences(user);
+        
+        var transaction = transactionAddRequest.ToTransaction();
+        var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.FromAccountNumber);
+        if (!isFromValid) return Result.Fail(CreateNotFoundError("An Account for 'from' account With This Number Has Not Been Found"));
+        var (isToValid, _, toAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.ToAccountNumber);
+        if (!isToValid) return Result.Fail(CreateNotFoundError("An Account for 'to' account With This Number Has Not Been Found"));
 
+        // Check 'Amount' not be Greater Than Balance
+        if (transactionAddRequest.Amount > fromAccount.Balance)
+            return Result.Fail("Invalid Operation, The 'Amount' You Want to Transfer is Greater than Your Balance");
+        
         // Check Access to 'From' or 'To' Account  
         var accessValidateResult = CheckAccountAccess(transactionAddRequest, user);
         // if (accessValidateResult.IsFailed) return accessValidateResult.ToResult();
@@ -59,12 +69,6 @@ public class TransactionService : ITransactionService
         bool isCommissionFree = false;
         if (user!.CurrencyAccounts!.Any(acc => acc.Number == transactionAddRequest.ToAccountNumber))
             isCommissionFree = true;
-        
-        var transaction = transactionAddRequest.ToTransaction();
-        var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.FromAccountNumber);
-        if (!isFromValid) return Result.Fail(CreateNotFoundError("An Account for 'from' account With This Number Has Not Been Found"));
-        var (isToValid, _, toAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.ToAccountNumber);
-        if (!isToValid) return Result.Fail(CreateNotFoundError("An Account for 'to' account With This Number Has Not Been Found"));
         
         var transactionAmount = transactionAddRequest.Amount!.Value;
        

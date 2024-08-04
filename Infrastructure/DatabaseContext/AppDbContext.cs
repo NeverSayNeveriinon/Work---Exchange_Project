@@ -80,18 +80,10 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
         
         #endregion
         
-        // modelBuilder.Entity<Currency>()
-        //     .Property(entity => entity.ExchangeValues)
-        //     .HasConversion(
-        //         v => JsonConvert.SerializeObject(v),
-        //         v => JsonConvert.DeserializeObject<Dictionary<int, decimal>>(v));
-        
-        // modelBuilder.Entity<UserProfile>()
-        //     .Property(entity => entity.DefinedAccountNumbers)
-        //     .HasConversion(
-        //         v => JsonConvert.SerializeObject(v),
-        //         v1 => JsonConvert.DeserializeObject<List<string>>(v1)!);
 
+        #region General_Config
+        
+        //
         modelBuilder.Entity<UserProfile>()
                     .Ignore(entity => entity.PhoneNumber)
                     .Ignore(entity => entity.PhoneNumberConfirmed);
@@ -99,36 +91,58 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
         modelBuilder.Entity<Transaction>()
                     .HasQueryFilter(entity => entity.TransactionStatus == TransactionStatusOptions.Pending ||
                                               entity.TransactionStatus == TransactionStatusOptions.Confirmed);
+
+        // Keys & Indexes
+        modelBuilder.Entity<CurrencyAccount>()
+                    .HasKey(entity => entity.Number)
+                    .IsClustered(false);
+
+        modelBuilder.Entity<Transaction>()
+                    .HasKey(entity => entity.Id)
+                    .IsClustered(false);
         
-        // modelBuilder.Entity<CommissionRate>()
-        //             .Property(entity => entity.CRate)
-        //             .HasPrecision(6,5); 
-        //
-        // modelBuilder.Entity<Transaction>()
-        //             .Property(entity => entity.CRate)
-        //             .HasPrecision(6,5);   
-        //
-        // modelBuilder.Entity<ExchangeValue>()
-        //             .Property(entity => entity.UnitOfFirstValue)
-        //             .HasPrecision(20,9);
+        modelBuilder.Entity<DefinedAccount>()
+                    .HasKey(entity => entity.Id)
+                    .IsClustered(false);
+        
+        modelBuilder.Entity<DefinedAccount>()
+                    .HasIndex(entity => new { entity.UserProfileId, entity.CurrencyAccountNumber })
+                    .IsUnique()
+                    .IsClustered(false);
 
-
+        modelBuilder.Entity<Currency>()
+                    .HasIndex(entity => entity.CurrencyType)
+                    .IsUnique()
+                    .IsClustered(false);
+        
+        modelBuilder.Entity<ExchangeValue>()
+                    .HasIndex(entity => new { entity.FirstCurrencyId, entity.SecondCurrencyId })
+                    .IsUnique()
+                    .IsClustered();
+        
+        modelBuilder.Entity<CommissionRate>()
+                    .HasIndex(entity => entity.MaxUSDRange)
+                    .IsUnique()
+                    .IsClustered();
+        
+        
         // modelBuilder.Entity<UserProfile>()
         //             .Navigation(entity => entity.DefinedCurrencyAccounts)
         //             .AutoInclude();
         //     
+        
         // modelBuilder.Entity<UserProfile>()
         //             .Navigation(entity => entity.CurrencyAccounts)
         //             .AutoInclude();
-            
-
+        
         // modelBuilder.Entity<CommissionRate>()
         //     .Property(entity => entity.MaxUSDRange)
         //     .HasPrecision(20,3);
         
+        #endregion
+
         
-        
-        // - Relationships
+        #region Relations
         
         // CurrencyAccount 'N'====......----'1' UserProfile
         modelBuilder.Entity<CurrencyAccount>()
@@ -177,5 +191,6 @@ public class AppDbContext : IdentityDbContext<UserProfile,UserRole,Guid>
                         r => r.HasOne<CurrencyAccount>(e => e.CurrencyAccount)
                             .WithMany(e => e.DefinedAccountsJoin)
                             .HasForeignKey(e => e.CurrencyAccountNumber).IsRequired(false).OnDelete(DeleteBehavior.Cascade));
+        #endregion
     }
 }

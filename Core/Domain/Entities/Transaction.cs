@@ -32,11 +32,11 @@ public class Transaction
     public decimal CRate { get; set; }    
     
     [ForeignKey("FromAccount")]
-    [Column(TypeName="varchar(10)")]
+    [Column(TypeName="char(10)")]
     public string FromAccountNumber { get; init; }
     
     [ForeignKey("ToAccount")]
-    [Column(TypeName="varchar(10)")]
+    [Column(TypeName="char(10)")]
     public string? ToAccountNumber { get; init; }
     
     public virtual CurrencyAccount? FromAccount { get; set; } = null!;

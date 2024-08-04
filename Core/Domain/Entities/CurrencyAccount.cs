@@ -10,7 +10,7 @@ public class CurrencyAccount
 {
     [Key]
     [Length(10,10)]  
-    [Column(TypeName="varchar(10)")]
+    [Column(TypeName="char(10)")]
     public string Number { get; init; }
     
     [Column(TypeName="decimal(20,9)")]

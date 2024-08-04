@@ -11,7 +11,7 @@ public class Currency
     [Key]
     public int Id { get; init; }
     
-    [Column(TypeName="varchar(3)")]
+    [Column(TypeName="char(3)")]
     public string CurrencyType  { get; init; }
     
     

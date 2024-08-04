@@ -12,7 +12,7 @@ public class CurrencyAccountAddRequest
     [RegularExpression("^[A-Z]{3}$")]
     public string CurrencyType { get; set; }
     
-    public MoneyOpenAccountRequest MoneyToOpenAccount { get; set; }
+    public MoneyRequest MoneyToOpenAccount { get; set; }
 }
 
 public static partial class CurrencyAccountExtensions

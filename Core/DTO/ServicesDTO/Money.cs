@@ -1,6 +1,6 @@
 ﻿using Core.Domain.Entities;
 
-namespace Core.DTO.ServicesDTO.Money;
+namespace Core.DTO.ServicesDTO;
 
 public class Money
 {

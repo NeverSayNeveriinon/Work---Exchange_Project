@@ -4,7 +4,7 @@ using Core.Helpers.CustomValidateAttribute;
 
 namespace Core.DTO.CurrencyAccountDTO;
 
-public class MoneyOpenAccountRequest
+public class MoneyRequest
 {
     [Required(ErrorMessage = "The 'Amount' Can't Be Blank!!!")]
     [DecimalRange("0", Constants.DecimalRange.MaxValue, ErrorMessage = "The 'Amount' Must Be Positive")]

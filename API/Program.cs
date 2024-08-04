@@ -28,6 +28,7 @@ namespace API;
 
 // TODO: Add Exception Middleware
 // TODO: Add Eager,Lazy Loading
+// TODO: Add AntiforgeryToken (CSRF)
 public class Program
 {
     public static void Main(string[] args)

@@ -31,16 +31,20 @@ public class CommissionRateService : ICommissionRateService
         
         // Validation For Valid MaxSDRange (We shouldn't have same MaxUSDRange) //
         var usdRangeValidateResult = await ValidateMaxUSDRangeDuplicate(commissionRateRequest.MaxUSDRange!.Value, allCommissionRates);
-        if (usdRangeValidateResult.IsFailed) return Result.Fail(usdRangeValidateResult.FirstErrorMessage());
+        if (usdRangeValidateResult.IsFailed) 
+            return Result.Fail(usdRangeValidateResult.FirstErrorMessage());
         
         // Validation For Valid CRate (More USDRange has to have less CRate) //
         var cRateValidateResult = await ValidateCRateRange(commissionRateRequest, allCommissionRates);
-        if (cRateValidateResult.IsFailed) return Result.Fail(cRateValidateResult.FirstErrorMessage());
+        if (cRateValidateResult.IsFailed) 
+            return Result.Fail(cRateValidateResult.FirstErrorMessage());
         
         var commissionRate = commissionRateRequest.ToCommissionRate();
         var commissionRateReturned = await _commissionRateRepository.AddCommissionRateAsync(commissionRate);
+        
         var numberOfRowsAffected = await _commissionRateRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok(commissionRateReturned.ToCommissionRateResponse());
     }   
@@ -62,13 +66,16 @@ public class CommissionRateService : ICommissionRateService
         {
             var exchangeValue = money.Currency.FirstExchangeValues?.FirstOrDefault(exValue => exValue.SecondCurrency.CurrencyType == 
                                                                                               Constants.Currency.USD);
-            if (exchangeValue == null) return Result.Fail($"There is No Relevant Exchange Value to Convert to '{Constants.Currency.USD}'");
+            if (exchangeValue == null) 
+                return Result.Fail($"There is No Relevant Exchange Value to Convert to '{Constants.Currency.USD}'");
+            
             var valueToBeMultiplied = exchangeValue.UnitOfFirstValue;
             money.Amount *= valueToBeMultiplied;
         }
 
         var cRate = await _commissionRateRepository.GetCRateByUSDAmountAsync(money.Amount);
-        if (cRate == null) return Result.Fail("There is No Relevant Commission Rate for the Amount");
+        if (cRate == null) 
+            return Result.Fail("There is No Relevant Commission Rate for the Amount");
 
         return Result.Ok(cRate.Value);
     }
@@ -78,7 +85,8 @@ public class CommissionRateService : ICommissionRateService
         var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(maxRange);
         
         // if 'maxRange' doesn't exist in 'CommissionRates list' 
-        if (commissionRate == null) return Result.Fail(CreateNotFoundError("!!A Commission Rate With This maxRange Has Not Been Found!!"));
+        if (commissionRate == null) 
+            return Result.Fail(CreateNotFoundError("!!A Commission Rate With This maxRange Has Not Been Found!!"));
         
         return Result.Ok(commissionRate.ToCommissionRateResponse());
     }
@@ -89,16 +97,20 @@ public class CommissionRateService : ICommissionRateService
         
         // Validation For Valid CRate (More USDRange has to have less CRate) //
         var validateResult = await ValidateCRateRange(commissionRateRequest);
-        if (validateResult.IsFailed) return Result.Fail(validateResult.FirstErrorMessage());
+        if (validateResult.IsFailed) 
+            return Result.Fail(validateResult.FirstErrorMessage());
         
         var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(commissionRateRequest.MaxUSDRange!.Value);
         
         // if 'maxRange' is invalid (doesn't exist)
-        if (commissionRate == null) return Result.Fail(CreateNotFoundError("!!A Commission Rate With This maxRange Has Not Been Found!!"));
+        if (commissionRate == null) 
+            return Result.Fail(CreateNotFoundError("!!A Commission Rate With This maxRange Has Not Been Found!!"));
     
         var commissionRateReturned = _commissionRateRepository.UpdateCRate(commissionRate, commissionRateRequest.CRate!.Value);
+        
         var numberOfRowsAffected = await _commissionRateRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
         
         return Result.Ok(commissionRateReturned.ToCommissionRateResponse());
     }
@@ -108,11 +120,14 @@ public class CommissionRateService : ICommissionRateService
         var commissionRate = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(maxRange);
         
         // if 'maxRange' is invalid (doesn't exist)
-        if (commissionRate == null) return Result.Fail(CreateNotFoundError("!!A Commission Rate With This maxRange Has Not Been Found!!"));
+        if (commissionRate == null) 
+            return Result.Fail(CreateNotFoundError("!!A Commission Rate With This maxRange Has Not Been Found!!"));
     
         _commissionRateRepository.DeleteCommissionRate(commissionRate);
+        
         var numberOfRowsAffected = await _commissionRateRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok().WithSuccess("The Deletion Has Been Successful");
     }
@@ -132,6 +147,7 @@ public class CommissionRateService : ICommissionRateService
         var commissionRateIndex = allCommissionRatesOrdered.Select(commissionRate => commissionRate.MaxUSDRange)
                                                            .ToList()
                                                            .BinarySearch(commissionRateRequest.MaxUSDRange!.Value);
+        
         commissionRateIndex = int.IsNegative(commissionRateIndex) ? ~commissionRateIndex : commissionRateIndex; 
         
         var previousCommissionRate =  allCommissionRatesOrdered.ElementAtOrDefault(commissionRateIndex - 1);

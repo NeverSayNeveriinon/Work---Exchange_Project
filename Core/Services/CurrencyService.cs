@@ -23,13 +23,16 @@ public class CurrencyService : ICurrencyService
         ArgumentNullException.ThrowIfNull(currencyRequest,$"The '{nameof(currencyRequest)}' object parameter is Null");
         
         var currency = currencyRequest.ToCurrency();
+        
         var currencyResponseByType = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currency.CurrencyType);
         if (currencyResponseByType is not null) // if currencyResponseByType has sth, means this currencytype already exists
             return Result.Fail("There is Already a Currency Object With This 'Currency Type'");
         
         var currencyReturned = await _currencyRepository.AddCurrencyAsync(currency);
         var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok(currencyReturned.ToCurrencyResponse());
     }   
@@ -45,7 +48,8 @@ public class CurrencyService : ICurrencyService
     public async Task<Result<CurrencyResponse>> GetCurrencyByID(int id)
     {
         var currency = await _currencyRepository.GetCurrencyByIDAsync(id);
-        if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'currencies list' 
+        if (currency == null) // if 'id' doesn't exist in 'currencies list'
+            return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!"));  
         
         return Result.Ok(currency.ToCurrencyResponse());
     }
@@ -55,7 +59,8 @@ public class CurrencyService : ICurrencyService
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' parameter is Null");
         
         var currency = await _currencyRepository.GetCurrencyByCurrencyTypeAsync(currencyType);
-        if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This currencyType Has Not Been Found!!")); // if 'currencyType' doesn't exist in 'currencies list' 
+        if (currency == null) // if 'currencyType' doesn't exist in 'currencies list'
+            return Result.Fail(CreateNotFoundError("!!A Currency With This currencyType Has Not Been Found!!")); 
 
         return Result.Ok(currency.ToCurrencyResponse());
     }   
@@ -63,11 +68,14 @@ public class CurrencyService : ICurrencyService
     public async Task<Result> DeleteCurrencyByID(int id)
     {
         var currency = await _currencyRepository.GetCurrencyByIDAsync(id);
-        if (currency == null) return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'currencies list' 
+        if (currency == null)  // if 'id' doesn't exist in 'currencies list'
+            return Result.Fail(CreateNotFoundError("!!A Currency With This ID Has Not Been Found!!")); 
         
         _currencyRepository.DeleteCurrency(currency);
+        
         var numberOfRowsAffected = await _currencyRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok().WithSuccess("The Deletion Has Been Successful");
     }

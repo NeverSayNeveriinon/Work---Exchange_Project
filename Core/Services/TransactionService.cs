@@ -47,14 +47,20 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' object parameter is Null");
         
         var user = await _userManager.GetUserAsync(userClaims);
-        if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
+        if (user == null) // if 'user' doesn't exist
+            return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); 
+        
         _accountService.LoadReferences(user);
         
         var transaction = transactionAddRequest.ToTransaction();
+        
         var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.FromAccountNumber);
-        if (!isFromValid) return Result.Fail(CreateNotFoundError("An Account for 'from' account With This Number Has Not Been Found"));
+        if (!isFromValid) 
+            return Result.Fail(CreateNotFoundError("An Account for 'from' account With This Number Has Not Been Found"));
+        
         var (isToValid, _, toAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.ToAccountNumber);
-        if (!isToValid) return Result.Fail(CreateNotFoundError("An Account for 'to' account With This Number Has Not Been Found"));
+        if (!isToValid) 
+            return Result.Fail(CreateNotFoundError("An Account for 'to' account With This Number Has Not Been Found"));
 
         // Check 'Amount' not be Greater Than Balance
         if (transactionAddRequest.Amount > fromAccount.Balance)
@@ -62,8 +68,8 @@ public class TransactionService : ITransactionService
         
         // Check Access to 'From' or 'To' Account  
         var accessValidateResult = CheckAccountAccess(transactionAddRequest, user);
-        // if (accessValidateResult.IsFailed) return accessValidateResult.ToResult();
-        if (accessValidateResult.IsFailed) return Result.Fail(accessValidateResult.FirstErrorMessage());
+        if (accessValidateResult.IsFailed) 
+            return Result.Fail(accessValidateResult.FirstErrorMessage());
         
         // if 'ToAccountNumber' belongs to the user itself, then the commission is free 
         bool isCommissionFree = false;
@@ -73,10 +79,13 @@ public class TransactionService : ITransactionService
         var transactionAmount = transactionAddRequest.Amount!.Value;
        
         // All Calculations and Check Invalid Balance
-        var (amountsValidateResult, calculationsAmounts) = (await CalculateTransferAmounts(fromAccount!, toAccount!, transaction, isCommissionFree)).DeconstructObject();
-        // if (amountsValidateResult.IsFailed) return amountsValidateResult.ToResult();
-        if (amountsValidateResult.IsFailed) return Result.Fail(amountsValidateResult.FirstErrorMessage());
+        var (amountsValidateResult, calculationsAmounts) = (await CalculateTransferAmounts(fromAccount, toAccount!, transaction, isCommissionFree))
+                                                           .DeconstructObject();
+        if (amountsValidateResult.IsFailed) 
+            return Result.Fail(amountsValidateResult.FirstErrorMessage());
+        
         var (cRate, commissionAmount, destinationAmount, valueToBeMultiplied) = calculationsAmounts.ToTuple();
+        
         
         // Updating the 'StashBalance' of 'FromAccount'
         _currencyAccountService.UpdateStashBalanceAmount(fromAccount!, transactionAmount, (val1, val2) => val1 - val2);
@@ -90,8 +99,10 @@ public class TransactionService : ITransactionService
         transaction.ToAccountChangeAmount = destinationAmount;
         
         var transactionAddReturned = await _transactionRepository.AddTransactionAsync(transaction);
+        
         var numberOfRowsAffected = await _transactionRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected >= 3)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected >= 3)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok(transactionAddReturned.ToTransactionResponse(valueToBeMultiplied));
     }
@@ -106,19 +117,24 @@ public class TransactionService : ITransactionService
 
         // 'AccountNumber' has to belong to the user itself //
         var user = await _userManager.GetUserAsync(userClaims);
-        if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
+        if (user == null) // if 'user' doesn't exist
+            return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); 
+        
         _accountService.LoadReferences(user);        
 
         if (!user.CurrencyAccounts!.Any(account => account.Number == transactionAddRequest.AccountNumber))
              return Result.Fail(CreateNotFoundError("'AccountNumber' is Not One of Your Accounts Number"));
         
         var (isFromValid, _, fromAccount) = await _currencyAccountService.GetCurrencyAccountByNumberWithNavigationInternal(transactionAddRequest.AccountNumber);
-        if (!isFromValid) return Result.Fail(CreateNotFoundError("An Account With This Number Has Not Been Found"));
+        if (!isFromValid) 
+            return Result.Fail(CreateNotFoundError("An Account With This Number Has Not Been Found"));
         
         // Calculate Amount to be added to 'StashBalance' of 'Account'
         var toCurrencyType = fromAccount.Currency?.CurrencyType;
         var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(transactionAddRequest.Money.CurrencyType, toCurrencyType!);
-        if (!isExchangeValid) return Result.Fail($"There is No Relevant Exchange Value to convert to {toCurrencyType}");
+        if (!isExchangeValid) 
+            return Result.Fail($"There is No Relevant Exchange Value to convert to {toCurrencyType}");
+        
         var amount = transactionAddRequest.Money.Amount * valueToBeMultiplied;
 
         // Updating the 'StashBalance' of 'Account'
@@ -127,8 +143,10 @@ public class TransactionService : ITransactionService
         transaction.FromAccountChangeAmount = amount.GetValueOrDefault();
         transaction.ToAccountChangeAmount = 0;
         var transactionAddReturned = await _transactionRepository.AddTransactionAsync(transaction);
+        
         var numberOfRowsAffected = await _transactionRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            Result.Fail("The Request Has Not Been Done Completely, Try Again");
         
         var transactionResponse = transactionAddReturned.ToTransactionResponse(valueToBeMultiplied, transactionAddRequest.Money.CurrencyType);
         return Result.Ok(transactionResponse);    
@@ -168,12 +186,15 @@ public class TransactionService : ITransactionService
         var transaction = transactionAddRequest.ToTransaction();
         
         // Calculate Amount to be added to 'Balance' of 'Account'
-        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(transactionAddRequest.Money.CurrencyType, currencyAccountAddRequest.CurrencyType);
-        if (!isExchangeValid) return Result.Fail($"There is No Relevant Exchange Value to convert to {currencyAccountAddRequest.CurrencyType}");
+        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(transactionAddRequest.Money.CurrencyType,
+                                                                                                                    currencyAccountAddRequest.CurrencyType);
+        if (!isExchangeValid) 
+            return Result.Fail($"There is No Relevant Exchange Value to convert to {currencyAccountAddRequest.CurrencyType}");
     
-        var minimumUSDValidateResult = await CheckMinimumUSDBalanceAsync(transactionAddRequest.Money.CurrencyType, transactionAddRequest.Money.Amount.GetValueOrDefault());
-        // if (minimumUSDValidateResult.IsFailed) return minimumUSDValidateResult.ToResult();
-        if (minimumUSDValidateResult.IsFailed) return Result.Fail(minimumUSDValidateResult.FirstErrorMessage());
+        var minimumUSDValidateResult = await CheckMinimumUSDBalanceAsync(transactionAddRequest.Money.CurrencyType, 
+                                                                         transactionAddRequest.Money.Amount.GetValueOrDefault());
+        if (minimumUSDValidateResult.IsFailed) 
+            return Result.Fail(minimumUSDValidateResult.FirstErrorMessage());
         
         var finalAmount = transactionAddRequest.Money.Amount * valueToBeMultiplied;
         transaction.FromAccountChangeAmount = finalAmount.GetValueOrDefault();
@@ -184,17 +205,20 @@ public class TransactionService : ITransactionService
         return Result.Ok(transactionResponse);    
     }
     
-    public async Task<Result<TransactionResponse>> UpdateTransactionStatusOfTransaction(ConfirmTransactionRequest confirmTransactionRequest, ClaimsPrincipal userClaims, DateTime DateTimeNow)
+    public async Task<Result<TransactionResponse>> UpdateTransactionStatusOfTransaction(ConfirmTransactionRequest confirmTransactionRequest, 
+                                                                                        ClaimsPrincipal userClaims, DateTime DateTimeNow)
     {
         ArgumentNullException.ThrowIfNull(confirmTransactionRequest,$"The '{nameof(confirmTransactionRequest)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' parameter is Null");
         
         var user = await _userManager.GetUserAsync(userClaims);
-        if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
-
+        if (user == null) // if 'user' doesn't exist
+            return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); 
             
         var transaction = await _transactionRepository.GetTransactionByIDAsync(Guid.Parse(confirmTransactionRequest.TransactionId), ignoreQueryFilter:true);
-        if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
+        if (transaction == null) // if 'ID' is invalid (doesn't exist)
+            return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); 
+        
         var fromAccount = transaction.FromAccount;
         var toAccount = transaction.ToAccount;
         
@@ -204,8 +228,8 @@ public class TransactionService : ITransactionService
 
         // if 'transactionStatus' from db is other than "Pending"
         var transactionStatusValidateResult = CheckInvalidTransactionStatus(transaction.TransactionStatus);
-        // if (transactionStatusValidateResult.IsFailed) return transactionStatusValidateResult.ToResult();
-        if (transactionStatusValidateResult.IsFailed) return Result.Fail(transactionStatusValidateResult.FirstErrorMessage());
+        if (transactionStatusValidateResult.IsFailed) 
+            return Result.Fail(transactionStatusValidateResult.FirstErrorMessage());
         
         // if More Than 10 minutes has passed since the transaction time
         if (DateTimeNow.Subtract(transaction.DateTime) > ChangeStatusMaximumTimeOut)
@@ -226,9 +250,10 @@ public class TransactionService : ITransactionService
         if (confirmTransactionRequest.TransactionStatus == nameof(TransactionStatusOptions.Confirmed))
         {
             updatedTransaction = _transactionRepository.UpdateTransactionStatusOfTransaction(transaction, TransactionStatusOptions.Confirmed);
+            
             var validateResult = await ApplyTransactionFee(transaction, fromAccount!, toAccount!);
-            // if (validateResult.IsFailed) return validateResult.ToResult();
-            if (validateResult.IsFailed) return Result.Fail(validateResult.FirstErrorMessage());
+            if (validateResult.IsFailed) 
+                return Result.Fail(validateResult.FirstErrorMessage());
         }
         else if (confirmTransactionRequest.TransactionStatus == nameof(TransactionStatusOptions.Cancelled))
         {
@@ -249,7 +274,8 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' object parameter is Null");
 
         var user = await _userManager.GetUserAsync(userClaims);
-        if (user == null) return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); // if 'user' doesn't exist
+        if (user == null) // if 'user' doesn't exist
+            return Result.Fail(CreateNotFoundError("The User Doesn't Exist")); 
 
         if (await _userManager.IsInRoleAsync(user, Constants.Role.Admin))
             return await GetAllTransactionsInternal();
@@ -263,6 +289,7 @@ public class TransactionService : ITransactionService
     public async Task<List<TransactionResponse>> GetAllTransactionsInternal()
     {
         var transactions = await _transactionRepository.GetAllTransactionsAsync(ignoreQueryFilter:true);
+        
         var transactionResponses = transactions.Select(transactionItem => transactionItem.ToTransactionResponse()).ToList();
         return transactionResponses;
     }
@@ -272,13 +299,15 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' parameter is Null");
 
         var user = await _userManager.GetUserAsync(userClaims);
-        if (user == null) return Result.Fail("The User Doesn't Exist"); // if 'user' doesn't exist
+        if (user == null) // if 'user' doesn't exist
+            return Result.Fail("The User Doesn't Exist"); 
 
         if (await _userManager.IsInRoleAsync(user, Constants.Role.Admin))
             return await GetTransactionByIDInternal(id);
 
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id, ignoreQueryFilter);
-        if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
+        if (transaction == null) // if 'ID' is invalid (doesn't exist)
+            return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); 
 
         if (transaction.FromAccount!.OwnerID != user.Id && transaction.ToAccount!.OwnerID != user.Id)
             return Result.Fail("This Transaction Doesn't Belong To You");
@@ -289,7 +318,8 @@ public class TransactionService : ITransactionService
     public async Task<Result<TransactionResponse>> GetTransactionByIDInternal(Guid id)
     {
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id, ignoreQueryFilter:true);
-        if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
+        if (transaction == null) // if 'ID' is invalid (doesn't exist)
+            return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); 
 
         return Result.Ok(transaction.ToTransactionResponse());
     }  
@@ -299,20 +329,24 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(userClaims,$"The '{nameof(userClaims)}' parameter is Null");
         
         var user = await _userManager.GetUserAsync(userClaims);
-        if (user == null) return Result.Fail("The User Doesn't Exist"); // if 'user' doesn't exist
+        if (user == null) // if 'user' doesn't exist
+            return Result.Fail("The User Doesn't Exist"); 
 
         if (await _userManager.IsInRoleAsync(user, Constants.Role.Admin))
             return await DeleteTransactionByIdInternal(id);
         
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id);
-        if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
+        if (transaction == null) // if 'ID' is invalid (doesn't exist)
+            return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); 
         
         if (transaction.FromAccount!.OwnerID != user.Id)
             return Result.Fail("This Transaction Doesn't Belong To You");
     
         _transactionRepository.DeleteTransaction(transaction);
+        
         var numberOfRowsAffected = await _transactionRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok().WithSuccess("The Deletion Has Not Be b en Successful");
     }
@@ -320,16 +354,17 @@ public class TransactionService : ITransactionService
     public async Task<Result> DeleteTransactionByIdInternal(Guid id)
     {
         var transaction = await _transactionRepository.GetTransactionByIDAsync(id, ignoreQueryFilter:true);
-        if (transaction == null) return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); // if 'ID' is invalid (doesn't exist)
+        if (transaction == null) // if 'ID' is invalid (doesn't exist)
+            return Result.Fail(CreateNotFoundError("!!A Transaction With This ID Has Not Been Found!!")); 
         
         _transactionRepository.DeleteTransaction(transaction);
+        
         var numberOfRowsAffected = await _transactionRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected > 0)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected > 0)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok().WithSuccess("The Deletion Has Not Be b en Successful");
     }
-    
-    
     
     
     
@@ -358,7 +393,7 @@ public class TransactionService : ITransactionService
     }
     
     private async Task<Result<TransferCalculationsAmounts>> CalculateTransferAmounts(CurrencyAccount fromAccount, CurrencyAccount toAccount,
-                                                                                                                   Transaction transaction, bool isCommissionFree)
+                                                                                     Transaction transaction, bool isCommissionFree)
     {
         ArgumentNullException.ThrowIfNull(fromAccount,$"The '{nameof(fromAccount)}' object parameter is Null");
         ArgumentNullException.ThrowIfNull(toAccount,$"The '{nameof(toAccount)}' object parameter is Null");
@@ -372,8 +407,8 @@ public class TransactionService : ITransactionService
         {
             var money = new Money() { Amount = transaction.Amount, Currency = fromAccount.Currency!};
             var cRateValidateResult = await _commissionRateService.GetUSDAmountCRate(money);
-            // if (cRateValidateResult.IsFailed) return cRateValidateResult.ToResult();
-            if (cRateValidateResult.IsFailed) return Result.Fail(cRateValidateResult.FirstErrorMessage());
+            if (cRateValidateResult.IsFailed) 
+                return Result.Fail(cRateValidateResult.FirstErrorMessage());
 
             cRate = cRateValidateResult.Value;
             commissionAmount = transaction.Amount * cRate.GetValueOrDefault();
@@ -384,12 +419,14 @@ public class TransactionService : ITransactionService
         var currencyType = fromAccount.Currency?.CurrencyType;
 
         var balanceValidateResult = await CheckFromAccountInvalidBalance(fromAccount, currencyType!, decreaseAmount, transaction.DateTime);
-        // if (balanceValidateResult.IsFailed) return balanceValidateResult.ToResult();
-        if (balanceValidateResult.IsFailed) return Result.Fail(balanceValidateResult.FirstErrorMessage());
+        if (balanceValidateResult.IsFailed) 
+            return Result.Fail(balanceValidateResult.FirstErrorMessage());
         
         // Calculate Final Amount to be added to 'StashBalance' of 'ToAccount'
-        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(fromAccount.Currency?.CurrencyType!, toAccount.Currency?.CurrencyType!);
-        if (!isExchangeValid) return Result.Fail($"There is No Relevant Exchange Value to convert to {toAccount.Currency?.CurrencyType!}");
+        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(fromAccount.Currency?.CurrencyType!, 
+                                                                                                                    toAccount.Currency?.CurrencyType!);
+        if (!isExchangeValid) 
+            return Result.Fail($"There is No Relevant Exchange Value to convert to {toAccount.Currency?.CurrencyType!}");
         var destinationAmount = transaction.Amount * valueToBeMultiplied;
         
         var allTransactionAmounts = new TransferCalculationsAmounts()
@@ -410,12 +447,12 @@ public class TransactionService : ITransactionService
         var finalBalanceAmount = fromAccount.Balance - decreaseAmount;
 
         var minimumUSDValidateResult = await CheckMinimumUSDBalanceAsync(currencyType, finalBalanceAmount);
-        // if (minimumUSDValidateResult.IsFailed) return minimumUSDValidateResult.ToResult(); 
-        if (minimumUSDValidateResult.IsFailed) return Result.Fail(minimumUSDValidateResult.FirstErrorMessage()); 
+        if (minimumUSDValidateResult.IsFailed) 
+            return Result.Fail(minimumUSDValidateResult.FirstErrorMessage()); 
         
         var maxUSDDayValidateResult = await CheckMaxUSDBalanceWithdrawPerDayAsync(currencyType, decreaseAmount, fromAccount, dateTime);
-        // if (maxUSDDayValidateResult.IsFailed) return maxUSDDayValidateResult.ToResult(); 
-        if (maxUSDDayValidateResult.IsFailed) return Result.Fail(maxUSDDayValidateResult.FirstErrorMessage()); 
+        if (maxUSDDayValidateResult.IsFailed) 
+            return Result.Fail(maxUSDDayValidateResult.FirstErrorMessage()); 
         
         return Result.Ok();
     }
@@ -425,7 +462,8 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' object parameter is Null");
         
         var (isExchangeValid, _,valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.Currency.USD);
-        if (!isExchangeValid) return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
+        if (!isExchangeValid) 
+            return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
         
         var finalUSDAmount = finalAmount * valueToBeMultiplied;
         if (finalUSDAmount < BalanceMinimumUSD)
@@ -440,15 +478,20 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(currencyAccount,$"The '{nameof(currencyAccount)}' object parameter is Null");
 
         var (isExchangeValid, _,valueToBeMultiplied) = (await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.Currency.USD));
-        if (!isExchangeValid) return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
+        if (!isExchangeValid) 
+            return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
 
         var userAllTransactions = await _transactionRepository.GetAllTransactionsByUserAsync(currencyAccount.OwnerID);
+        
         var userAllFromTransactionsPerDay = userAllTransactions.Where(t => t.FromAccountNumber == currencyAccount.Number &&
                                                                            t.TransactionType == TransactionTypeOptions.Transfer &&
                                                                            t.TransactionStatus == TransactionStatusOptions.Confirmed)
                                                                .GroupBy(t => t.DateTime.Date).ToList();
+        
         var userAllFromTransactionsToday = userAllFromTransactionsPerDay.FirstOrDefault(group => group.Key == transactionDate.Date);
-        if (userAllFromTransactionsToday == null) return Result.Ok();
+        if (userAllFromTransactionsToday == null) 
+            return Result.Ok();
+        
         var finalAmount = userAllFromTransactionsToday.Sum(t => t.FromAccountChangeAmount);
         
         var finalUSDAmount = finalAmount * valueToBeMultiplied;
@@ -483,8 +526,8 @@ public class TransactionService : ITransactionService
             var decreaseAmount = transaction.FromAccountChangeAmount;
             
             var balanceValidateResult = await CheckFromAccountInvalidBalance(fromAccount, fromAccount.Currency!.CurrencyType, decreaseAmount, transaction.DateTime);
-            // if (balanceValidateResult.IsFailed) return balanceValidateResult.ToResult();
-            if (balanceValidateResult.IsFailed) return Result.Fail(balanceValidateResult.FirstErrorMessage());
+            if (balanceValidateResult.IsFailed) 
+                return Result.Fail(balanceValidateResult.FirstErrorMessage());
             
             _currencyAccountService.UpdateStashBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 + val2);
             _currencyAccountService.UpdateBalanceAmount(fromAccount, transaction.FromAccountChangeAmount, (val1, val2) => val1 - val2);
@@ -511,5 +554,4 @@ public class TransactionService : ITransactionService
             _currencyAccountService.UpdateStashBalanceAmount(toAccount!, transaction.ToAccountChangeAmount, (val1, val2) => val1 - val2);
         }
     }
-    
 }

@@ -69,9 +69,9 @@ public class TransactionRepository : ITransactionRepository
      
     public async Task<Transaction> AddTransactionAsync(Transaction transaction)
     {
-        var tranactionReturned = await _dbContext.Transactions.AddAsync(transaction);
+        var transactionReturned = await _dbContext.Transactions.AddAsync(transaction);
 
-        return tranactionReturned.Entity;
+        return transactionReturned.Entity;
     }
     
     public Transaction Attach(Transaction transaction)

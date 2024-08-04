@@ -57,14 +57,9 @@ public class AccountService : IAccountService
         {
             await _userManager.AddToRoleAsync(user, userRegister.Role);
             await _userManager.AddClaimAsync(user, new Claim(ClaimTypes.Role, userRegister.Role));
-            _ = SendConfirmationEmailInternal(user);
-            // var (isValid, message) = SendConfirmationEmail(user).Result;
-            // var (isValid, message) = Task.Run(() => SendConfirmationEmail(user));
-            // if (!isValid)
-            //     return (false, message);
             
-            // return (true, message);
-            // return (true, "Please Check Your Email");
+            _ = SendConfirmationEmailInternal(user);
+            
             return Result.Ok().WithSuccess("Please Check Your Email");
         }
         
@@ -81,16 +76,15 @@ public class AccountService : IAccountService
         if (user == null || !await _userManager.CheckPasswordAsync(user, userLogin.Password))
             return Result.Fail("Invalid Email or Password");
         
-        var result = await _signInManager.PasswordSignInAsync(userLogin.Email, userLogin.Password, isPersistent: false, lockoutOnFailure: false);
+        var result = await _signInManager.PasswordSignInAsync(userLogin.Email, userLogin.Password, 
+                                                              isPersistent: false, lockoutOnFailure: false);
         
         // Validations
         if (result.IsNotAllowed)
             return Result.Fail("You Are Not Allowed to Log in (Have You Tried to Confirm Your Email?");
         
-
         if (result.IsLockedOut)
             return Result.Fail($"You Had Too Many Attempts to Log In, You can try Again in {user.LockoutEnd}");
-
                 
         // If Everything is Correct
         if (result.Succeeded)
@@ -127,13 +121,11 @@ public class AccountService : IAccountService
         
         if (user.EmailConfirmed)
             return Result.Fail("Your Email Is Already Confirmed");
-
         
         token = token.Replace(" ", "+");
         var result = await _userManager.ConfirmEmailAsync(user, token);
         if (!result.Succeeded)
             return Result.Fail("Email Has Not Been Confirmed, Link Expired (Or Token is Invalid)");
-
         
         return Result.Ok().WithSuccess("Email Has Been Confirmed Successfully");
     }
@@ -163,7 +155,6 @@ public class AccountService : IAccountService
         });
         
         var result = await _userManager.UpdateAsync(user);
-        // var userReturned = _userManager.Users.FirstOrDefault(userItem => userItem.UserName == userClaims.Identity.Name);
         if (!result.Succeeded)
             return Result.Fail("The Defined Account ID has not been Added, Try Again");
         

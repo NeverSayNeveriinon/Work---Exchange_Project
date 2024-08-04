@@ -28,13 +28,18 @@ public class ExchangeValueService : IExchangeValueService
         ArgumentNullException.ThrowIfNull(exchangeValueAddRequest, $"The '{nameof(exchangeValueAddRequest)}' object parameter is Null");
         
         // if 'currencyType's doesn't exist in 'currencies list' 
-        var (firstCurrencyResult, firstCurrency) = (await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.FirstCurrencyType)).DeconstructObject();
-        if (firstCurrencyResult.IsFailed) return firstCurrencyResult.ToResult(); // if 'first currency' doesn't exist
-        var (secondCurrencyResult, secondCurrency) = (await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.SecondCurrencyType)).DeconstructObject();
-        if (secondCurrencyResult.IsFailed) return secondCurrencyResult.ToResult(); // if 'second currency' doesn't exist
+        var (firstCurrencyResult, firstCurrency) = (await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.FirstCurrencyType))
+                                                                          .DeconstructObject();
+        if (firstCurrencyResult.IsFailed) // if 'first currency' doesn't exist
+            return firstCurrencyResult.ToResult(); 
+        
+        var (secondCurrencyResult, secondCurrency) = (await _currencyService.GetCurrencyByCurrencyType(exchangeValueAddRequest.SecondCurrencyType))
+                                                                            .DeconstructObject();
+        if (secondCurrencyResult.IsFailed) // if 'second currency' doesn't exist
+            return secondCurrencyResult.ToResult(); 
 
-        var exchangeValueResponseByCurrenciesID = await _exchangeValueRepository.GetExchangeValueByCurrenciesIDAsync(firstCurrency.Id, secondCurrency.Id);
-        if (exchangeValueResponseByCurrenciesID is not null) // if exchangeValueResponseByCurrenciesID has sth, means this two currency id's already exists
+        var existingExchangeValue = await _exchangeValueRepository.GetExchangeValueByCurrenciesIDAsync(firstCurrency.Id, secondCurrency.Id);
+        if (existingExchangeValue is not null) // if exchangeValueResponse has sth, means this two currency id's already exists
             return Result.Fail("There is Already a Exchange Value Object With These First Currency type and Second Currency type");
             
         var exchangeValue = exchangeValueAddRequest.ToExchangeValue(firstCurrency.Id,secondCurrency.Id);
@@ -42,8 +47,10 @@ public class ExchangeValueService : IExchangeValueService
             
         var exchangeValueReturned = await _exchangeValueRepository.AddExchangeValueAsync(exchangeValue);
         var oppositeExchangeValueReturned = await _exchangeValueRepository.AddExchangeValueAsync(oppositeExchangeValue);
+        
         var numberOfRowsAffected = await _exchangeValueRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected >= 2)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected >= 2)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok(exchangeValueReturned.ToExchangeValueResponse());
     }   
@@ -60,7 +67,8 @@ public class ExchangeValueService : IExchangeValueService
     public async Task<Result<ExchangeValueResponse>> GetExchangeValueByID(int id)
     {
         var exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(id);
-        if (exchangeValue == null) return Result.Fail(CreateNotFoundError("!!An Exchange Value With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'exchangeValues list' 
+        if (exchangeValue == null) // if 'id' doesn't exist in 'exchangeValues list' 
+            return Result.Fail(CreateNotFoundError("!!An Exchange Value With This ID Has Not Been Found!!"));  
         
         return exchangeValue.ToExchangeValueResponse();
     }
@@ -70,16 +78,23 @@ public class ExchangeValueService : IExchangeValueService
         ArgumentNullException.ThrowIfNull(firstCurrencyType,$"The '{nameof(firstCurrencyType)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(secondCurrencyType,$"The '{nameof(secondCurrencyType)}' parameter is Null");
 
-        if (firstCurrencyType == secondCurrencyType) return Result.Ok(1M);
+        if (firstCurrencyType == secondCurrencyType) 
+            return Result.Ok(1M);
         
         // if 'currencyType's doesn't exist in 'currencies list' 
-        var (sourceCurrencyResult, sourceCurrencyResponse) = (await _currencyService.GetCurrencyByCurrencyType(firstCurrencyType)).DeconstructObject();
-        if (sourceCurrencyResult.IsFailed) return sourceCurrencyResult.ToResult(); // if 'source currency' doesn't exist
-        var (destCurrencyResult, destCurrencyResponse) = (await _currencyService.GetCurrencyByCurrencyType(secondCurrencyType)).DeconstructObject();
-        if (destCurrencyResult.IsFailed) return destCurrencyResult.ToResult(); // if 'dest currency' doesn't exist
+        var (sourceCurrencyResult, sourceCurrencyResponse) = (await _currencyService.GetCurrencyByCurrencyType(firstCurrencyType))
+                                                                                    .DeconstructObject();
+        if (sourceCurrencyResult.IsFailed) // if 'source currency' doesn't exist
+            return sourceCurrencyResult.ToResult(); 
+        
+        var (destCurrencyResult, destCurrencyResponse) = (await _currencyService.GetCurrencyByCurrencyType(secondCurrencyType))
+                                                                                .DeconstructObject();
+        if (destCurrencyResult.IsFailed) // if 'dest currency' doesn't exist
+            return destCurrencyResult.ToResult(); 
         
         var valueToBeMultiplied = await _exchangeValueRepository.GetUnitValueByCurrencyTypeAsync(sourceCurrencyResponse.Id, destCurrencyResponse.Id);
-        if (valueToBeMultiplied == null) return Result.Fail(CreateNotFoundError("!!An Exchange Value With This Currency Types Has Not Been Found!!"));
+        if (valueToBeMultiplied == null) 
+            return Result.Fail(CreateNotFoundError("!!An Exchange Value With This Currency Types Has Not Been Found!!"));
          
         return Result.Ok(valueToBeMultiplied.Value);
     }
@@ -89,16 +104,22 @@ public class ExchangeValueService : IExchangeValueService
         ArgumentNullException.ThrowIfNull(exchangeValueUpdateRequest,$"The '{nameof(exchangeValueUpdateRequest)}' object parameter is Null");
         
         var exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(exchangeValueID);
-        if (exchangeValue == null) return Result.Fail(CreateNotFoundError("!!An Exchange Value With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'exchangeValues list' 
+        if (exchangeValue == null) // if 'id' doesn't exist in 'exchangeValues list'
+            return Result.Fail(CreateNotFoundError("!!An Exchange Value With This ID Has Not Been Found!!"));  
         
         var allExchangeValues = await _exchangeValueRepository.GetAllExchangeValuesAsync();
-        var oppositeExchangeValue = allExchangeValues.FirstOrDefault(exValue => exValue.SecondCurrencyId == exchangeValue.FirstCurrencyId && exValue.FirstCurrencyId == exchangeValue.SecondCurrencyId);
-        if (oppositeExchangeValue == null) return Result.Fail(CreateNotFoundError("!!An Opposite Exchange Value With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'exchangeValues list' 
+        
+        var oppositeExchangeValue = allExchangeValues.FirstOrDefault(exValue => exValue.SecondCurrencyId == exchangeValue.FirstCurrencyId && 
+                                                                                exValue.FirstCurrencyId == exchangeValue.SecondCurrencyId);
+        if (oppositeExchangeValue == null) // if 'id' doesn't exist in 'exchangeValues list'
+            return Result.Fail(CreateNotFoundError("!!An Opposite Exchange Value With This ID Has Not Been Found!!"));  
 
         var updatedExchangeValue = _exchangeValueRepository.UpdateExchangeValueByID(exchangeValue, exchangeValueUpdateRequest.ToExchangeValue());
         var updatedOppositeExchangeValue = _exchangeValueRepository.UpdateExchangeValueByID(oppositeExchangeValue, exchangeValueUpdateRequest.ToOppositeExchangeValue());
+        
         var numberOfRowsAffected = await _exchangeValueRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected >= 2)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected >= 2)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok(updatedExchangeValue.ToExchangeValueResponse());
     }
@@ -106,16 +127,22 @@ public class ExchangeValueService : IExchangeValueService
     public async Task<Result> DeleteExchangeValueByID(int id)
     {
         var exchangeValue = await _exchangeValueRepository.GetExchangeValueByIDAsync(id);
-        if (exchangeValue == null) return Result.Fail(CreateNotFoundError("!!An Exchange Value With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'exchangeValues list' 
+        if (exchangeValue == null) // if 'id' doesn't exist in 'exchangeValues list'
+            return Result.Fail(CreateNotFoundError("!!An Exchange Value With This ID Has Not Been Found!!"));  
         
         var allExchangeValues = await _exchangeValueRepository.GetAllExchangeValuesAsync();
-        var oppositeExchangeValue = allExchangeValues.FirstOrDefault(exValue => exValue.SecondCurrencyId == exchangeValue.FirstCurrencyId && exValue.FirstCurrencyId == exchangeValue.SecondCurrencyId);
-        if (oppositeExchangeValue == null) return Result.Fail(CreateNotFoundError("!!An Opposite Exchange Value With This ID Has Not Been Found!!")); // if 'id' doesn't exist in 'exchangeValues list' 
+        
+        var oppositeExchangeValue = allExchangeValues.FirstOrDefault(exValue => exValue.SecondCurrencyId == exchangeValue.FirstCurrencyId && 
+                                                                                exValue.FirstCurrencyId == exchangeValue.SecondCurrencyId);
+        if (oppositeExchangeValue == null) // if 'id' doesn't exist in 'exchangeValues list'
+            return Result.Fail(CreateNotFoundError("!!An Opposite Exchange Value With This ID Has Not Been Found!!"));  
 
         _exchangeValueRepository.DeleteExchangeValueByID(exchangeValue);
         _exchangeValueRepository.DeleteExchangeValueByID(oppositeExchangeValue);
+        
         var numberOfRowsAffected = await _exchangeValueRepository.SaveChangesAsync();
-        if (!(numberOfRowsAffected >= 2)) return Result.Fail("The Request Has Not Been Done Completely, Try Again");
+        if (!(numberOfRowsAffected >= 2)) 
+            return Result.Fail("The Request Has Not Been Done Completely, Try Again");
 
         return Result.Ok().WithSuccess("The Deletion Has Been Successful");
     }

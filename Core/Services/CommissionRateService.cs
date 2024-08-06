@@ -42,9 +42,9 @@ public class CommissionRateService : ICommissionRateService
         var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
         
         // Validation For Valid MaxSDRange (We shouldn't have same MaxUSDRange) //
-        var usdRangeValidateResult = await GetCommissionRateByMaxRange(commissionRateRequest.MaxUSDRange!.Value);
-        if (usdRangeValidateResult.IsFailed) 
-            return Result.Fail(usdRangeValidateResult.FirstErrorMessage());
+        var usdRangeReturned = await _commissionRateRepository.GetCommissionRateByMaxRangeAsync(commissionRateRequest.MaxUSDRange!.Value);
+        if (usdRangeReturned != null) 
+            return Result.Fail("There is Already a Commission Rate Object With This 'MaxUSDRange'");
         
         // Validation For Valid CRate (More USDRange has to have less CRate) //
         var cRateValidateResult = await ValidateCRateRange(commissionRateRequest, allCommissionRates);

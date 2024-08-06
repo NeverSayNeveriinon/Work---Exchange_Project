@@ -1,4 +1,5 @@
-﻿using Core.Domain.Entities;
+﻿using System.Diagnostics;
+using Core.Domain.Entities;
 using Core.Domain.RepositoryContracts;
 using Core.DTO;
 using Core.DTO.CommissionRateDTO;
@@ -10,17 +11,28 @@ using Core.ServiceContracts;
 using FluentResults;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Caching.Memory;
 using static Core.Helpers.FluentResultsExtensions;
 
 namespace Core.Services;
 
 public class CommissionRateService : ICommissionRateService
 {
-    private readonly ICommissionRateRepository _commissionRateRepository;
+    private static readonly TimeSpan CacheSlidingTTL = TimeSpan.FromSeconds(10); // cache expiration time after last access
+    private static readonly TimeSpan CacheAbsoluteTTL = TimeSpan.FromMinutes(1); // cache expiration time after key creation
+
+    private static readonly MemoryCacheEntryOptions CacheEntryOptions = new MemoryCacheEntryOptions()
+                                                                                    .SetSlidingExpiration(CacheSlidingTTL) 
+                                                                                    .SetAbsoluteExpiration(CacheAbsoluteTTL); 
     
-    public CommissionRateService(ICommissionRateRepository commissionRateRepository)
+    
+    private readonly ICommissionRateRepository _commissionRateRepository;
+    private readonly IMemoryCache _cache;
+    
+    public CommissionRateService(ICommissionRateRepository commissionRateRepository, IMemoryCache cache)
     {
         _commissionRateRepository = commissionRateRepository;
+        _cache = cache;
     }
 
     public async Task<Result<CommissionRateResponse>> AddCommissionRate(CommissionRateRequest commissionRateRequest)
@@ -30,7 +42,7 @@ public class CommissionRateService : ICommissionRateService
         var allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
         
         // Validation For Valid MaxSDRange (We shouldn't have same MaxUSDRange) //
-        var usdRangeValidateResult = await ValidateMaxUSDRangeDuplicate(commissionRateRequest.MaxUSDRange!.Value, allCommissionRates);
+        var usdRangeValidateResult = await GetCommissionRateByMaxRange(commissionRateRequest.MaxUSDRange!.Value);
         if (usdRangeValidateResult.IsFailed) 
             return Result.Fail(usdRangeValidateResult.FirstErrorMessage());
         
@@ -51,12 +63,18 @@ public class CommissionRateService : ICommissionRateService
     
     public async Task<List<CommissionRateResponse>> GetAllCommissionRates()
     {
+        const string cacheKey = CacheKeys.AllCommissionRatesKey;
+        var cacheResponse = _cache.Get<List<CommissionRateResponse>>(cacheKey);
+        if (cacheResponse != null)
+            return cacheResponse;
+        
         var commissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
         
         var commissionRateResponses = commissionRates.Select(accountItem => accountItem.ToCommissionRateResponse()).ToList();
+        _cache.Set(cacheKey, commissionRateResponses, CacheEntryOptions);
         return commissionRateResponses;
     }    
-    
+     
     // todo:check no need to calculate exchangevalue -> instead call its function
     public async Task<Result<decimal>> GetUSDAmountCRate(Money money)
     {
@@ -133,7 +151,6 @@ public class CommissionRateService : ICommissionRateService
     }
 
     
-    
     // Private Methods //
     
     private async Task<Result> ValidateCRateRange(CommissionRateRequest commissionRateRequest, List<CommissionRate>? allCommissionRates = null)
@@ -159,18 +176,6 @@ public class CommissionRateService : ICommissionRateService
             return Result.Fail("The 'CRate' Can't be More Than the CRate's of Lesser USDRanges\n and Lesser Than than CRate's of More USDRanges");
         }
 
-        return Result.Ok();
-    }
-
-    private async Task<Result> ValidateMaxUSDRangeDuplicate(decimal maxUSDRange, List<CommissionRate>? allCommissionRates = null)
-    {
-        if (allCommissionRates is null)
-            allCommissionRates = await _commissionRateRepository.GetAllCommissionRatesAsync();
-        
-        var allUSDRanges = allCommissionRates.Select(commisionRate => commisionRate.MaxUSDRange).ToHashSet();
-        if (allUSDRanges.Contains(maxUSDRange)) // means there is already a same range, we don't want that 
-            return Result.Fail("There is Already a Commission Rate Object With This 'MaxUSDRange'");
-        
         return Result.Ok();
     }
 }

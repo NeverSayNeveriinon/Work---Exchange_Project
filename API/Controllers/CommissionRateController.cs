@@ -1,4 +1,5 @@
-﻿using API.Helpers;
+﻿using System.Diagnostics;
+using API.Helpers;
 using Core.DTO.CommissionRateDTO;
 using Core.Helpers;
 using Core.ServiceContracts;
@@ -38,7 +39,11 @@ public class CommissionRateController : ControllerBase
     // GET: api/CommissionRate
     public async Task<ActionResult<IEnumerable<CommissionRateResponse>>> GetAllCommissionRates()
     {
+        Stopwatch s = new Stopwatch();
+        s.Start();
         var commissionRatesList = await _commissionRateService.GetAllCommissionRates();
+        s.Stop();
+        
         return Ok(commissionRatesList);
     }
 

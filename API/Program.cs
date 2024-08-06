@@ -148,8 +148,8 @@ public class Program
         builder.Services.AddIdempotentAPI(new IdempotencyOptions());
         builder.Services.AddDistributedMemoryCache(); 
         builder.Services.AddIdempotentAPIUsingDistributedCache();
-        
-        
+
+        builder.Services.AddMemoryCache();
         var app = builder.Build();
         
         app.EnsureCreatingDatabase<AppDbContext>();

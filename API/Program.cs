@@ -150,6 +150,15 @@ public class Program
         builder.Services.AddIdempotentAPIUsingDistributedCache();
 
         builder.Services.AddMemoryCache();
+        
+        // builder.Services.AddHsts(options =>
+        // {
+        //     options.ExcludedHosts.Clear();
+        //     options.Preload = true;
+        //     options.IncludeSubDomains = true;
+        //     options.MaxAge = TimeSpan.FromDays(60);
+        // });
+        
         var app = builder.Build();
         
         app.EnsureCreatingDatabase<AppDbContext>();

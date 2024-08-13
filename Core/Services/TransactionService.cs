@@ -130,7 +130,7 @@ public class TransactionService : ITransactionService
         
         // Calculate Amount to be added to 'StashBalance' of 'Account'
         var toCurrencyType = fromAccount.Currency?.CurrencyType;
-        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(transactionAddRequest.Money.CurrencyType, toCurrencyType!);
+        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeRateByCurrencyTypes(transactionAddRequest.Money.CurrencyType, toCurrencyType!);
         if (!isExchangeValid) 
             return Result.Fail($"There is No Relevant Exchange Value to convert to {toCurrencyType}");
         
@@ -185,7 +185,7 @@ public class TransactionService : ITransactionService
         var transaction = transactionAddRequest.ToTransaction();
         
         // Calculate Amount to be added to 'Balance' of 'Account'
-        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(transactionAddRequest.Money.CurrencyType,
+        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeRateByCurrencyTypes(transactionAddRequest.Money.CurrencyType,
                                                                                                                     currencyAccountAddRequest.CurrencyType);
         if (!isExchangeValid) 
             return Result.Fail($"There is No Relevant Exchange Value to convert to {currencyAccountAddRequest.CurrencyType}");
@@ -405,7 +405,7 @@ public class TransactionService : ITransactionService
         if (!isCommissionFree)
         {
             var money = new Money() { Amount = transaction.Amount, Currency = fromAccount.Currency!};
-            var cRateValidateResult = await _commissionRateService.GetUSDAmountCRate(money);
+            var cRateValidateResult = await _commissionRateService.GetCRateByMoney(money);
             if (cRateValidateResult.IsFailed) 
                 return Result.Fail(cRateValidateResult.FirstErrorMessage());
 
@@ -422,7 +422,7 @@ public class TransactionService : ITransactionService
             return Result.Fail(balanceValidateResult.FirstErrorMessage());
         
         // Calculate Final Amount to be added to 'StashBalance' of 'ToAccount'
-        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(fromAccount.Currency?.CurrencyType!, 
+        var (isExchangeValid, _, valueToBeMultiplied) = await _exchangeValueService.GetExchangeRateByCurrencyTypes(fromAccount.Currency?.CurrencyType!, 
                                                                                                                     toAccount.Currency?.CurrencyType!);
         if (!isExchangeValid) 
             return Result.Fail($"There is No Relevant Exchange Value to convert to {toAccount.Currency?.CurrencyType!}");
@@ -460,7 +460,7 @@ public class TransactionService : ITransactionService
     {
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' object parameter is Null");
         
-        var (isExchangeValid, _,valueToBeMultiplied) = await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.Currency.USD);
+        var (isExchangeValid, _,valueToBeMultiplied) = await _exchangeValueService.GetExchangeRateByCurrencyTypes(currencyType, Constants.Currency.USD);
         if (!isExchangeValid) 
             return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
         
@@ -476,7 +476,7 @@ public class TransactionService : ITransactionService
         ArgumentNullException.ThrowIfNull(currencyType,$"The '{nameof(currencyType)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(currencyAccount,$"The '{nameof(currencyAccount)}' object parameter is Null");
 
-        var (isExchangeValid, _,valueToBeMultiplied) = (await _exchangeValueService.GetExchangeValueByCurrencyTypes(currencyType, Constants.Currency.USD));
+        var (isExchangeValid, _,valueToBeMultiplied) = (await _exchangeValueService.GetExchangeRateByCurrencyTypes(currencyType, Constants.Currency.USD));
         if (!isExchangeValid) 
             return Result.Fail($"There is No Relevant Exchange Value to convert to {Constants.Currency.USD}");
 

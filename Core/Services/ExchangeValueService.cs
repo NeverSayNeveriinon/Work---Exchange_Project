@@ -73,7 +73,7 @@ public class ExchangeValueService : IExchangeValueService
         return exchangeValue.ToExchangeValueResponse();
     }
 
-    public async Task<Result<decimal>> GetExchangeValueByCurrencyTypes(string firstCurrencyType, string secondCurrencyType)
+    public async Task<Result<decimal>> GetExchangeRateByCurrencyTypes(string firstCurrencyType, string secondCurrencyType)
     {
         ArgumentNullException.ThrowIfNull(firstCurrencyType,$"The '{nameof(firstCurrencyType)}' parameter is Null");
         ArgumentNullException.ThrowIfNull(secondCurrencyType,$"The '{nameof(secondCurrencyType)}' parameter is Null");

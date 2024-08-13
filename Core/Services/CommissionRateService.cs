@@ -27,12 +27,14 @@ public class CommissionRateService : ICommissionRateService
     
     
     private readonly ICommissionRateRepository _commissionRateRepository;
+    private readonly IExchangeValueService _exchangeValueService;
     private readonly IMemoryCache _cache;
     
-    public CommissionRateService(ICommissionRateRepository commissionRateRepository, IMemoryCache cache)
+    public CommissionRateService(ICommissionRateRepository commissionRateRepository, IExchangeValueService exchangeValueService, IMemoryCache cache)
     {
         _commissionRateRepository = commissionRateRepository;
         _cache = cache;
+        _exchangeValueService = exchangeValueService;
     }
 
     public async Task<Result<CommissionRateResponse>> AddCommissionRate(CommissionRateRequest commissionRateRequest)
@@ -75,28 +77,45 @@ public class CommissionRateService : ICommissionRateService
         return commissionRateResponses;
     }    
      
-    // todo:check no need to calculate exchangevalue -> instead call its function
-    public async Task<Result<decimal>> GetUSDAmountCRate(Money money)
+    public async Task<Result<decimal>> GetCRateByMoney(Money money)
     {
         ArgumentNullException.ThrowIfNull(money,$"The '{nameof(money)}' object parameter is Null");
 
+        var amount = money.Amount;
         if (money.Currency.CurrencyType != Constants.Currency.USD)
         {
-            var exchangeValue = money.Currency.FirstExchangeValues?.FirstOrDefault(exValue => exValue.SecondCurrency.CurrencyType == 
-                                                                                              Constants.Currency.USD);
-            if (exchangeValue == null) 
+            var (isValid, valueToBeMultiplied) = (await _exchangeValueService.GetExchangeRateByCurrencyTypes(money.Currency.CurrencyType, Constants.Currency.USD))
+                                                  .DeconstructObject();
+            if (isValid.IsFailed) 
                 return Result.Fail($"There is No Relevant Exchange Value to Convert to '{Constants.Currency.USD}'");
             
-            var valueToBeMultiplied = exchangeValue.UnitOfFirstValue;
-            money.Amount *= valueToBeMultiplied;
+            amount = money.Amount * valueToBeMultiplied;
         }
 
-        var cRate = await _commissionRateRepository.GetCRateByUSDAmountAsync(money.Amount);
+        var cRate = await GetCRateByUSDAmount(amount);
         if (cRate == null) 
             return Result.Fail("There is No Relevant Commission Rate for the Amount");
 
         return Result.Ok(cRate.Value);
     }
+
+    internal async Task<decimal?> GetCRateByUSDAmount(decimal amount)
+    {
+        var commissionRatesList = await _commissionRateRepository.GetAllCommissionRatesAsync();
+        if (commissionRatesList.Count == 0) 
+            return null;
+
+        var commissionRatesOrderedList = commissionRatesList.OrderBy(commissionRate => commissionRate.MaxUSDRange).ToList();
+            
+        var cRateIndex = commissionRatesOrderedList.Select(commissionRate => commissionRate.MaxUSDRange).ToList().BinarySearch(amount);
+        cRateIndex = int.IsNegative(cRateIndex) ? ~cRateIndex : cRateIndex; 
+        if (cRateIndex == commissionRatesList.Count) // in case 'amount' be larger than largest 'MaxUSDRange'
+            return null;
+         
+        var finalCRate = commissionRatesOrderedList.ElementAtOrDefault(cRateIndex)!.CRate;
+        return finalCRate;
+    }
+    
 
     public async Task<Result<CommissionRateResponse>> GetCommissionRateByMaxRange(decimal maxRange)
     {

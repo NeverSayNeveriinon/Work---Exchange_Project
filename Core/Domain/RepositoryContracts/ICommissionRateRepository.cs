@@ -7,7 +7,6 @@ public interface ICommissionRateRepository
     Task<List<CommissionRate>> GetAllCommissionRatesAsync();
     
     Task<CommissionRate?> GetCommissionRateByMaxRangeAsync(decimal maxRange);
-    Task<decimal?> GetCRateByUSDAmountAsync(decimal amount);
     
     Task<CommissionRate> AddCommissionRateAsync(CommissionRate commissionRate);
     CommissionRate UpdateCRate(CommissionRate commissionRate, decimal commissionCRate);

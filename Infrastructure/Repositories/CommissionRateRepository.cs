@@ -29,20 +29,6 @@ public class CommissionRateRepository : ICommissionRateRepository
 
         return commissionRate;
     }
-
-    public async Task<decimal?> GetCRateByUSDAmountAsync(decimal amount)
-    {
-        var commissionRatesList = await _dbContext.CommissionRates.ToListAsync();
-        if (commissionRatesList.Count == 0) return null;
-        
-        var commissionRatesOrderedList = commissionRatesList.OrderBy(commissionRate => commissionRate.MaxUSDRange).ToList();
-        var cRateIndex = commissionRatesOrderedList.Select(commissionRate => commissionRate.MaxUSDRange).ToList().BinarySearch(amount);
-        cRateIndex = int.IsNegative(cRateIndex) ? ~cRateIndex : cRateIndex; 
-        if (cRateIndex == commissionRatesList.Count) return null;
-        
-        var finalCRate = commissionRatesOrderedList.ElementAtOrDefault(cRateIndex)!.CRate;
-        return finalCRate;
-    }
     
     public async Task<CommissionRate> AddCommissionRateAsync(CommissionRate commissionRate)
     {
